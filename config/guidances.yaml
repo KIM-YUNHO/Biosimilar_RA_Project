@@ -1,0 +1,163 @@
+# 가이던스 축: 기관 API가 없으므로 사람이 관리하는 목록에서 수집한다.
+# 날짜·상태는 2026-10-08 기준 공개 자료에서 확인한 값이며, 수집 시 status_checked_at 과 함께 재확인한다.
+# url 이 랜딩 페이지(HTML)인 경우 원본 HTML을 저장하고, PDF 링크 추적은 전처리 단계에서 한다.
+# url_verified: false 는 작성 시점에 사이트 접속이 막혀 URL을 직접 열어보지 못한 항목이다.
+# topics: 공통 쟁점 어휘 — analytical, pk, comparator_bridging, ces, immunogenicity,
+#         extrapolation, interchangeability, labeling, meetings, general
+
+guidances:
+  # ---------------- EMA ----------------
+  - id: ema-nonclinical-clinical-rev1
+    jurisdiction: EU
+    agency: ema
+    title: "Guideline on similar biological medicinal products containing biotechnology-derived proteins as active substance: non-clinical and clinical issues"
+    reference_no: "EMEA/CHMP/BMWP/42832/2005 Rev1"
+    status: final
+    adopted_at: "2014-12-18"
+    effective_from: "2015-07-01"
+    supersedes: "EMEA/CHMP/BMWP/42832/2005"
+    scope_products: [all_biosimilars]
+    topics: [pk, ces, immunogenicity, extrapolation]
+    url: "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-similar-biological-medicinal-products-containing-biotechnology-derived-proteins-active_en-2.pdf"
+    url_verified: false
+
+  - id: ema-reflection-tailored-clinical
+    jurisdiction: EU
+    agency: ema
+    title: "Reflection paper on a tailored clinical approach in biosimilar development"
+    status: final
+    published_at: "2025-04-01"   # 초안 공개
+    adopted_at: "2026"            # 최종 채택(정확한 날짜 확인 필요)
+    scope_products: [all_biosimilars]
+    topics: [ces, pk, immunogenicity]
+    url: "https://www.ema.europa.eu/en/reflection-paper-tailored-clinical-approach-biosimilar-development"
+    url_verified: false
+
+  - id: ema-overarching-rev1
+    jurisdiction: EU
+    agency: ema
+    title: "Guideline on similar biological medicinal products (overarching)"
+    reference_no: "CHMP/437/04 Rev 1"
+    status: final
+    scope_products: [all_biosimilars]
+    topics: [general]
+    url: null
+    url_verified: false
+
+  - id: ema-mab-nonclinical-clinical
+    jurisdiction: EU
+    agency: ema
+    title: "Guideline on similar biological medicinal products containing monoclonal antibodies: non-clinical and clinical issues"
+    reference_no: "EMA/CHMP/BMWP/403543/2010"
+    status: final
+    scope_products: [monoclonal_antibodies]
+    topics: [pk, ces, immunogenicity, extrapolation]
+    url: null
+    url_verified: false
+
+  # ---------------- FDA ----------------
+  - id: fda-scientific-considerations-2015
+    jurisdiction: US
+    agency: fda
+    title: "Scientific Considerations in Demonstrating Biosimilarity to a Reference Product"
+    status: final
+    published_at: "2015-04-28"
+    scope_products: [therapeutic_proteins]
+    topics: [general, ces, pk, immunogenicity]
+    url: null
+    url_verified: false
+
+  - id: fda-ces-updated-recommendations-2025
+    jurisdiction: US
+    agency: fda
+    title: "Scientific Considerations in Demonstrating Biosimilarity to a Reference Product: Updated Recommendations for Assessing the Need for Comparative Efficacy Studies"
+    status: draft
+    published_at: "2025-10-29"
+    scope_products: [therapeutic_proteins]
+    scope_exceptions: [locally_acting]   # 국소작용 제품 예외 조항
+    topics: [ces]
+    url: "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/scientific-considerations-demonstrating-biosimilarity-reference-product-updated-recommendations"
+    url_verified: false
+
+  - id: fda-comparative-analytical-2025
+    jurisdiction: US
+    agency: fda
+    title: "Development of Therapeutic Protein Biosimilars: Comparative Analytical Assessment and Other Quality-Related Considerations"
+    status: final
+    published_at: "2025-09"
+    scope_products: [therapeutic_proteins]
+    topics: [analytical]
+    url: "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/development-therapeutic-protein-biosimilars-comparative-analytical-assessment-and-other-quality"
+    url_verified: false
+
+  - id: fda-clinical-pharmacology-2016
+    jurisdiction: US
+    agency: fda
+    title: "Clinical Pharmacology Data to Support a Demonstration of Biosimilarity to a Reference Product"
+    status: final
+    published_at: "2016-12-29"
+    scope_products: [therapeutic_proteins]
+    topics: [pk]
+    url: "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/clinical-pharmacology-data-support-demonstration-biosimilarity-reference-product"
+    url_verified: false
+
+  - id: fda-interchangeability-2019
+    jurisdiction: US
+    agency: fda
+    title: "Considerations in Demonstrating Interchangeability With a Reference Product"
+    status: final
+    published_at: "2019-05"
+    superseded_note: "2024-06 초안 개정(스위칭 연구 일반적으로 불필요)"
+    scope_products: [therapeutic_proteins]
+    topics: [interchangeability]
+    url: null
+    url_verified: false
+
+  - id: fda-qa-bpcia-rev4-2026
+    jurisdiction: US
+    agency: fda
+    title: "New and Revised Draft Q&As on Biosimilar Development and the BPCI Act (Revision 4)"
+    status: draft
+    published_at: "2026-03-09"
+    partial_supersession:
+      document: "Questions and Answers on Biosimilar Development and the BPCI Act (2021)"
+      sections_withdrawn_from_final: ["I.8", "I.10", "I.19"]
+    scope_products: [all_biosimilars]
+    topics: [comparator_bridging, pk]
+    url: "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/new-and-revised-draft-qas-biosimilar-development-and-bpci-act-revision-4"
+    url_verified: false
+
+  - id: fda-bsufa-meetings-2025
+    jurisdiction: US
+    agency: fda
+    title: "Formal Meetings Between the FDA and Sponsors or Applicants of BsUFA Products"
+    status: final
+    published_at: "2025-07"
+    scope_products: [all_biosimilars]
+    topics: [meetings]
+    url: "https://www.fda.gov/media/113913/download"
+    url_verified: false
+
+  # ---------------- Health Canada ----------------
+  - id: hc-biosimilar-guidance-2026
+    jurisdiction: CA
+    agency: hc
+    title: "Guidance document: Information and submission requirements for biosimilar biologic drugs"
+    status: final
+    published_at: "2026-05-19"
+    supersedes: "2016 revision"
+    scope_products: [all_biosimilars]
+    topics: [general, ces, extrapolation, pk, immunogenicity]
+    url: null
+    url_verified: false
+
+  - id: hc-biosimilar-guidance-2026-changes
+    jurisdiction: CA
+    agency: hc
+    title: "Summary of changes: Guidance on information and submission requirements for biosimilar biologic drugs"
+    status: final
+    published_at: "2026-05-19"
+    scope_products: [all_biosimilars]
+    topics: [general, ces]
+    url: "https://www.canada.ca/en/health-canada/services/drugs-health-products/biologics-radiopharmaceuticals-genetic-therapies/applications-submissions/guidance-documents/information-submission-requirements-biosimilar-biologic-drugs/summary-changes.html"
+    url_verified: true

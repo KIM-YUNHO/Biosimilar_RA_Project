@@ -1,0 +1,79 @@
+# 제품 레지스트리: 적재 대상을 고르는 기준.
+# - 성분명(ingredient) 또는 제품명(개발 코드 / 기관별 브랜드명 / FDA 접미사 이름)으로 대상을 지정한다.
+# - aliases는 기관별로 둔다. 같은 프로그램도 기관마다 이름이 다르다(예: ABP 654 = Wezlana / Wezenla).
+# - identifiers는 이미 알고 있는 공식 식별자 힌트다. 비어 있어도 카탈로그 수집 단계에서 이름으로 찾는다.
+# - 기관에 승인이 없으면 해당 기관 키에 `approved: false`를 둔다(없는 문서를 찾지 않도록).
+# - holdout: true 인 프로그램은 기본 실행에서 제외된다(--include-holdout 으로 포함).
+# - 승인 정보는 2026-10-08 기준 2차 출처이며 수집 결과(registration 테이블)가 우선한다.
+
+ingredients:
+  ustekinumab:
+    synonyms: [ustekinumab, "ustekinumab-"]   # FDA 접미사 이름(ustekinumab-xxxx)도 매칭
+    reference_product: stelara
+
+programs:
+  - id: stelara
+    role: reference
+    ingredient: ustekinumab
+    developer: Janssen
+    aliases:
+      fda: [Stelara]
+      ema: [Stelara]
+      hc: [Stelara]
+
+  - id: SB17
+    role: biosimilar
+    ingredient: ustekinumab
+    developer: Samsung Bioepis
+    codes: [SB17, SB-17]
+    aliases:
+      fda: [Pyzchiva, ustekinumab-ttwe]
+      ema: [Pyzchiva]
+      hc: [Pyzchiva]
+    identifiers:
+      fda_bla: ["761373", "761425"]
+
+  - id: ABP654
+    role: biosimilar
+    ingredient: ustekinumab
+    developer: Amgen
+    codes: [ABP 654, ABP654, ABP-654]
+    aliases:
+      fda: [Wezlana, ustekinumab-auub]
+      ema: [Wezenla]
+      hc: [Wezlana]
+    identifiers:
+      fda_bla: ["761285", "761331"]
+
+  - id: CT-P43
+    role: biosimilar
+    ingredient: ustekinumab
+    developer: Celltrion
+    codes: [CT-P43, CTP43, CT P43]
+    aliases:
+      fda: [Steqeyma, ustekinumab-stba]
+      ema: [Steqeyma]
+      hc: [Steqeyma]
+
+  - id: BMAB1200
+    role: biosimilar
+    ingredient: ustekinumab
+    developer: Biocon Biologics
+    codes: [BMAB1200, BMAB 1200, Bmab 1200, Bmab-1200]
+    aliases:
+      fda: [Yesintek, ustekinumab-kfce]
+      ema: [Yesintek]
+      hc: [Yesintek]
+
+  - id: BAT2206
+    role: biosimilar
+    ingredient: ustekinumab
+    developer: Bio-Thera Solutions
+    codes: [BAT2206, BAT-2206]
+    holdout: true          # 신규 제품 추가 측정용: 개발 중 제외, 마지막에 적재
+    aliases:
+      fda: [Starjemza, ustekinumab-hmny]
+      ema: [Usymro]
+      hc: []
+    agency_status:
+      hc: {approved: false, note: "2026-10 기준 HC 승인 기록을 찾지 못함 (확인 필요)"}
