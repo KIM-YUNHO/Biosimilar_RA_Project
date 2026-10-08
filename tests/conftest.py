@@ -3,6 +3,7 @@ docs/ra-document-sources.md); identifiers here are fake test values."""
 from __future__ import annotations
 
 import io
+import json
 import os
 import re
 import zipfile
@@ -56,18 +57,21 @@ EMA_DOCS = {"data": [
      "URL": "https://www.ema.europa.eu/en/documents/assessment-report/wezenla-epar-public-assessment-report_en.pdf"},
 ]}
 
-PURPLE_BOOK_CSV = """Purple Book Data Download - changes this month
-N/R/U,Applicant,BLA Number,Proprietary Name,Proper Name,BLA Type,Strength,Dosage Form,Approval Date
-N,Bio-Thera,999905,STARJEMZA,ustekinumab-hmny,351(k) Biosimilar,45 mg/0.5 mL,Injection,05/22/2025
-
-All products
-Applicant,BLA Number,Proprietary Name,Proper Name,BLA Type,Strength,Dosage Form,Route of Administration,Product Number,Approval Date,Ref. Product Proprietary Name,Ref. Product Proper Name,Marketing Status
-Janssen,125261,STELARA,ustekinumab,351(a),45 mg/0.5 mL,Injection,Subcutaneous,001,09/25/2009,,,Rx
-Samsung Bioepis,999901,PYZCHIVA,ustekinumab-ttwe,351(k) Biosimilar,45 mg/0.5 mL,Injection,Subcutaneous,001,06/28/2024,STELARA,ustekinumab,Rx
-Samsung Bioepis,999901,PYZCHIVA,ustekinumab-ttwe,351(k) Biosimilar,90 mg/mL,Injection,Subcutaneous,002,06/28/2024,STELARA,ustekinumab,Rx
-Amgen,999902,WEZLANA,ustekinumab-auub,351(k) Interchangeable,45 mg/0.5 mL,Injection,Subcutaneous,001,10/31/2023,STELARA,ustekinumab,Rx
-Bio-Thera,999905,STARJEMZA,ustekinumab-hmny,351(k) Biosimilar,45 mg/0.5 mL,Injection,Subcutaneous,001,05/22/2025,STELARA,ustekinumab,Rx
-AbbVie,125057,HUMIRA,adalimumab,351(a),40 mg/0.8 mL,Injection,Subcutaneous,001,12/31/2002,,,Rx
+PURPLE_BOOK_CSV = """Purple Book Monthly Historical Data Changes Report - September 2026,,,,
+,,,,
+Newly Approved Products (N)  / Products Added in Current Release (R) / Updated Products (U),,,,
+N/R/U,Applicant,BLA Number,Proprietary Name,Proper Name,License Type,Strength,Dosage Form,Route of Administration,Product Presentation,Marketing Status,Licensure,Approval Date,Inter. Approval Date,Ref. Product Proper Name,Ref. Product Proprietary Name,Supplement Number,Submission Type,Product Number
+N,Bio-Thera,999905,Starjemza,ustekinumab-hmny,351(k) Biosimilar,45MG/0.5ML,Injection ,Subcutaneous,Pre-Filled Syringe,Rx,Licensed,"May 22, 2025",,ustekinumab,Stelara,,Original,001
+,,,,
+Purple Book Database,,,,
+N/R/U,Applicant,BLA Number,Proprietary Name,Proper Name,License Type,Strength,Dosage Form,Route of Administration,Product Presentation,Marketing Status,Licensure,Approval Date,Inter. Approval Date,Ref. Product Proper Name,Ref. Product Proprietary Name,Supplement Number,Submission Type,Product Number
+,"Janssen Biotech, Inc.",125261,Stelara,ustekinumab,351(a),45MG/0.5ML,Injection ,Subcutaneous,Single-Dose Vial,Rx,Licensed,"September 25, 2009",,,,,Original,001
+,"Samsung Bioepis Co., Ltd.",999901,Pyzchiva,ustekinumab-ttwe,351(k) Interchangeable,45MG/0.5ML,Injection ,Subcutaneous,Pre-Filled Syringe,Rx,Licensed,"June 28, 2024","April 30, 2025",ustekinumab,Stelara,,Original,001
+,"Samsung Bioepis Co., Ltd.",999901,Pyzchiva,ustekinumab-ttwe,351(k) Interchangeable,45MG/0.5ML,Injection ,Subcutaneous,Autoinjector,Rx,Licensed,"June 27, 2025","April 30, 2025",ustekinumab,Stelara,1,Supplement,004
+,Amgen Inc.,999902,Wezlana,ustekinumab-auub,351(k) Interchangeable,45MG/0.5ML,Injection ,Subcutaneous,Pre-Filled Syringe,Rx,Licensed,"October 31, 2023","October 31, 2023",ustekinumab,Stelara,,Original,001
+,Amgen Inc.,999902,Wezlana,ustekinumab-auub,351(k) Biosimilar,45MG/0.5ML,Injection ,Subcutaneous,Autoinjector,Rx,Licensed,"December 26, 2024",,ustekinumab,Stelara,1,Supplement,004
+,"Bio-Thera Solutions, Ltd.",999905,Starjemza,ustekinumab-hmny,351(k) Interchangeable,45MG/0.5ML,Injection ,Subcutaneous,Pre-Filled Syringe,Rx,Licensed,"May 22, 2025","May 22, 2025",ustekinumab,Stelara,,Original,001
+,AbbVie Inc.,125057,Humira,adalimumab,351(a),40MG/0.8ML,Injection ,Subcutaneous,Kit,Rx,Licensed,"December 31, 2002",,,,,Original,001
 """
 
 FDA_TOC = "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/999901Orig1s000TOC.cfm"
@@ -98,10 +102,32 @@ def drugsatfda_zip() -> bytes:
     return buf.getvalue()
 
 
-TOC_HTML = f"""<html><body><ul>
-<li><a href="999901Orig1s000MultidisciplineR.pdf">Multi-Discipline Review</a></li>
-<li><a href="/drugsatfda_docs/appletter/2024/999901Orig1s000ltr.pdf">Approval Letter</a></li>
-</ul></body></html>"""
+TOC_HTML = """<html><head><script>
+var pdfBaseName = "999901Orig1s000";
+var pdfFiles = {
+    approv: 1,
+    lbl: 0,
+    chemR: 0,
+    multidisciplineR: 1,
+};
+function populatePageContent() {
+    var approvalHtml = '';
+    if (pdfFiles.approv == 1) {
+        approvalHtml += '<li><a href="' + pdfBaseName + 'Approv.pdf" title="Go to approval letter" target="_blank">Approval Letter(s)</a> (PDF)</li>';
+    }
+    if (pdfFiles.lbl == 1) {
+        approvalHtml += '<li><a href="' + pdfBaseName + 'Lbl.pdf" title="Go to printed labeling" target="_blank">Printed Labeling</a> (PDF)</li>';
+    }
+    var reviewHtml = '';
+    if (pdfFiles.chemR == 1) {
+        reviewHtml += '<li><a href="' + pdfBaseName + 'ChemR.pdf" title="Go to product quality review(s)" target="_blank">Product Quality Review(s)</a> (PDF)</li>';
+    }
+    if (pdfFiles.multidisciplineR == 1) {
+        reviewHtml += '<li><a href="' + pdfBaseName + 'MultidisciplineR.pdf" title="Go to multi-discipline review" target="_blank">Multi-Discipline Review</a> (PDF)</li>';
+    }
+}
+</script></head><body></body></html>"""
+FDA_APPROV = "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/999901Orig1s000Approv.pdf"
 
 DPD_PRODUCTS = {
     "Pyzchiva": [{"drug_code": 11, "brand_name": "PYZCHIVA", "drug_identification_number": "09990011",
@@ -110,11 +136,14 @@ DPD_PRODUCTS = {
                   "company_name": "SAMSUNG BIOEPIS CO., LTD."}],
     "Wezlana": [{"drug_code": 21, "brand_name": "WEZLANA", "drug_identification_number": "09990021",
                  "company_name": "AMGEN CANADA INC"}],
-    "ustekinumab": [{"drug_code": 31, "brand_name": "JAMTEKI", "drug_identification_number": "09990031",
-                     "company_name": "JAMP"}],
 }
-DPD_INGREDIENT = {11: "USTEKINUMAB", 12: "USTEKINUMAB", 21: "USTEKINUMAB", 31: "USTEKINUMAB"}
-DPD_STATUS = {11: "2024-08-15", 12: "2024-08-20", 21: "2023-12-27", 31: "2023-11-30"}
+DPD_BY_ID = {31: {"drug_code": 31, "brand_name": "JAMTEKI", "drug_identification_number": "09990031",
+                  "company_name": "JAMP"}}
+DPD_PRODUCTS["Pyzchiva"].append({"drug_code": 13, "brand_name": "PYZCHIVA I.V.",
+                                 "drug_identification_number": "09990013",
+                                 "company_name": "SAMSUNG BIOEPIS CO., LTD."})
+DPD_INGREDIENT = {13: "USTEKINUMAB", 11: "USTEKINUMAB", 12: "USTEKINUMAB", 21: "USTEKINUMAB", 31: "USTEKINUMAB"}
+DPD_STATUS = {13: "2024-09-01", 11: "2024-08-15", 12: "2024-08-20", 21: "2023-12-27", 31: "2023-11-30"}
 
 CTGOV = {"studies": [
     {"protocolSection": {
@@ -167,19 +196,42 @@ def mocked():
         rs.get(FDA_LTR, body=b"%PDF-1.4 letter", content_type="application/pdf")
         rs.get(FDA_REVIEW, body=b"%PDF-1.4 review", content_type="application/pdf")
         rs.get(FDA_TOC, body=TOC_HTML, content_type="text/html")
+        rs.get(FDA_APPROV, body=b"%PDF-1.4 approv", content_type="application/pdf")
 
         def dpd(request):
             q = dict(re.findall(r"[?&]([^=&]+)=([^&]*)", request.url))
             resource = request.url.split("/api/drug/")[1].split("/")[0]
             if resource == "drugproduct":
-                return 200, {}, __import__("json").dumps(DPD_PRODUCTS.get(q.get("brandname", ""), []))
+                if "id" in q:
+                    return 200, {}, json.dumps([DPD_BY_ID[int(q["id"])]] if int(q["id"]) in DPD_BY_ID else [])
+                return 200, {}, json.dumps(DPD_PRODUCTS.get(q.get("brandname", ""), []))
+            if resource == "activeingredient" and "ingredientname" in q:
+                return 200, {}, json.dumps([{"drug_code": c, "ingredient_name": i} for c, i in DPD_INGREDIENT.items()])
             code = int(q["id"])
             if resource == "activeingredient":
-                return 200, {}, __import__("json").dumps([{"ingredient_name": DPD_INGREDIENT[code]}])
+                return 200, {}, json.dumps([{"ingredient_name": DPD_INGREDIENT[code]}])
             if resource == "status":
-                return 200, {}, __import__("json").dumps([{"status": "MARKETED", "history_date": DPD_STATUS[code]}])
+                return 200, {}, json.dumps([{"status": "MARKETED", "history_date": DPD_STATUS[code]}])
             return 404, {}, "[]"
         rs.add_callback(responses.GET, re.compile(re.escape(DPD_API) + r"/.*"), callback=dpd)
+        def dhpp(request):
+            q = dict(re.findall(r"[?&]([^=&]+)=([^&]*)", request.url))
+            term, page = q.get("search", "").lower(), q.get("page", "0")
+            items = [(f"SBD000{i}", t) for i, t in enumerate([
+                "Summary Basis of Decision for Pyzchiva and Pyzchiva I.V.",
+                "Regulatory Decision Summary for Pyzchiva / Pyzchiva I.V. (ustekinumab)",
+                "Summary Basis of Decision for Wezlana/Wezlana I.V.",
+                "Regulatory Decision Summary for Jamteki / Jamteki I.V."])]
+            items = [(("RDS" if t.startswith("Reg") else "SBD") + d[3:], t) for d, t in items]
+            hits = [(d, t) for d, t in items if term in t.lower() or term == "ustekinumab"] if page == "0" else []
+            body = "".join(f'<a href="/review-documents/resource/{d}">{t}</a>' for d, t in hits)
+            return 200, {"Content-Type": "text/html"}, f"<html>{body}</html>"
+        rs.add_callback(responses.GET, re.compile(r"https://dhpp\.hpfb-dgpsa\.ca/review-documents\?.*"), callback=dhpp)
+        rs.get(re.compile(r"https://dhpp\.hpfb-dgpsa\.ca/review-documents/resource/SBD.*"),
+               body="<html><p>Date SBD issued: 2025-02-18</p><table><tr><td>NOC: 2024-07-29</td>"
+                    "<td>NOC issued for the New Drug Submission</td></tr></table></html>", content_type="text/html")
+        rs.get(re.compile(r"https://dhpp\.hpfb-dgpsa\.ca/review-documents/resource/RDS.*"),
+               body="<html><p>Date of decision: 2025-11-21</p></html>", content_type="text/html")
         rs.get(re.compile(r"https://clinicaltrials\.gov/api/v2/studies.*"), json=CTGOV)
         rs.get(GUIDANCE_URL, body="<html>summary of changes</html>", content_type="text/html")
         rs.get(re.compile(r"https://www\.(fda|ema)\.(gov|europa\.eu)/.*"), status=404)

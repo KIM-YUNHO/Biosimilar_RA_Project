@@ -162,11 +162,13 @@ class Store:
         if row is None:
             row = RegistrationRow(agency=r.agency, native_key=r.native_key)
             s.add(row)
-        for f in ("program_id", "brand_name", "ingredient", "identifiers", "holder", "licence_type",
+        for f in ("program_id", "brand_name", "ingredient", "holder", "licence_type",
                   "first_approval_date", "status", "indications", "source", "source_snapshot", "raw"):
             new = getattr(r, f)
             if new not in (None, "", {}) or getattr(row, f, None) is None:
                 setattr(row, f, new)
+        # merge so values learned later (e.g. HC NOC date from the SBD page) survive re-runs
+        row.identifiers = {**(row.identifiers or {}), **(r.identifiers or {})}
         row.last_seen_at = utcnow()
         s.flush()
         return row
@@ -189,7 +191,10 @@ class Store:
             new = getattr(d, f)
             if new is not None:
                 setattr(row, f, new)
-        row.extra = {**(row.extra or {}), **d.extra, "is_index_page": d.is_index_page}
+        extra = {**(row.extra or {}), **d.extra, "is_index_page": d.is_index_page}
+        if registration_id:
+            extra["registration_ids"] = sorted(set(extra.get("registration_ids", [])) | {registration_id})
+        row.extra = extra
         row.last_seen_at = utcnow()
         s.flush()
         return row

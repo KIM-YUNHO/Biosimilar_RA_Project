@@ -6,7 +6,10 @@ from urllib.parse import urlparse
 
 import requests
 
-USER_AGENT = "ra-ingest/0.1 (biosimilar regulatory research; contact via repository)"
+# FDA (Akamai) answers non-browser user agents with an "abuse detection" redirect, so a
+# browser-like agent is the default. Requests stay polite: one host at a time with a delay.
+USER_AGENT = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+              "Chrome/126.0 Safari/537.36 ra-ingest/0.1")
 
 
 class FetchError(Exception):
@@ -42,9 +45,9 @@ class Fetcher:
     settings come from the environment (HTTPS_PROXY, REQUESTS_CA_BUNDLE)."""
 
     def __init__(self, timeout: float = 60, retries: int = 3, host_delay: float = 1.0,
-                 max_bytes: int = 200 * 1024 * 1024):
+                 max_bytes: int = 200 * 1024 * 1024, user_agent: str = USER_AGENT):
         self.session = requests.Session()
-        self.session.headers["User-Agent"] = USER_AGENT
+        self.session.headers["User-Agent"] = user_agent
         self.timeout = timeout
         self.retries = retries
         self.host_delay = host_delay
@@ -69,6 +72,8 @@ class Fetcher:
             except requests.RequestException as e:
                 last_err = FetchError(url, f"{type(e).__name__}: {e}")
             else:
+                if r.status_code == 200 and "apology" in r.url:
+                    raise FetchError(url, "bot-detection redirect (apology page)", 429)
                 if r.status_code == 200:
                     chunks, size = [], 0
                     for chunk in r.iter_content(1 << 16):

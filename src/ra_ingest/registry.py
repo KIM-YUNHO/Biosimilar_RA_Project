@@ -16,6 +16,15 @@ from .models import AGENCIES, RegistrationRecord
 from .util import norm_name
 
 
+def names_match(candidates: set[str], aliases: list[str]) -> bool:
+    """Exact normalized match, or a candidate that starts with an alias of 5+ chars
+    ("pyzchivaiv" matches alias "Pyzchiva")."""
+    al = {norm_name(a) for a in aliases if a}
+    if candidates & al:
+        return True
+    return any(c.startswith(a) for c in candidates for a in al if len(a) >= 5)
+
+
 @dataclass
 class Program:
     id: str
@@ -61,10 +70,10 @@ class Target:
         """Map a registration to a program by agency alias, then by any program name."""
         reg_names = {norm_name(n) for n in reg.names()}
         for p in self.programs:
-            if reg_names & {norm_name(a) for a in p.agency_names(agency)}:
+            if names_match(reg_names, p.agency_names(agency)):
                 return p.id
         for p in self.programs:
-            if reg_names & {norm_name(a) for a in p.all_names()}:
+            if names_match(reg_names, p.all_names()):
                 return p.id
         return None
 

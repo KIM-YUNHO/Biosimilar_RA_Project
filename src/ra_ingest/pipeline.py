@@ -157,6 +157,12 @@ class _Run:
             self._set_fetch(row.id, "failed", e.reason)
             self.stats["fetch_failed"] += 1
             return
+        expects_pdf = doc.source_url.lower().endswith(".pdf") or "/download" in doc.source_url
+        if expects_pdf and not res.content.startswith(b"%PDF") and b"<html" in res.content[:2000].lower():
+            # WAF / rate-limit pages ("Sorry", "apology") come back as 200 HTML
+            self._set_fetch(row.id, "failed", "HTML page returned instead of PDF (blocked or moved)")
+            self.stats["fetch_failed"] += 1
+            return
         sha, path = self.raw.put(doc.agency, res.content, guess_ext(res.url, res.content_type))
         with self.store.session() as s:
             r = s.get(DocumentRow, row.id)
@@ -166,9 +172,33 @@ class _Run:
             r.fetch_status, r.fetch_error = "fetched", None
             s.commit()
         self.stats["fetched"] += 1
+        if conn is not None:
+            self._apply_after_fetch(conn.after_fetch(doc, res), row.id, reg_id)
         if doc.is_index_page and self.cfg.expand_index_pages and conn is not None:
             for child in conn.expand_index(doc, res):
                 self._handle_document(conn, child, reg_id, parent_id=row.id)
+
+    def _apply_after_fetch(self, updates: dict, doc_id: int, reg_id: int | None) -> None:
+        if not updates:
+            return
+        from .db import RegistrationRow
+        with self.store.session() as s:
+            d = s.get(DocumentRow, doc_id)
+            for k, v in (updates.get("document") or {}).items():
+                if v:
+                    setattr(d, k, v)
+            if reg_id and updates.get("registration"):
+                r = s.get(RegistrationRow, reg_id)
+                for k, v in updates["registration"].items():
+                    if not v:
+                        continue
+                    if k.startswith("identifiers."):
+                        r.identifiers = {**(r.identifiers or {}), k.split(".", 1)[1]: v}
+                    elif k == "first_approval_date" and r.first_approval_date and r.first_approval_date <= v:
+                        continue  # keep the earliest
+                    else:
+                        setattr(r, k, v)
+            s.commit()
 
     def _set_fetch(self, doc_id: int, status: str, error: str | None) -> None:
         with self.store.session() as s:
@@ -178,7 +208,7 @@ class _Run:
 
     def _ingest_guidance(self, agencies: list[str]) -> None:
         report = self.report_for(None)
-        for doc in guidance_documents(load_guidances(self.cfg.guidances_path), agencies, report):
+        for doc in guidance_documents(load_guidances(self.cfg.guidances_path), agencies, report, self.fetcher):
             self._handle_document(None, doc, None)
 
     def _ingest_trials(self, target: Target) -> None:

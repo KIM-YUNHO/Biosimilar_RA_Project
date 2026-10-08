@@ -35,15 +35,20 @@ class Connector(ABC):
     def expand_index(self, doc: DocumentRecord, page: FetchResult) -> Iterable[DocumentRecord]:
         return []
 
+    def after_fetch(self, doc: DocumentRecord, page: FetchResult) -> dict:
+        """Facts that only the fetched content reveals. Returns
+        {"document": {field: value}, "registration": {field: value}}; empty when nothing."""
+        return {}
+
     def keep(self, target: Target, names: list[str], ingredient_text: str | None) -> bool:
         """Selection rule shared by connectors.
         product-scoped run: keep only alias matches.
         ingredient run: keep anything whose ingredient field matches (unmapped products
         are kept too and flagged later, so the catalog shows every same-ingredient product)."""
+        from ..registry import names_match
         from ..util import contains_any, norm_name
 
-        alias_hit = bool({norm_name(n) for n in names if n} &
-                         {norm_name(a) for a in target.search_names(self.agency)})
+        alias_hit = names_match({norm_name(n) for n in names if n}, target.search_names(self.agency))
         if target.product_scoped:
             return alias_hit
         return alias_hit or contains_any(ingredient_text, target.ingredient_synonyms)

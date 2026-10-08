@@ -74,9 +74,13 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q  # PostgreSQL
 ```
 
-테스트는 기관별 데이터 형식을 본뜬 목업으로 실행합니다. 실제 사이트의 필드 이름은 접속이 열리면 검증해야 합니다(`docs/ra-document-sources.md`의 ⚠️ 항목).
+테스트 목업은 2026-10-08에 실제 응답으로 확인한 형식(EMA JSON, Purple Book CSV, Drugs@FDA ZIP, FDA 승인 패키지 목차, DPD API, DHPP 검색, FDA 가이던스 목록)을 따릅니다.
+
+주의: FDA는 브라우저가 아닌 User-Agent를 차단하므로 기본 UA가 브라우저형입니다(`http.USER_AGENT`).
 
 ## 문서
+
+- [적재 실행 결과 (2026-10-08)](docs/ingestion-report.md)
 
 - [RA 문서 소스 카탈로그](docs/ra-document-sources.md)
 - [진행 계획](docs/project-plan.md)

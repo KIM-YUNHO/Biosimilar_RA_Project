@@ -46,8 +46,8 @@ def test_unknown_product_raises():
 # --- parsers -------------------------------------------------------------------------
 def test_purple_book_takes_full_list_block():
     rows = parse_purple_book(PURPLE_BOOK_CSV)
-    assert len(rows) == 6
-    assert rows[0]["Proprietary Name"] == "STELARA"
+    assert len(rows) == 7
+    assert rows[0]["Proprietary Name"] == "Stelara"
 
 
 def test_dates():
@@ -82,11 +82,17 @@ def test_end_to_end(mocked, fetcher, tmp_path, db_url):
         # FDA: Purple Book last block, presentations grouped per BLA, interchangeable type
         wez = by[("fda", "ABP654")]
         assert wez.licence_type == "351(k) Interchangeable" and wez.first_approval_date == "2023-10-31"
-        assert len(by[("fda", "SB17")].identifiers["presentations"]) == 2
+        pyz_us = by[("fda", "SB17")]
+        assert len(pyz_us.identifiers["presentations"]) == 2
+        assert pyz_us.first_approval_date == "2024-06-28"          # supplement rows don't move it
+        assert pyz_us.identifiers["interchangeable_date"] == "2025-04-30"
         assert by[("fda", "stelara")].licence_type == "351(a)"
         # HC: DINs grouped per brand+company, earliest status date, unmapped ingredient match kept
         pyz = by[("hc", "SB17")]
-        assert pyz.identifiers["din"] == ["09990011", "09990012"] and pyz.first_approval_date == "2024-08-15"
+        assert sorted(pyz.identifiers["din"]) == ["09990011", "09990012", "09990013"]  # IV brand grouped
+        assert pyz.identifiers["other_names"] == ["PYZCHIVA I.V."]
+        assert pyz.identifiers["first_market_date"] == "2024-08-15"       # DPD date is a market date
+        assert pyz.first_approval_date == "2024-07-29" == pyz.identifiers["noc_date"]  # NOC from SBD page
         assert any(r.agency == "hc" and r.brand_name == "Jamteki" and r.program_id is None for r in regs)
 
         docs = s.scalars(select(DocumentRow)).all()
@@ -98,6 +104,9 @@ def test_end_to_end(mocked, fetcher, tmp_path, db_url):
         # FDA: TOC page expanded into its PDFs, http->https, letter de-duplicated by URL
         review = urls["https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/999901Orig1s000MultidisciplineR.pdf"]
         assert review.doc_type == "review" and review.parent_document_id is not None
+        assert review.native_doc_type == "multidisciplineR"
+        assert urls["https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/999901Orig1s000Approv.pdf"].doc_type == "approval_letter"
+        assert not any(u.endswith("999901Orig1s000ChemR.pdf") for u in urls)   # flag 0 -> not listed
         assert review.decision_date == "2024-06-28" and review.procedure_id == "ORIG-1"
         assert sum(1 for u in urls if u.endswith("999901Orig1s000ltr.pdf")) == 1
         # guidance axis
@@ -108,7 +117,12 @@ def test_end_to_end(mocked, fetcher, tmp_path, db_url):
 
         events = {(e.kind, e.agency, e.program_id) for e in s.scalars(select(IngestEventRow))}
         assert ("expected_absent", "hc", "BAT2206") in events
-        assert ("manual_seed_needed", "hc", "SB17") in events
+        # HC: SBD/RDS discovered by DHPP search, titles filtered to the product
+        hc_docs = [d for d in docs if d.agency == "hc"]
+        assert {d.doc_type for d in hc_docs if d.program_id == "SB17"} == {"sbd", "rds"}
+        assert not any("Jamteki" in d.title for d in hc_docs)
+        rds = [d for d in hc_docs if d.doc_type == "rds" and d.program_id == "SB17"][0]
+        assert rds.decision_date == "2025-11-21"
         assert ("missing_registration", "hc", "CT-P43") in events  # not in the DPD fixture
 
         # metadata contract
@@ -162,3 +176,25 @@ def test_cli_status_and_manifest(mocked, fetcher, tmp_path, db_url, capsys, monk
     assert cli_main(["--db", cfg.db_url, "manifest", "--out", str(mf)]) == 0
     lines = [json.loads(l) for l in mf.read_text().splitlines()]
     assert lines and all(l["schema_version"] == "1" and l["agency"] == "ema" for l in lines)
+
+
+def test_fda_guidance_catalog_parsing():
+    from ra_ingest.connectors.guidance import parse_fda_catalog
+    rows = [
+        {"title": '<a href="/regulatory-information/search-fda-guidance-documents/new-and-revised-draft-qas-'
+                  'biosimilar-development-and-bpci-act-revision-4">New and Revised Draft Q&amp;As on Biosimilar '
+                  'Development and the BPCI Act (Revision 4): Draft Guidance for Industry</a>',
+         "field_associated_media_2": '<a href="/media/119278/download">PDF (306.95 KB)</a>',
+         "field_issue_datetime": "03/09/2026", "field_final_guidance_1": "Draft",
+         "field_comment_close_date": "", "term_node_tid": "Biosimilars",
+         "field_docket_number": '<a href="https://www.regulations.gov/docket/FDA-2011-D-0611">FDA-2011-D-0611</a>',
+         "changed": '<time datetime="2026-04-08T16:16:48-04:00">2026-04-08 16:16</time>\n'},
+        {"title": "<a href=\"/x\">Expansion Cohorts: Use in First-In-Human Clinical Trials</a>",
+         "term_node_tid": "Biosimilars", "field_associated_media_2": '<a href="/media/1/download">PDF</a>'},
+    ]
+    out = parse_fda_catalog(rows)
+    assert len(out) == 1                       # topic tag alone is not enough
+    c = out[0]
+    assert c["status"] == "draft" and c["published_at"] == "2026-03-09" and c["docket"] == "FDA-2011-D-0611"
+    assert c["pdf_url"] == "https://www.fda.gov/media/119278/download"
+    assert c["title"].startswith("New and Revised Draft Q&As") and c["page_changed"] == "2026-04-08"

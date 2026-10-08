@@ -72,16 +72,36 @@ def read_tsv_table(z: zipfile.ZipFile, name_hint: str) -> list[dict[str, str]]:
     return []
 
 
+def normalize_fda_url(url: str) -> tuple[str, str | None]:
+    """Drugs@FDA URLs seen in the data: http://, '#page=36' fragments (a medication guide
+    inside the label PDF), and a doubled 'https://.../https://...' prefix."""
+    url = url.strip()
+    if url.count("://") > 1:
+        url = url[url.rfind("http"):]
+    url = url.replace("http://", "https://", 1)
+    fragment = None
+    if "#" in url:
+        url, fragment = url.split("#", 1)
+    return url, fragment
+
+
 def map_fda_doc_type(desc: str | None, url: str) -> tuple[str, bool]:
+    """URL markers first: the type column is sometimes wrong (a 'Letter' pointing to a label)."""
     d = (desc or "").lower()
     u = url.lower()
     if re.search(r"toc\.(cfm|htm|html)$", u) or u.endswith(".cfm"):
         return "review_index", True
-    if "letter" in d or "ltr" in u:
-        return "approval_letter", False
-    if "label" in d or "lbl" in u:
+    if "lbl.pdf" in u:
         return "label", False
-    if "review" in d or u.endswith("r.pdf"):
+    if "ltr.pdf" in u or "approv.pdf" in u:
+        return "approval_letter", False
+    if re.search(r"(r|memo|corres|rems\d*)\.pdf$", u):
+        return "review", False
+    if "letter" in d:
+        return "approval_letter", False
+    if "label" in d or "medication guide" in d or "patient" in d:
+        return "label", False
+    if "review" in d:
         return "review", False
     return "other", False
 
@@ -143,20 +163,35 @@ class FdaConnector(Connector):
             key = f"BLA{bla}"
             reg = regs.get(key)
             if reg is None:
-                bla_type = pick(row, "bla_type", "license_type") or ""
                 reg = regs[key] = RegistrationRecord(
                     agency="fda", native_key=key, brand_name=prop or proper, ingredient=proper,
                     identifiers={"fda_bla": bla, "proper_name": proper, "presentations": []},
-                    holder=pick(row, "applicant"), licence_type=bla_type or None,
-                    first_approval_date=to_iso_date(pick(row, "approval_date", "date_of_first_licensure")),
-                    status=pick(row, "marketing_status", "licensure"),
+                    holder=pick(row, "applicant"),
+                    status=pick(row, "licensure", "marketing_status"),
                     source="fda.purple_book", source_snapshot=month,
                     raw={"reference_product": pick(row, "ref_product_proprietary_name"),
-                         "reference_proper_name": pick(row, "ref_product_proper_name")},
+                         "reference_proper_name": pick(row, "ref_product_proper_name"),
+                         "license_number": pick(row, "license_number")},
                 )
+            lic = pick(row, "license_type", "bla_type") or ""
+            approved = to_iso_date(pick(row, "approval_date"))
+            inter = to_iso_date(pick(row, "inter_approval_date"))
+            original = (pick(row, "submission_type") or "Original").lower().startswith("orig")
             reg.identifiers["presentations"].append({
-                k: pick(row, k) for k in ("product_number", "strength", "dosage_form",
-                                          "route_of_administration", "product_presentation")})
+                "product_number": pick(row, "product_number"), "strength": pick(row, "strength"),
+                "dosage_form": (pick(row, "dosage_form") or "").strip(),
+                "route": pick(row, "route_of_administration"),
+                "presentation": pick(row, "product_presentation"),
+                "license_type": lic, "approval_date": approved, "submission_type": pick(row, "submission_type"),
+                "supplement_number": pick(row, "supplement_number"),
+                "marketing_status": pick(row, "marketing_status")})
+            if original and approved and (reg.first_approval_date is None or approved < reg.first_approval_date):
+                reg.first_approval_date = approved
+            if "interchangeable" in lic.lower() or reg.licence_type is None:
+                reg.licence_type = lic or reg.licence_type
+            if inter and (reg.identifiers.get("interchangeable_date") is None
+                          or inter < reg.identifiers["interchangeable_date"]):
+                reg.identifiers["interchangeable_date"] = inter
 
         # Drugs@FDA adds BLAs the Purple Book file missed (or covers for it when it failed)
         t = self._drugsatfda()
@@ -189,10 +224,13 @@ class FdaConnector(Connector):
         for d in t.get("ApplicationDocs", []):
             if d.get("ApplNo", "").lstrip("0") != appl:
                 continue
-            url = (d.get("ApplicationDocsURL") or "").strip()
-            if not url:
+            raw_url = (d.get("ApplicationDocsURL") or "").strip()
+            if not raw_url:
                 continue
-            url = url.replace("http://", "https://", 1)
+            url, fragment = normalize_fda_url(raw_url)
+            year = (d.get("ApplicationDocsDate") or "")[:4]
+            if year.isdigit():
+                url = re.sub(r"/drugsatfda_docs/(appletter|label|nda)/(?!\d{4}/)", rf"/drugsatfda_docs/\1/{year}/", url)
             desc = lookup.get(d.get("ApplicationDocsTypeID"))
             doc_type, is_index = map_fda_doc_type(desc, url)
             sub = subs.get((d.get("SubmissionType"), d.get("SubmissionNo")), {})
@@ -204,13 +242,29 @@ class FdaConnector(Connector):
                 decision_date=to_iso_date(sub.get("SubmissionStatusDate")),
                 doc_date=to_iso_date(d.get("ApplicationDocsDate")),
                 language="en", is_index_page=is_index,
-                extra={"submission_status": sub.get("SubmissionStatus")},
+                extra={"submission_status": sub.get("SubmissionStatus"),
+                       **({"page_fragment": fragment} if fragment else {}),
+                       **({"raw_url": raw_url} if raw_url != url else {})},
             )
 
     def expand_index(self, doc: DocumentRecord, page: FetchResult) -> Iterable[DocumentRecord]:
         html = page.text()
+        links: list[tuple[str, str, str | None]] = []   # (href, label, flag key)
+        base = re.search(r'var\s+pdfBaseName\s*=\s*"([^"]+)"', html)
+        flags_block = re.search(r"var\s+pdfFiles\s*=\s*\{(.*?)\};", html, flags=re.S)
+        if base and flags_block:
+            # newer TOC pages build their links in JavaScript; only flags set to 1 exist
+            flags = dict(re.findall(r"(\w+)\s*:\s*([01])", flags_block.group(1)))
+            for key, suffix, label in re.findall(
+                    r"pdfFiles\.(\w+)\s*==\s*1\)\s*\{\s*\w+\s*\+=\s*'<li><a href=\"'\s*\+\s*pdfBaseName\s*\+\s*'([^\"']+)\"[^>]*>([^<]+)<",
+                    html):
+                if flags.get(key) == "1":
+                    links.append((base.group(1) + suffix, label, key))
+        else:
+            links = [(h, l, None) for h, l in
+                     re.findall(r'<a[^>]+href="([^"]+\.pdf)"[^>]*>(.*?)</a>', html, flags=re.I | re.S)]
         seen = set()
-        for href, label in re.findall(r'<a[^>]+href="([^"]+\.pdf)"[^>]*>(.*?)</a>', html, flags=re.I | re.S):
+        for href, label, flag in links:
             url = urljoin(page.url, href).replace("http://", "https://", 1)
             if url in seen:
                 continue
@@ -220,7 +274,8 @@ class FdaConnector(Connector):
             if doc_type == "other" and contains_any(title, ["review", "summary"]):
                 doc_type = "review"
             yield DocumentRecord(
-                agency="fda", doc_kind="product", doc_type=doc_type, native_doc_type="approval_package_item",
+                agency="fda", doc_kind="product", doc_type=doc_type,
+                native_doc_type=flag or "approval_package_item",
                 title=title, source_url=url, registration_key=doc.registration_key,
                 program_id=doc.program_id, procedure_id=doc.procedure_id,
                 decision_date=doc.decision_date, language="en",

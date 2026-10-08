@@ -36,6 +36,8 @@ _TYPE_MAP = {
     "summary_for_the_public": "epar_overview",
     "risk_management_plan_summary": "risk_management",
     "rmp_summary": "risk_management",
+    "rmp": "risk_management",
+    "all_authorised_presentations": "other",
 }
 
 

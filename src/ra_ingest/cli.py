@@ -74,7 +74,10 @@ def _status(a: argparse.Namespace) -> int:
         cells = []
         for ag in AGENCIES:
             rs = by_prog.get((p.id, ag), [])
-            name = rs[0].brand_name if rs else "—"
+            primary = ((p.aliases or {}).get(ag) or [""])[0].lower()
+            rs = sorted(rs, key=lambda r: (r.brand_name.lower() != primary, r.native_key))
+            extra = f"+{len(rs) - 1}" if len(rs) > 1 else ""
+            name = (rs[0].brand_name + extra) if rs else "—"
             date = rs[0].first_approval_date if rs and rs[0].first_approval_date else ""
             n_ok = doc_count[(p.id, ag, "fetched")]
             n_all = sum(v for (pid, a2, _), v in doc_count.items() if pid == p.id and a2 == ag)

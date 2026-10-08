@@ -3,6 +3,8 @@
 # - aliases는 기관별로 둔다. 같은 프로그램도 기관마다 이름이 다르다(예: ABP 654 = Wezlana / Wezenla).
 # - identifiers는 이미 알고 있는 공식 식별자 힌트다. 비어 있어도 카탈로그 수집 단계에서 이름으로 찾는다.
 # - 기관에 승인이 없으면 해당 기관 키에 `approved: false`를 둔다(없는 문서를 찾지 않도록).
+# - EMA는 같은 개발 프로그램에 제품번호를 여러 개 줄 수 있다(중복 허가). 평가보고서 본문의 개발 코드로
+#   확인된 것만 aliases.ema 에 넣는다. Upstelda(Amgen, 신청 철회)는 평가보고서가 없어 확인 불가 → 미등록.
 # - holdout: true 인 프로그램은 기본 실행에서 제외된다(--include-holdout 으로 포함).
 # - 승인 정보는 2026-10-08 기준 2차 출처이며 수집 결과(registration 테이블)가 우선한다.
 
@@ -28,7 +30,7 @@ programs:
     codes: [SB17, SB-17]
     aliases:
       fda: [Pyzchiva, ustekinumab-ttwe]
-      ema: [Pyzchiva]
+      ema: [Pyzchiva, Eksunbi]   # Eksunbi: EU 중복 허가(철회), 평가보고서에 SB17 명시 — 2026-10-08 확인
       hc: [Pyzchiva]
     identifiers:
       fda_bla: ["761373", "761425"]
@@ -52,7 +54,7 @@ programs:
     codes: [CT-P43, CTP43, CT P43]
     aliases:
       fda: [Steqeyma, ustekinumab-stba]
-      ema: [Steqeyma]
+      ema: [Steqeyma, Qoyvolma]  # Qoyvolma: EU 중복 허가(철회), 평가보고서에 CT-P43 명시 — 2026-10-08 확인
       hc: [Steqeyma]
 
   - id: BMAB1200
@@ -62,7 +64,7 @@ programs:
     codes: [BMAB1200, BMAB 1200, Bmab 1200, Bmab-1200]
     aliases:
       fda: [Yesintek, ustekinumab-kfce]
-      ema: [Yesintek]
+      ema: [Yesintek, Usrenty]   # Usrenty: EU 중복 허가, 평가보고서에 BMab1200 명시 — 2026-10-08 확인
       hc: [Yesintek]
 
   - id: BAT2206
