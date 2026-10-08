@@ -232,6 +232,14 @@ def mocked():
                     "<td>NOC issued for the New Drug Submission</td></tr></table></html>", content_type="text/html")
         rs.get(re.compile(r"https://dhpp\.hpfb-dgpsa\.ca/review-documents/resource/RDS.*"),
                body="<html><p>Date of decision: 2025-11-21</p></html>", content_type="text/html")
+        def dpd_page(request):
+            code = dict(re.findall(r"[?&]([^=&]+)=([^&]*)", request.url)).get("code")
+            pm = {"11": "00099911", "12": "00099911", "13": "00099911", "21": "00099921"}.get(code)
+            body = ("<html><p>Product Monograph/Veterinary Labelling:</p><p>Date: 2026-07-27</p>"
+                    f'<a href="https://pdf.hres.ca/dpd_pm/{pm}.PDF">Product monograph (PDF)</a></html>') if pm else "<html></html>"
+            return 200, {"Content-Type": "text/html"}, body
+        rs.add_callback(responses.GET, re.compile(r"https://health-products\.canada\.ca/dpd-bdpp/info.*"), callback=dpd_page)
+        rs.get(re.compile(r"https://pdf\.hres\.ca/dpd_pm/.*"), body=b"%PDF-1.6 pm", content_type="application/pdf")
         rs.get(re.compile(r"https://clinicaltrials\.gov/api/v2/studies.*"), json=CTGOV)
         rs.get(GUIDANCE_URL, body="<html>summary of changes</html>", content_type="text/html")
         rs.get(re.compile(r"https://www\.(fda|ema)\.(gov|europa\.eu)/.*"), status=404)

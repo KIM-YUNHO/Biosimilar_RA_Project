@@ -27,7 +27,8 @@ FDA_BASE = "https://www.fda.gov"
 _GUIDANCE_FIELDS = ("jurisdiction", "reference_no", "status", "published_at", "adopted_at",
                     "effective_from", "effective_to", "consultation_end", "supersedes",
                     "superseded_note", "partial_supersession", "scope_products", "scope_exceptions",
-                    "topics", "url_verified")
+                    "topics", "url_verified", "withdrawal_source", "note")
+_INACTIVE = ("withdrawn", "superseded")
 
 _TOPIC_RULES = [
     (r"interchangeab", "interchangeability"), (r"comparative analytical|quality", "analytical"),
@@ -129,6 +130,8 @@ def guidance_documents(entries: list[dict[str, Any]], agencies: list[str], repor
             )
         if catalog:
             for e in entries:
+                if e.get("status") in _INACTIVE:
+                    continue  # withdrawn guidances are absent from the live list by design; ingest below
                 if e.get("agency") == "fda" and e.get("url") and e["url"] not in used:
                     report("warning", "guidance_not_in_catalog",
                            f"큐레이션 목록의 FDA 가이던스가 FDA 현재 목록에 없음: {e['id']} (철회·대체 여부 확인)",

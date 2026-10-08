@@ -67,9 +67,20 @@
 
 | 항목 | 상태 |
 |---|---|
-| FDA 2015 "Scientific Considerations" 최종본 | FDA 현재 목록에 항목이 없음. 같은 docket의 2025-10 개정 초안만 있음 → 상태 확인 필요 |
+| FDA 2015 "Scientific Considerations" 최종본 | **확인 완료**: FDA가 2026-03-09 보도자료에서 철회("no longer represents the FDA's current thinking"). PDF(media/82647)는 아직 공개돼 있음 → `status: withdrawn`, `effective_to: 2026-03-09`로 적재. 4개 제품 모두 이 문서가 유효할 때 심사됨 |
 | Upstelda (Amgen, EU 신청 철회) | 평가보고서가 없어 ABP 654 중복 여부 미확인 → 미등록 |
-| HC Product Monograph | DPD API로는 링크를 얻을 수 없음. 필요하면 시드 URL로 추가 |
+| HC Product Monograph | **구현 완료**: DPD 제품 페이지(`dpd-bdpp/info?code=`)에서 PM PDF 링크와 PM 날짜를 추출. 6건 발견(Yesintek은 PM 2개). PDF 호스트 `pdf.hres.ca`가 네트워크 정책에 막혀 다운로드는 실패 상태 → 도메인 허용 후 `--agencies hc` 재실행 |
 | ClinicalTrials.gov | 개발 코드 검색만으로는 일부 시험이 누락될 수 있음(BMAB1200 건강인 PK 본시험 등) |
 | BAT2206 | holdout. 마지막에 `--product BAT2206 --include-holdout`으로 적재하고 수동 개입 시간을 측정 |
 | 전처리 | 다음 단계. 입력은 `ra-ingest manifest`가 만드는 `data/manifest.jsonl` |
+
+## 5. 저장 위치
+
+| 항목 | 위치 | 비고 |
+|---|---|---|
+| 메타데이터 DB | `data/ra.db` (SQLite) | 프로그램, 허가, 문서 인덱스, 버전, 시험, 실행 로그 |
+| 원문 | `data/raw/<agency>/<sha256 앞 2자리>/<sha256>.<ext>` | 내용 해시 기준, 같은 파일은 1번만 저장 |
+| 매니페스트 | `data/manifest.jsonl` | 전처리 입력(문서 단위 메타데이터) |
+
+`data/`는 git에 포함하지 않습니다(`.gitignore`). 클라우드 세션 컨테이너의 디스크라서 세션이 회수되면 사라집니다.
+같은 결과는 `ra-ingest ingest`로 다시 만들 수 있고, `--db postgresql+psycopg://...`로 영구 DB에 적재할 수 있습니다.

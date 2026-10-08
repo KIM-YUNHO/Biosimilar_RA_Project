@@ -10,7 +10,11 @@ Sources (docs/ra-document-sources.md H1/H3/H4), verified against the live servic
   ?search=<term> and returns SBD / RDS / SSR links whose titles name the product.
   Titles are matched against the program's HC aliases (the full-text search also returns
   other ustekinumab products).
-- Product monographs: not reachable from the DPD API; seed URLs via config if needed.
+- Product monographs: the DPD API has no link, but the DPD product page
+    dpd-bdpp/info?lang=eng&code=<drug_code>
+  links the current PM PDF (pdf.hres.ca/dpd_pm/<n>.PDF) with its date. One PM is usually
+  shared by all DINs of a product, so documents de-duplicate by URL. Only the current PM is
+  published there; earlier PM versions are kept by re-running (content hash versions).
 """
 from __future__ import annotations
 
@@ -25,6 +29,7 @@ from .base import Connector
 
 DPD_API = "https://health-products.canada.ca/api/drug"
 DHPP_REVIEW_DOCS = "https://dhpp.hpfb-dgpsa.ca/review-documents"
+DPD_PRODUCT_PAGE = "https://health-products.canada.ca/dpd-bdpp/info"
 
 _DOC_PREFIX = {"SBD": "sbd", "RDS": "rds", "SSR": "other"}
 _BRAND_SUFFIX = re.compile(r"\s*(I\.?\s?V\.?|IV|SC|S\.C\.|AUTOINJECTOR)\s*$", re.I)
@@ -32,6 +37,17 @@ _BRAND_SUFFIX = re.compile(r"\s*(I\.?\s?V\.?|IV|SC|S\.C\.|AUTOINJECTOR)\s*$", re
 
 def base_brand(brand: str) -> str:
     return _BRAND_SUFFIX.sub("", brand.strip()).strip()
+
+
+def parse_product_page(html_text: str) -> tuple[str | None, str | None]:
+    """-> (product monograph PDF url, PM date) from a DPD product page."""
+    import html as _html
+    m = re.search(r'href="(https?://pdf\.hres\.ca/dpd_pm/[^"]+)"', html_text)
+    if not m:
+        return None, None
+    text = re.sub(r"\s+", " ", _html.unescape(re.sub(r"<[^>]+>", " ", html_text)))
+    d = re.search(r"Product Monograph/Veterinary Labelling:\s*Date:\s*(\d{4}-\d{2}-\d{2})", text)
+    return m.group(1).replace("http://", "https://", 1), d.group(1) if d else None
 
 
 def parse_review_listing(html: str) -> list[tuple[str, str, str]]:
@@ -47,10 +63,12 @@ def parse_review_listing(html: str) -> list[tuple[str, str, str]]:
 class HcConnector(Connector):
     agency = "hc"
 
-    def __init__(self, *a, api_base: str = DPD_API, review_docs_url: str = DHPP_REVIEW_DOCS, **kw):
+    def __init__(self, *a, api_base: str = DPD_API, review_docs_url: str = DHPP_REVIEW_DOCS,
+                 product_page_url: str = DPD_PRODUCT_PAGE, **kw):
         super().__init__(*a, **kw)
         self.api = api_base.rstrip("/")
         self.review_docs_url = review_docs_url
+        self.product_page_url = product_page_url
         self._seeds: dict[str, list[dict[str, Any]]] = {}
 
     def _get(self, resource: str, **params: Any) -> list[dict[str, Any]]:
@@ -133,6 +151,30 @@ class HcConnector(Connector):
             return None
         return rows[0] if rows else None
 
+    def _product_monographs(self, reg: RegistrationRecord) -> Iterable[DocumentRecord]:
+        found: dict[str, dict] = {}
+        for code in dict.fromkeys(reg.identifiers.get("drug_code", [])):
+            try:
+                page = self.fetcher.get(self.product_page_url, params={"lang": "eng", "code": code})
+            except FetchError as e:
+                self.report("warning", "source_failed", f"DPD 제품 페이지 실패(code {code}): {e.reason}",
+                            url=e.url, program_id=reg.program_id)
+                continue
+            url, pm_date = parse_product_page(page.text())
+            if url:
+                entry = found.setdefault(url, {"date": pm_date, "drug_codes": []})
+                entry["drug_codes"].append(code)
+        if not found:
+            self.report("warning", "no_product_monograph", f"{reg.brand_name}: DPD 제품 페이지에 PM 링크 없음",
+                        program_id=reg.program_id)
+        for url, e in found.items():
+            yield DocumentRecord(
+                agency="hc", doc_kind="product", doc_type="product_monograph", native_doc_type="PM",
+                title=f"{reg.brand_name} Product Monograph", source_url=url,
+                registration_key=reg.native_key, program_id=reg.program_id, doc_date=e["date"],
+                language="en", extra={"drug_codes": e["drug_codes"], "pm_date": e["date"]},
+            )
+
     # -- dates from fetched pages ----------------------------------------------
     def after_fetch(self, doc: DocumentRecord, page) -> dict:
         if doc.doc_type not in ("sbd", "rds"):
@@ -207,6 +249,7 @@ class HcConnector(Connector):
         if not seen:
             self.report("warning", "no_review_documents", f"{reg.brand_name}: DHPP에서 SBD/RDS를 찾지 못함",
                         program_id=reg.program_id)
+        yield from self._product_monographs(reg)
         for s in self._seeds.get(reg.program_id or "", []):
             yield DocumentRecord(
                 agency="hc", doc_kind="product", doc_type=s.get("doc_type", "other"),

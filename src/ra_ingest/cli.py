@@ -67,7 +67,7 @@ def _status(a: argparse.Namespace) -> int:
         by_prog[(r.program_id or "-", r.agency)].append(r)
     doc_count: Counter = Counter()
     for d in docs:
-        if d.doc_kind == "product":
+        if d.doc_kind == "product" and d.fetch_status != "superseded":
             doc_count[(d.program_id or "-", d.agency, d.fetch_status)] += 1
     print(f"{'program':<10} " + " ".join(f"{ag.upper():<34}" for ag in AGENCIES))
     for p in programs:
@@ -118,7 +118,8 @@ def _manifest(a: argparse.Namespace) -> int:
 CHECK_HOSTS = {
     "ema": ["https://www.ema.europa.eu/"],
     "fda": ["https://www.accessdata.fda.gov/", "https://www.fda.gov/"],
-    "hc": ["https://health-products.canada.ca/", "https://dhpp.hpfb-dgpsa.ca/", "https://www.canada.ca/"],
+    "hc": ["https://health-products.canada.ca/", "https://dhpp.hpfb-dgpsa.ca/", "https://www.canada.ca/",
+           "https://pdf.hres.ca/"],
     "ctgov": ["https://clinicaltrials.gov/"],
 }
 

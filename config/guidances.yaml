@@ -59,17 +59,19 @@ guidances:
 
   # ---------------- FDA ----------------
   - id: fda-scientific-considerations-2015
-    note: "2026-10-08 FDA 가이던스 목록에 2015 최종본 항목 없음. 같은 docket(FDA-2011-D-0605)의 2025-10 개정 초안만 있음 — 상태 확인 필요"
     jurisdiction: US
     agency: fda
     title: "Scientific Considerations in Demonstrating Biosimilarity to a Reference Product"
-    status: final
+    status: withdrawn
     published_at: "2015-04-28"
+    effective_to: "2026-03-09"      # FDA 보도자료(2026-03-09): "no longer represents the FDA's current thinking"
+    withdrawal_source: "https://www.fda.gov/news-events/press-announcements/fda-takes-further-steps-streamline-biosimilar-development-and-make-medicines-more-affordable"
+    note: "철회됨. 2023~2025 승인 선례는 이 문서가 유효할 때 심사됨 → '당시 기준' 질문용으로 보관. 후속: 2025-10 CES 초안(같은 docket FDA-2011-D-0605)"
+    reference_no: "FDA-2011-D-0605"
     scope_products: [therapeutic_proteins]
-    topics: [general, ces, pk, immunogenicity]
-    url: null
+    topics: [general, ces, pk, immunogenicity, extrapolation]
+    url: "https://www.fda.gov/media/82647/download"
     url_verified: true
-
   - id: fda-ces-updated-recommendations-2025
     jurisdiction: US
     agency: fda

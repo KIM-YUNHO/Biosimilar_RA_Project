@@ -119,8 +119,13 @@ def test_end_to_end(mocked, fetcher, tmp_path, db_url):
         assert ("expected_absent", "hc", "BAT2206") in events
         # HC: SBD/RDS discovered by DHPP search, titles filtered to the product
         hc_docs = [d for d in docs if d.agency == "hc"]
-        assert {d.doc_type for d in hc_docs if d.program_id == "SB17"} == {"sbd", "rds"}
+        assert {d.doc_type for d in hc_docs if d.program_id == "SB17"} == {"sbd", "rds", "product_monograph"}
         assert not any("Jamteki" in d.title for d in hc_docs)
+        pms = [d for d in hc_docs if d.doc_type == "product_monograph"]
+        assert {(d.program_id, d.source_url.rsplit("/", 1)[1]) for d in pms} == {("SB17", "00099911.PDF"),
+                                                                                 ("ABP654", "00099921.PDF")}
+        sb17_pm = [d for d in pms if d.program_id == "SB17"][0]
+        assert sb17_pm.doc_date == "2026-07-27" and sorted(sb17_pm.extra["drug_codes"]) == [11, 12, 13]
         rds = [d for d in hc_docs if d.doc_type == "rds" and d.program_id == "SB17"][0]
         assert rds.decision_date == "2025-11-21"
         assert ("missing_registration", "hc", "CT-P43") in events  # not in the DPD fixture
@@ -198,3 +203,13 @@ def test_fda_guidance_catalog_parsing():
     assert c["status"] == "draft" and c["published_at"] == "2026-03-09" and c["docket"] == "FDA-2011-D-0611"
     assert c["pdf_url"] == "https://www.fda.gov/media/119278/download"
     assert c["title"].startswith("New and Revised Draft Q&As") and c["page_changed"] == "2026-04-08"
+
+
+def test_withdrawn_curated_guidance_is_ingested_without_catalog_warning():
+    from ra_ingest.connectors.guidance import guidance_documents, load_guidances
+    events = []
+    docs = list(guidance_documents(load_guidances(ROOT / "config" / "guidances.yaml"), ["fda"],
+                                   lambda *a, **k: events.append(a), fetcher=None))
+    sc = [d for d in docs if d.guidance.get("guidance_id") == "fda-scientific-considerations-2015"]
+    assert len(sc) == 1 and sc[0].guidance["status"] == "withdrawn"
+    assert sc[0].guidance["effective_to"] == "2026-03-09"
