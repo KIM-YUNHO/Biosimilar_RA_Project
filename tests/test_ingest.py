@@ -213,3 +213,15 @@ def test_withdrawn_curated_guidance_is_ingested_without_catalog_warning():
     sc = [d for d in docs if d.guidance.get("guidance_id") == "fda-scientific-considerations-2015"]
     assert len(sc) == 1 and sc[0].guidance["status"] == "withdrawn"
     assert sc[0].guidance["effective_to"] == "2026-03-09"
+
+
+def test_html_fingerprint_ignores_per_request_tokens():
+    from ra_ingest.storage import fingerprint
+    page = ('<html><head><input data-drupal-selector="form-{f}" name="form_build_id" value="form-{f}" /></head>'
+            '<main><h1>Summary Basis of Decision</h1><a href="/cdn-cgi/l/email-protection#{e}">ORA</a></main>'
+            '<footer>{f}</footer></html>')
+    a = page.format(f="aaa111", e="d1b9b2ff").encode()
+    b = page.format(f="zzz999", e="a7cfc489").encode()
+    assert fingerprint(a, ".html") == fingerprint(b, ".html")
+    assert fingerprint(a, ".html") != fingerprint(a.replace(b"Decision", b"Decisions"), ".html")
+    assert fingerprint(a, ".pdf") != fingerprint(b, ".pdf")   # binary files hash as-is
