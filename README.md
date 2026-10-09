@@ -82,6 +82,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 
 - [적재 실행 결과 (2026-10-08)](docs/ingestion-report.md)
 - [전처리 파이프라인 설계](docs/preprocessing-design.md)
+- [전처리 실행 계획 (확정안)](docs/preprocessing-plan.md)
 
 - [RA 문서 소스 카탈로그](docs/ra-document-sources.md)
 - [진행 계획](docs/project-plan.md)
