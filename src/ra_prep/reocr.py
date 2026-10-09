@@ -102,7 +102,9 @@ def decide(first: str, second: str, rereads=None) -> tuple[str, str]:
     if a == b:
         return first, "kept"
     similar = bool(b) and SequenceMatcher(None, a, b, autojunk=False).ratio() >= 0.95
-    suspect = garbled_spans(first) or (bool(b) and not similar)
+    comparable = bool(b) and 0.8 * len(a) <= len(b) <= 1.25 * len(a)
+    numbers_differ = comparable and _NUM.findall(first) != _NUM.findall(second)
+    suspect = garbled_spans(first) or (bool(b) and not similar) or numbers_differ
     if not suspect:
         return first, "kept"
     readings = [first]

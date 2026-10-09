@@ -1,4 +1,5 @@
-"""Extraction: Docling with per-route settings, then OCR repair of garbled blocks.
+"""Extraction: Docling with per-route settings, then a second OCR reader on OCR'd pages
+(garbled-line repair, table rebuild for table images the layout model calls pictures).
 
 Output is a list of plain-dict blocks (JSON-serialisable), in reading order:
   {"type": "text", "label": "text|section_header|list_item|caption|footnote|page_header|...",
@@ -6,7 +7,9 @@ Output is a list of plain-dict blocks (JSON-serialisable), in reading order:
    "layer": "body|furniture", "status": "kept|reread|needs_review"}
   {"type": "table", ..., "caption": str, "n_rows": int, "n_cols": int,
    "cells": [{"r", "c", "rs", "cs", "text", "header", "bbox"}]}
-  {"type": "picture", ..., "caption": str, "text": str (OCR text inside, if any)}
+  {"type": "picture", ..., "caption": str}
+  table cells may carry "status" (reread | needs_review); rebuilt tables carry
+  "structure": "ocr_grid".
 bbox is in PDF points with a bottom-left origin, the same frame pypdfium2 uses.
 """
 from __future__ import annotations
@@ -110,6 +113,16 @@ class Extractor:
                 blocks = self._pictures_to_tables(blocks, lines)
             timing["second_reader"] = time.time() - t
         return {"engine": self.version(), "blocks": blocks, "timing": timing}
+
+    # -- HTML (HC SBD / RDS pages) ------------------------------------------------------
+    def extract_html(self, path: str) -> dict:
+        """HTML pages are already structured: DOM walk of <main> (see html.py)."""
+        from .html import html_blocks
+
+        t = time.time()
+        raw = open(path, "rb").read().decode("utf-8", errors="replace")
+        return {"engine": self.version(), "blocks": html_blocks(raw),
+                "timing": {"html": time.time() - t}}
 
     # -- docling document -> blocks ---------------------------------------------------
     def _blocks(self, doc, by_page: dict) -> list[dict]:

@@ -11,6 +11,7 @@ Metrics per page:
   num_in_text      share of gold numeric cells whose value appears anywhere in the output
                    (what retrieval would still find even without table structure)
   garbled          candidate text blocks with a run of broken fragments (textquality.garbled_spans)
+  furniture_leak   gold header/footer/page-number strings that remain as text items
   seconds          extraction time for the page
 
 Normalisation: Unicode NFKC, lower case, all whitespace removed, dash variants -> "-",
@@ -114,6 +115,8 @@ def score_page(gold: dict, cand: dict) -> dict:
                         hn += 1
     m.update(cell_n=gc, cell_hit=hc, num_n=gn, num_hit=hn, row_n=rows, row_hit=rows_hit, num_in_text=nit)
     m["garbled"] = sum(1 for t in cand_text if garbled_spans(t))
+    cand_items = {norm(t) for t in cand_text}
+    m["furniture_leak"] = sum(1 for f in gold.get("furniture", []) if norm(f) in cand_items)
     m["seconds"] = cand.get("seconds")
     return m
 
@@ -138,6 +141,7 @@ def aggregate(ms: list[dict]) -> dict:
         "row_exact": r("row_hit", "row_n"),
         "num_in_text": r("num_in_text", "num_n"),
         "garbled": int(s["garbled"]),
+        "furniture_leak": int(s["furniture_leak"]),
         "sec_per_page": round(sum(secs) / len(secs), 1) if secs else None,
         "cells": int(s["cell_n"]), "num_cells": int(s["num_n"]),
     }
@@ -183,7 +187,7 @@ def main():
         results[cand] = res
 
     cols = ["pages", "text_recall", "text_score", "cell_recall", "num_cell_recall", "row_exact",
-            "num_in_text", "garbled", "sec_per_page"]
+            "num_in_text", "garbled", "furniture_leak", "sec_per_page"]
     lines = []
     for group in ["all"] + list(GROUPS):
         lines.append(f"\n### {group}\n")

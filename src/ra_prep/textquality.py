@@ -40,7 +40,7 @@ def _words(text: str) -> list[str]:
 
 def _bad(w: str) -> bool:
     lw = w.lower()
-    if lw in _SHORT_OK:
+    if lw in _SHORT_OK or len(lw) == 1:  # single letters: footnote marks, bullets
         return False
     if len(lw) <= 2:
         return True

@@ -96,6 +96,28 @@ def run_a(pages, repair: bool, name: str, legacy_ocr: bool = False):
         print(name, e["id"], route, f"{el:.1f}s", flags, flush=True)
 
 
+def run_structured(pages, base: str = "A1", name: str = "A1S"):
+    """Apply RA post-processing (ra_prep.structure) to a finished A-candidate's blocks;
+    furniture blocks are dropped from the text."""
+    import pypdfium2 as pdfium
+
+    from ra_prep.structure import structure
+
+    for e in pages:
+        f = OUT / base / f"{e['id']}.json"
+        if not f.exists():
+            continue
+        d = json.loads(f.read_text())
+        pdf = pdfium.PdfDocument(page_pdf(e["id"]))
+        sizes = {1: tuple(pdf[0].get_size())}
+        pdf.close()
+        agency = {"assessment_report": "ema"}.get(e["doc_type"], "fda")
+        blocks = structure(d["blocks"], agency, e["doc_type"], sizes)
+        text = [b["text"] for b in blocks if b["type"] == "text" and not b["furniture"] and b["text"].strip()]
+        save(name, e["id"], {"text": text, "tables": tables_from_blocks(blocks),
+                             "seconds": d["seconds"], "flags": d["flags"], "blocks": blocks})
+
+
 # -- B: PaddleOCR-VL markdown -----------------------------------------------------------
 class _TableParser(HTMLParser):
     def __init__(self):
@@ -214,6 +236,8 @@ def main():
             run_a(pages, repair=True, name="A1")
         elif c == "A2":
             run_a(pages, repair=True, name="A2", legacy_ocr=True)
+        elif c == "A1S":
+            run_structured(pages)
         elif c == "B":
             run_b(pages, Path(a.paddle_dir))
         elif c == "C":

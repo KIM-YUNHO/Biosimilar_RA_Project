@@ -61,11 +61,36 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 | `src/ra_ingest/db.py` | `programs`, `registrations`, `documents`, `document_versions`, `trials`, `ingest_runs`, `ingest_events` |
 | `src/ra_ingest/metadata.py` | 문서 메타데이터 계약, 청크 메타데이터 스키마, 컨텍스트 헤더 |
 | `data/raw/<agency>/` | 해시 기반 원문 저장소(git 제외) |
+| `src/ra_prep/` | 전처리: `select`(대상 선별), `signals`·`route`(쪽 판정), `sanitize`(워터마크), `extract`(Docling), `reocr`·`grid`(두 번째 판독), `html`(HC 웹 문서), `structure`(RA 후처리), `qa`, `pipeline`, `cli` |
+| `eval/` | 전처리 정답 세트(`gold/`: 쪽 PDF 30개 + 정답 JSON)와 후보 실행·채점 스크립트 |
 
 **새 기관을 추가하는 방법**
 1. `connectors/<agency>.py`에 `Connector`를 구현합니다.
 2. `pipeline.CONNECTORS`에 등록합니다.
 3. `models.AGENCIES`에 추가합니다.
+
+## 전처리 (`ra-prep`)
+
+적재된 문서를 파싱해 `data/parsed/<sha256>.json`(블록 단위: 본문·표·섹션 경로·말한 주체·가림 표시·QA 지표)으로 저장합니다. LLM은 쓰지 않습니다. Docling의 레이아웃·표 모델, RapidOCR, 그리고 규칙으로만 처리합니다.
+
+```bash
+uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
+
+.venv-prep/bin/ra-prep select --product SB17          # 처리 대상 미리보기 (최신 라벨만, 중복 허가 문서 제외)
+.venv-prep/bin/ra-prep run --product SB17 --agencies ema,fda,hc
+.venv-prep/bin/ra-prep run --doc-id 232               # 문서 하나만
+.venv-prep/bin/ra-prep status                         # 처리 현황, 쪽당 시간, 검토 필요 블록 수
+```
+
+처리 순서: 워터마크 제거 → 쪽 단위 경로 판정(`DIGITAL`/`MIXED`/`IMAGE`/`LEGACY_OCR`/`BROKEN_TEXT`/`ARTWORK`/`BLANK`, HTML은 DOM) → Docling 추출(경로별 OCR 설정) → 두 번째 OCR 판독으로 깨진 줄 교정·그림으로 잡힌 표 복원 → RA 후처리(머리말·꼬리말, 섹션, 말한 주체, 가림 표시) → QA 지표.
+같은 문서 버전과 같은 엔진 버전 조합이면 다시 처리하지 않습니다(`--force`로 재처리).
+
+비교 시험(정답 세트 30쪽)과 결과는 [전처리 비교 시험](docs/preprocessing-benchmark.md)에 있습니다.
+
+```bash
+.venv-prep/bin/python eval/candidates.py A1 C        # 후보 실행 → eval/out/
+.venv-prep/bin/python eval/evaluate.py A1 C          # 정답 세트 대비 채점
+```
 
 ## 테스트
 
@@ -83,6 +108,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 - [적재 실행 결과 (2026-10-08)](docs/ingestion-report.md)
 - [전처리 파이프라인 설계](docs/preprocessing-design.md)
 - [전처리 실행 계획 (확정안)](docs/preprocessing-plan.md)
+- [전처리 비교 시험 (정답 세트 30쪽)](docs/preprocessing-benchmark.md)
 
 - [RA 문서 소스 카탈로그](docs/ra-document-sources.md)
 - [진행 계획](docs/project-plan.md)
