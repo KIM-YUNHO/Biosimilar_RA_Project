@@ -11,7 +11,9 @@
 | OCR | RapidOCR 영어 모델. 텍스트층이 없는 영역에만 적용 |
 | 표 | Docling TableFormer(accurate). 디지털 표와 이미지 표 모두 |
 | 범용 VLM (qwen3.5:9B 등) | **사용하지 않음**. 검증에 실패한 블록은 "검토 필요"로 표시하고 대기열로 보냄 |
-| PaddleOCR-VL 1.6 | **비교 시험 후보**. 이미지 표 쪽에서 Docling보다 확실히 나을 때만 해당 경로 전용 엔진으로 채택(4장) |
+| LLM 사용 | **전처리 파이프라인 어디에도 없음.** Docling 모델 + RapidOCR + 규칙만 사용 |
+| PaddleOCR-VL 1.6 | **비교 시험 결과 미채택(2026-10-09).** 표 구조는 더 낫지만 CPU에서 14배 느림. GPU 환경에서 `IMAGE` 쪽 표 전용 엔진으로 재검토 |
+| 최종 구성 | **A1S** = 워터마크 제거 → 쪽 판정 → Docling(경로별 OCR) → 두 번째 OCR 판독(깨진 줄 교체·그림 속 표 복원) → RA 후처리. 근거: [비교 시험](preprocessing-benchmark.md) |
 | 실행 환경 | 개발·검증은 클라우드(CPU 4코어). 본 처리는 로컬 또는 GPU 환경에서 같은 코드로 실행 |
 
 ## 0.1 실측 근거 (2026-10-09, Docling 2.137, CPU 4코어)
@@ -50,11 +52,14 @@
 - **제외:** 목차 페이지, 직원 명단, 포장 그림 쪽(쪽 단위는 P2에서 판정).
 - **산출물:** 처리 대상 목록(문서 ID, 버전 해시, 제외 사유).
 - **완료 기준:** 우스테키누맙 기준 FDA 처리 쪽수가 약 50% 줄어든 것을 수치로 확인.
+- **결과(2026-10-09, `ra-prep select`):** 전체 11,405쪽 → 7,952쪽(-30%), FDA 6,183쪽 → 3,751쪽(-39%). 지난 라벨 판 54건, EMA 중복 허가 문서 7건(5단어 shingle Jaccard 0.65~0.87), 목록 페이지 7건 제외. 목표 -50%에는 못 미쳤습니다. 라벨 쪽 안의 포장 그림 쪽은 `ARTWORK`로 남아 가중치만 낮춥니다.
 
 ### P2. 쪽 단위 판정 (`ra-prep route`)
 
 - 프로파일 신호(텍스트층 글자 수, 이미지 면적, 표 후보, PDF 생성 프로그램, 텍스트 품질 점수)로 쪽마다 경로를 정합니다.
-  - 경로 종류: `TEXT` / `TEXT_TABLE` / `IMAGE_PAGE` / `LEGACY_OCR` / `ARTWORK`, HTML 문서는 `HTML`
+  - 경로 종류(구현): `DIGITAL` / `MIXED` / `IMAGE` / `ARTWORK` / `LEGACY_OCR` / `BROKEN_TEXT` / `BLANK`, HTML 문서는 `HTML`. Docling은 표가 감지된 영역에만 표 모델을 돌리므로 `TEXT`와 `TEXT_TABLE`을 나눌 필요가 없어 `DIGITAL`로 합쳤습니다
+  - 판정 근거: 텍스트층 글자 수, 그림 면적, 글자가 없는 그림 면적(글자 상자 면적 비율 8% 미만), 보이지 않는 텍스트 비율(스캔본 OCR층), 문자 삼중자 통계로 본 텍스트층 품질. 판정 전에 대각선 워터마크 텍스트를 지웁니다
+  - 전체 11,405쪽 판정에 48초(쪽당 4ms)
 - 판정 결과와 근거는 DB의 `page_routes` 테이블에 저장합니다.
 - **완료 기준:** 무작위 100쪽을 사람이 확인했을 때 오분류 5% 이하. 특히 HC 가이던스처럼 배경 이미지만 있는 쪽이 `TEXT`로 판정될 것.
 
@@ -65,7 +70,9 @@
 | `TEXT` | OCR 끔, 표 구조 끔(레이아웃만, CPU 약 0.85초/쪽) |
 | `TEXT_TABLE` | OCR 끔, TableFormer accurate(CPU 약 3초/쪽) |
 | `IMAGE_PAGE` | OCR 켬(RapidOCR PP-OCRv6, 비트맵 영역), TableFormer accurate. 텍스트 품질 점수가 낮은 줄은 그 영역만 RapidOCR 단독(216dpi)으로 다시 읽어 교체 |
-| `LEGACY_OCR` | **기존 텍스트층 사용, OCR 끔**(실측: 재OCR이 잡음 추가). 텍스트 품질 점수가 아주 낮을 때만 예외적으로 강제 OCR |
+| `LEGACY_OCR` | **기존 텍스트층 사용, OCR 끔**(비교 시험 A2: 재OCR은 결과 동일, 시간 3배). 텍스트층 품질이 아주 낮으면 `BROKEN_TEXT`로 판정되어 전체 OCR |
+| `MIXED` | 텍스트층은 그대로, 텍스트가 없는 그림 영역만 OCR. EMA 평가보고서에 붙은 표 이미지가 여기 해당 |
+| `BROKEN_TEXT` | 글꼴 매핑이 깨진 텍스트층("LQWHUFKDQJHDEOH"). 전체 쪽 OCR |
 | `ARTWORK` | OCR 텍스트만 저장. 검색 가중치 낮음 |
 | `HTML` | Docling HTML 백엔드 |
 
@@ -99,7 +106,7 @@
 - 실패한 블록은 `needs_review`로 표시해 대기열로 보내고, 답변 단계에서 "원문 확인 필요"로 노출합니다.
 - **산출물:** `data/parsed/<sha256>.json`(DoclingDocument)과 정규화 블록 → 청킹(`metadata-strategy.md`)의 입력.
 
-### P6. 비교 시험 — 본 처리 전 관문
+### P6. 비교 시험 — 본 처리 전 관문 (완료, 결과: [preprocessing-benchmark.md](preprocessing-benchmark.md))
 
 - **정답 세트(30쪽):** EMA PK 표(병합 셀), EMA 일반 본문, FDA 이미지 표(임상시험 목록), **FDA 이미지 숫자 표(검사치·n(%)·PK 결과, 가림 표시 포함)**, **FDA 이미지 쪽 본문**, FDA 체크박스 표, 2009년 스캔본, HC 제품설명서 표, FDA 라벨, HC SBD(HTML). 이미지 쪽은 제품 4개에 고르게 나눕니다.
 - **비교 대상**
