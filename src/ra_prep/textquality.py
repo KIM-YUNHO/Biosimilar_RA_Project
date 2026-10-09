@@ -63,6 +63,17 @@ def is_garbled(text: str, threshold: float = 0.4) -> bool:
     return garble_score(text) >= threshold
 
 
+_GAP3 = re.compile(r"\S {3,}\S")
+_GAP2 = re.compile(r"\S {2}\S")
+
+
+def ocr_gaps(text: str) -> bool:
+    """Docling's OCR leaves runs of spaces where it dropped characters of a broken line
+    ("every 12 weeks the:   T-g T   e   to receive"). On the gold pages this occurs only in
+    broken lines."""
+    return bool(_GAP3.search(text)) or len(_GAP2.findall(text)) >= 2
+
+
 def garbled_spans(text: str, window: int = 6, threshold: float = 0.5) -> bool:
     """True if some run of `window` consecutive words is mostly garbage. Catches one broken
     line merged into an otherwise clean paragraph."""

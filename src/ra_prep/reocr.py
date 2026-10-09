@@ -17,7 +17,7 @@ from difflib import SequenceMatcher
 import numpy as np
 import pypdfium2 as pdfium
 
-from .textquality import bad_token_count, garbled_spans, lm_score
+from .textquality import bad_token_count, garbled_spans, lm_score, ocr_gaps
 
 _ENGINE = None
 SCALE = 3.0  # 216 dpi
@@ -88,7 +88,7 @@ def _norm(s: str) -> str:
 def _rank(text: str) -> tuple:
     """Lower is better: broken fragment runs first, then count of odd tokens, then
     letter-trigram plausibility."""
-    return (garbled_spans(text), bad_token_count(text), -lm_score(text))
+    return (garbled_spans(text) or ocr_gaps(text), bad_token_count(text), -lm_score(text))
 
 
 def decide(first: str, second: str, rereads=None) -> tuple[str, str]:
@@ -104,21 +104,22 @@ def decide(first: str, second: str, rereads=None) -> tuple[str, str]:
     similar = bool(b) and SequenceMatcher(None, a, b, autojunk=False).ratio() >= 0.95
     comparable = bool(b) and 0.8 * len(a) <= len(b) <= 1.25 * len(a)
     numbers_differ = comparable and _NUM.findall(first) != _NUM.findall(second)
-    suspect = garbled_spans(first) or (bool(b) and not similar) or numbers_differ
+    broken = garbled_spans(first) or ocr_gaps(first)
+    suspect = broken or (bool(b) and not similar) or numbers_differ
     if not suspect:
         return first, "kept"
     readings = [first]
     # a much shorter second reading means its detector missed lines: not a usable reading
     if b and len(b) >= 0.8 * len(a):
         readings.append(second)
-    if rereads is not None and garbled_spans(first):
+    if rereads is not None and broken:
         for scale in (4.0, 2.0, 5.0, 2.5):
             t = rereads(scale)
             if t and len(_norm(t)) >= 0.8 * len(a):
                 readings.append(t)
     best = min(readings, key=_rank)
     status = "kept" if best is first else "reread"
-    if garbled_spans(best):
+    if garbled_spans(best) or ocr_gaps(best):
         status = "needs_review"
     # numbers must agree across the comparable readings, otherwise a person checks
     nums = {tuple(_NUM.findall(r)) for r in readings}

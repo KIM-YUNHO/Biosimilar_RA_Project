@@ -94,6 +94,12 @@ def test_decide_takes_clean_second_reading():
     assert text == good and status == "reread"
 
 
+def test_ocr_gap_signal():
+    from ra_prep.textquality import ocr_gaps
+    assert ocr_gaps("every 12 weeks the:   T-g T   e   to receive either CT-P43")
+    assert not ocr_gaps("every 12 weeks thereafter up to Week 40. Those receiving EU-Stelara")
+
+
 def test_decide_flags_number_disagreement():
     _, status = decide("Overall, 7 subjects (1.8%) had 9 events", "Overall, 7 subjects (1.6%) had 9 events")
     assert status == "needs_review"
