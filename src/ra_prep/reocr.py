@@ -32,18 +32,27 @@ def _engine():
     return _ENGINE
 
 
-def page_lines(page: pdfium.PdfPage, scale: float = SCALE) -> list[tuple[list[float], str, float]]:
-    """OCR lines of a whole page: (bbox [l, b, r, t] in PDF points bottom-left, text, score)."""
+def page_lines(page: pdfium.PdfPage, scale: float = SCALE,
+               regions: list | None = None) -> list[tuple[list[float], str, float]]:
+    """OCR lines of a page: (bbox [l, b, r, t] in PDF points bottom-left, text, score).
+    With `regions` (bitmap boxes, same frame) only those areas are read, which is what
+    MIXED pages need: their text layer is fine, only pasted images are OCR'd."""
     w, h = page.get_size()
-    img = page.render(scale=scale).to_numpy()
-    res = _engine()(np.ascontiguousarray(img))
-    if res is None or res.boxes is None:
-        return []
+    boxes = regions or [[0.0, 0.0, w, h]]
     out = []
-    for box, txt, sc in zip(res.boxes.tolist(), res.txts, res.scores):
-        xs = [p[0] / scale for p in box]
-        ys = [p[1] / scale for p in box]
-        out.append(([min(xs), h - max(ys), max(xs), h - min(ys)], txt, float(sc)))
+    for l, b, r, t in boxes:
+        crop = (max(0.0, l), max(0.0, b), max(0.0, w - r), max(0.0, h - t))
+        img = page.render(scale=scale, crop=crop).to_numpy()
+        if img.size == 0:
+            continue
+        res = _engine()(np.ascontiguousarray(img))
+        if res is None or res.boxes is None:
+            continue
+        x0, top = crop[0], h - crop[3]
+        for box, txt, sc in zip(res.boxes.tolist(), res.txts, res.scores):
+            xs = [x0 + p[0] / scale for p in box]
+            ys = [top - p[1] / scale for p in box]
+            out.append(([min(xs), min(ys), max(xs), max(ys)], txt, float(sc)))
     return out
 
 

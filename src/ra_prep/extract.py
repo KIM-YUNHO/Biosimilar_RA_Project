@@ -106,7 +106,7 @@ class Extractor:
 
         if self.repair_ocr or self.picture_tables:
             t = time.time()
-            lines = self._second_reader(path, blocks)
+            lines = self._second_reader(path, blocks, by_page)
             if self.repair_ocr:
                 self._repair(path, blocks, lines)
             if self.picture_tables:
@@ -184,8 +184,9 @@ class Extractor:
         return out
 
     # -- second reader -----------------------------------------------------------------
-    def _second_reader(self, path: str, blocks: list[dict]) -> dict[int, list]:
-        """One independent RapidOCR pass over every page that has OCR-sourced blocks."""
+    def _second_reader(self, path: str, blocks: list[dict], by_page: dict) -> dict[int, list]:
+        """One independent RapidOCR pass over every page that has OCR-sourced blocks
+        (whole page; on MIXED pages only the bitmap regions without text)."""
         ocr_pages = sorted({b["page"] for b in blocks if b["source"] == "ocr"})
         if not ocr_pages:
             return {}
@@ -194,7 +195,9 @@ class Extractor:
             out = {}
             for p in ocr_pages:
                 page = pdf[p - 1]
-                out[p] = page_lines(page)
+                r = by_page.get(p, {})
+                regions = r.get("signals", {}).get("bare_boxes") if r.get("route") == "MIXED" else None
+                out[p] = page_lines(page, regions=regions)
                 page.close()
             return out
         finally:
