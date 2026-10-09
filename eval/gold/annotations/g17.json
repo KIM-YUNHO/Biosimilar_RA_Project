@@ -1,0 +1,89 @@
+{
+ "id": "g17",
+ "text": [
+  "Add the U.S. License Number.",
+  "The licensed manufacturer should appear as: Manufactured by: Biocon Biologics Inc., 245 Main St 2nd Floor, Cambridge, MA 02142, U.S.A., US License No. 2324 Product of India",
+  "The Applicant revised as recommended.",
+  "Comment/Recommendation: Revise the strength presentation of the vials so that the (b) (4) is not included with the primary expression of strength."
+ ],
+ "tables": [
+  [
+   [
+    "Lot number or other lot identification (container label)",
+    "Acceptable"
+   ],
+   [
+    "Regulations: 21 CFR 610.60(a)(3), 21 CFR 610.60(c), 21 CFR 201.18, 21 CFR 201.100(b)(6), 21 CFR 201.10(h)(2)(i)(1)(iii)",
+    "✓ Yes ☐ No ☐ N/A"
+   ]
+  ],
+  [
+   [
+    "Expiration date (container label)",
+    "Acceptable"
+   ],
+   [
+    "Regulations: 21 CFR 610.60(a)(4), 21 CFR 201.17",
+    "✓ Yes ☐ No ☐ N/A"
+   ],
+   [
+    "Recommended labeling practices references: USP General Chapters <7> Labeling, Guidance for Industry Safety Considerations for Container Labels and Carton Labeling Design to Minimize Medication Errors (May 2022)",
+    "✓ Yes ☐ No ☐ N/A"
+   ]
+  ],
+  [
+   [
+    "Beyond Use Date (Multiple-dose containers) (container label)",
+    "Acceptable"
+   ],
+   [
+    "Recommended labeling practices: USP General Chapters: <659> Packaging and Storage Requirements and <7> Labeling",
+    "☐ Yes ☐ No ☒ N/A"
+   ]
+  ],
+  [
+   [
+    "Product Strength (container label)",
+    "Acceptable"
+   ],
+   [
+    "Regulations: 21 CFR 201.10(d)(1), 21 CFR 201.100(b)(4)",
+    "✓ Yes ☐ No ☐ N/A"
+   ],
+   [
+    "Recommended labeling practices (expression of strength for injectable drugs) references: Guidance for Industry Safety Considerations for Container Labels and Carton Labeling Design to Minimize Medication Errors (May 2022) USP General Chapters: <7> Labeling",
+    "✓ Yes ☐ No ☐ N/A"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Page 10 of 40"
+ ],
+ "note": "Image page; checkbox form. Checkbox state is part of the cell text (✓/☒ checked, ☐ unchecked).",
+ "checkboxes": [
+  {
+   "item": "Lot number regulations",
+   "checked": "Yes"
+  },
+  {
+   "item": "Expiration date regulations",
+   "checked": "Yes"
+  },
+  {
+   "item": "Expiration date practices",
+   "checked": "Yes"
+  },
+  {
+   "item": "Beyond use date practices",
+   "checked": "N/A"
+  },
+  {
+   "item": "Product strength regulations",
+   "checked": "Yes"
+  },
+  {
+   "item": "Product strength practices",
+   "checked": "Yes"
+  }
+ ]
+}

@@ -1,0 +1,67 @@
+{
+ "id": "g28",
+ "text": [
+  "and 3.0% reported a ustekinumab injection-site reaction.",
+  "Intravenous Administration",
+  "In Crohn's disease and ulcerative colitis induction studies, no events of anaphylaxis or other serious infusion reactions were reported. In these studies, 2.2% of 785 placebo treated patients and 1.9% of 790 patients treated with the recommended dose of ustekinumab for injection reported adverse events occurring during or within an hour of the infusion.",
+  "8.2.1 Clinical Trial Adverse Reactions – Pediatrics",
+  "Pediatric Patients with Psoriasis",
+  "The safety of ustekinumab has been studied in two phase 3 studies of pediatric patients with moderate to severe plaque psoriasis. The first study was in 110 patients from 12 to 17 years of age treated for up to 60 weeks (CADMUS). The second study was in 44 patients from 6 to 11 years of age treated for up to 56 weeks (CADMUS Jr.). In general, the adverse events reported in these two studies were similar to those seen in previous studies in adults with plaque psoriasis.",
+  "Pediatrics (12 to 17 years of age)",
+  "Table 11. Adverse reactions reported by > 5% of patients during the placebo-controlled period of CADMUS",
+  "Pediatrics (6 to 11 years of age)",
+  "No new safety issues were identified in pediatric patients 6 to 11 years of age and the observed safety profile in these pediatric patients was similar to the safety profile observed in ustekinumab-treated adolescent patients 12 to 17 years of age.",
+  "8.3 Less Common Clinical Trial Adverse Reactions",
+  "The following adverse reactions occurred at rates less than 1% during the controlled period of ustekinumab clinical trials:",
+  "General disorders and administration site conditions: injection site reactions (including swelling, pruritus, induration, hemorrhage, hematoma), asthenia.",
+  "Infections and infestations: cellulitis, herpes zoster, viral upper respiratory tract infections, vulvovaginal mycotic infections, dental infections",
+  "Psychiatric disorders: depression",
+  "Respiratory, thoracic and mediastinal disorders: nasal congestion"
+ ],
+ "tables": [
+  [
+   [
+    "Patients treated",
+    "Placebo",
+    "Ustekinumab"
+   ],
+   [
+    "n = 37",
+    "Half Standard Dosage n = 37",
+    "Standard Dosage n = 36"
+   ],
+   [
+    "Infections and infestations"
+   ],
+   [
+    "Upper respiratory tract infection",
+    "2 (5.4%)",
+    "1 (2.7%)",
+    "3 (8.3%)"
+   ],
+   [
+    "Nervous system disorders"
+   ],
+   [
+    "Headache",
+    "2 (5.4%)",
+    "4 (10.8%)",
+    "3 (8.3%)"
+   ],
+   [
+    "Gastrointestinal disorders"
+   ],
+   [
+    "Diarrhea",
+    "0",
+    "0",
+    "2 (5.6%)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "YESINTEK (ustekinumab)",
+  "Page 21 of 99"
+ ],
+ "note": "Digital HC PM page."
+}

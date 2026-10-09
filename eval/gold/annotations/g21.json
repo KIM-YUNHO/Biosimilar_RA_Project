@@ -1,0 +1,77 @@
+{
+ "id": "g21",
+ "text": [
+  "2.2 Tables of Currently Available Treatments for Proposed Indications",
+  "Table 1 presents the approved products for the treatment of psoriatic arthritis in the United States. Compared to rheumatoid arthritis (RA), there are fewer products approved in the United States to treat psoriatic arthritis.",
+  "Table 1: Approved products for the treatment of psoriatic arthritis in the United States1",
+  "1 Steroids are also approved for the treatment of PsA",
+  "2 Infliximab was originally approved in 1998 for Crohn's Disease; etanercept was originally approved in 1998 for RA; and adalimumab was originally approved in 2002 for RA",
+  "2.3 Availability of Proposed Active Ingredient in the United States",
+  "Ustekinumab was approved in September 2009 in the United States for the treatment of moderate to severe plaque psoriasis.",
+  "2.4 Important Safety Issues with Consideration to Related Drugs",
+  "Ustekinumab is the only IL-12 and IL-23 antagonist approved in the United States. It is approved for the treatment of moderate-to-severe plaque psoriasis. Table 2 displays the adverse events that appear in the warnings and precautions section of the ustekinumab label. See Section 7.3.5 Submission Specific Primary Safety Concerns) for an evaluation of the association of ustekinumab with these known adverse events in psoriatic arthritis.",
+  "Table 2: Safety concerns in ustekinumab label",
+  "2.5 Summary of Presubmission Regulatory Activity Related to Submission"
+ ],
+ "tables": [
+  [
+   [
+    "",
+    "Product",
+    "NDA/BLA (sponsor)",
+    "Year Approved for PsA2",
+    "Characteristics",
+    "ROQ"
+   ],
+   [
+    "1",
+    "Infliximab (Remicade®)",
+    "103772 (Centocor)",
+    "2005",
+    "Monoclonal antibody (TNF inhibitor)",
+    "IV"
+   ],
+   [
+    "2",
+    "Etanercept (Enbrel®)",
+    "103795 (Immunex)",
+    "2002",
+    "Fusion protein (TNF inhibitor)",
+    "SQ"
+   ],
+   [
+    "3",
+    "Adalimumab (Humira®)",
+    "125057 (Abbott)",
+    "2005",
+    "Monoclonal antibody (TNF inhibitor)",
+    "SQ"
+   ],
+   [
+    "4",
+    "Golimumab (Simponi®)",
+    "125289 (Centocor)",
+    "2009",
+    "Monoclonal antibody (TNF inhibitor)",
+    "SQ"
+   ]
+  ],
+  [
+   [
+    "Location in label",
+    "Safety concerns"
+   ],
+   [
+    "Warnings/Precautions",
+    "1. Serious infections 2. Tuberculosis 3. Malignancies 4. Anaphylaxis 5. Reversible posterior leukoencephalopathy syndrome"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Clinical Review Suzette Peng, MD",
+  "Supplemental BLA 125261-103 Stelara®/ustekinumab",
+  "14",
+  "Reference ID: 3358899"
+ ],
+ "note": "2009 scan with an embedded OCR layer that has errors (lnfliximab, Simooni, svndrome). Gold is the visible page."
+}

@@ -1,0 +1,171 @@
+{
+ "id": "g01",
+ "text": [
+  "N= number of subjects in the PK Analysis Set; n = number of subjects for the assessment parameter; SD = standard deviation Min = minimum; Max = maximum; PK: pharmacokinetics.",
+  "Only the n, Min, Median, and Max were summarised for Tmax.",
+  "14 subjects were excluded from the ANOVA due to COVID-19 reported; PK parameters unreliable.",
+  "A subject was excluded from the PK parameter summary due to subject pregnancy reported; PK parameters unreliable.",
+  "Samples with low speed centrifuge issue were excluded from PK parameters calculation.",
+  "The geometric LSMean ratios (90% CI) between Pyzchiva and EU Stelara for AUCinf and Cmax were 1.01 (0.92 to 1.11) and 0.93 (0.85 to 1.02), respectively, which were within the pre-defined equivalence margin of 0.8 to 1.25 and contain 1.",
+  "In addition, the geometric LSMean ratios (90% CI) for AUCinf and Cmax between Pyzchiva and US Stelara and between EU Stelara and US Stelara were all within the pre-defined equivalence margin of 0.8 to 1.25 and contain 1.",
+  "Therefore, based on the results of ad-hoc ANCOVA for the primary PK parameters (AUCinf and Cmax) between Pyzchiva and EU Stelara, between Pyzchiva and US Stelara and between EU Stelara and US Stelara, the applicant concludes that bioequivalence for PK of Pyzchiva, EU Stelara, and US Stelara were fully demonstrated considering individual body weight per subject."
+ ],
+ "tables": [
+  [
+   [
+    "PK Parameter",
+    "Statistics",
+    "SB17 N = 67",
+    "EU Stelara N = 67",
+    "US Stelara N = 67"
+   ],
+   [
+    "(1/h)",
+    "Mean",
+    "0.0013891",
+    "0.0014051",
+    "0.0013624"
+   ],
+   [
+    "SD",
+    "0.00084317",
+    "0.00083473",
+    "0.00035215"
+   ],
+   [
+    "Median",
+    "0.0011864",
+    "0.0012144",
+    "0.0012921"
+   ],
+   [
+    "Min",
+    "0.0007264",
+    "0.0007386",
+    "0.0007192"
+   ],
+   [
+    "Max",
+    "0.005569",
+    "0.007060",
+    "0.002264"
+   ],
+   [
+    "t½ (h)",
+    "n",
+    "62",
+    "64",
+    "60"
+   ],
+   [
+    "Mean",
+    "582.70",
+    "563.80",
+    "541.07"
+   ],
+   [
+    "SD",
+    "171.00",
+    "161.55",
+    "134.93"
+   ],
+   [
+    "Median",
+    "584.24",
+    "571.09",
+    "536.46"
+   ],
+   [
+    "Min",
+    "124.5",
+    "98.2",
+    "306.1"
+   ],
+   [
+    "Max",
+    "954.2",
+    "938.4",
+    "963.8"
+   ],
+   [
+    "CL/F (mL/h)",
+    "n",
+    "62",
+    "64",
+    "60"
+   ],
+   [
+    "Mean",
+    "9.4308",
+    "9.4592",
+    "9.6075"
+   ],
+   [
+    "SD",
+    "2.7416",
+    "3.3800",
+    "3.0698"
+   ],
+   [
+    "Median",
+    "9.0546",
+    "8.4819",
+    "9.1494"
+   ],
+   [
+    "Min",
+    "5.065",
+    "4.378",
+    "4.411"
+   ],
+   [
+    "Max",
+    "18.64",
+    "22.01",
+    "21.25"
+   ],
+   [
+    "%AUCextrap",
+    "n",
+    "62",
+    "64",
+    "60"
+   ],
+   [
+    "Mean",
+    "7.91",
+    "7.40",
+    "6.32"
+   ],
+   [
+    "SD",
+    "5.00",
+    "3.73",
+    "3.18"
+   ],
+   [
+    "Median",
+    "6.41",
+    "6.69",
+    "5.52"
+   ],
+   [
+    "Min",
+    "1.4",
+    "1.6",
+    "2.2"
+   ],
+   [
+    "Max",
+    "30.2",
+    "18.5",
+    "14.9"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/106045/2024",
+  "Page 48/168"
+ ],
+ "note": "Table and text checked cell by cell against the rendered page. Text layer reads 'COVD-19'; page shows 'COVID-19'."
+}

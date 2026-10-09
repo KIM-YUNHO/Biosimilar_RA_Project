@@ -1,0 +1,68 @@
+{
+ "id": "g02",
+ "text": [
+  "Objectives",
+  "Primary Study Objective",
+  "To demonstrate the equivalence of Pyzchiva to Stelara, in terms of the percent change from baseline in Psoriasis Area and Severity Index (PASI) at Week 12 in patients with moderate to severe plaque psoriasis.",
+  "Secondary Study Objectives",
+  "To evaluate the efficacy of Pyzchiva compared to Stelara by",
+  "Percent change from baseline in PASI other than Week 12",
+  "Physician's Global Assessment (PGA)",
+  "PASI50, PASI75, PASI90, and PASI100 response rate",
+  "Change from baseline in Dermatology Life Quality Index (DLQI)",
+  "To evaluate the safety and tolerability of Pyzchiva compared to Stelara",
+  "To evaluate the PK of Pyzchiva compared to Stelara in patients participating in PK evaluation",
+  "To evaluate the immunogenicity of Pyzchiva compared to Stelara",
+  "To evaluate safety and immunogenicity in patients who transitioned to Pyzchiva and who maintained Stelara at Week 28 for the transition period"
+ ],
+ "tables": [
+  [
+   [
+    "Test Product, Dose and Mode of Administration, Batch Number"
+   ],
+   [
+    "Test Product:",
+    "SB17"
+   ],
+   [
+    "Presentation:",
+    "0.5 mL of 90 mg/mL solution of ustekinumab in a pre-filled syringe (PFS)"
+   ],
+   [
+    "Mode of Administration:",
+    "Subcutaneous injection"
+   ],
+   [
+    "Dose:",
+    "45 mg at Week 0, 4, and then every 12 weeks up to Week 40. If the subject becomes > 100 kg at subsequent dosing visits the subject will receive 90 mg in the form of two doses of 45 mg."
+   ],
+   [
+    "Reference Product, Dose and Mode of Administration, Batch Number"
+   ],
+   [
+    "Reference Product:",
+    "Stelara (EU-sourced)"
+   ],
+   [
+    "Presentation:",
+    "0.5 mL of 90 mg/mL solution of ustekinumab in a PFS"
+   ],
+   [
+    "Mode of Administration:",
+    "Subcutaneous injection"
+   ],
+   [
+    "Dose:",
+    "45 mg at Week 0, 4, and then every 12 weeks up to Week 40. If the subject becomes > 100 kg at subsequent dosing visits the subject will receive 90 mg in the form of two doses of 45 mg."
+   ],
+   [
+    "Duration of Treatment: 52 weeks (Last IP injection was at Week 40)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/106045/2024",
+  "Page 72/168"
+ ],
+ "note": "Checked against rendered page; matches."
+}

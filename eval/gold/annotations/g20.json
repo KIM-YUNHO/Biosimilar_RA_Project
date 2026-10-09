@@ -1,0 +1,129 @@
+{
+ "id": "g20",
+ "text": [
+  "Table 14: Proportion of Subjects Meeting Efficacy Endpoints at Week 8 in UC-1",
+  "† Infusion dose of ustekinumab using the weight-based dosage regimen specified in Table 3.",
+  "⸸ An additional 7 subjects on placebo and 9 subjects on ustekinumab (6 mg/kg) had been exposed to, but had not failed, biologics.",
+  "* Clinical remission was defined as Mayo stool frequency subscore of 0 or 1, Mayo rectal bleeding subscore of 0, and Mayo endoscopy subscore of 0 or 1 (modified so that 1 does not include friability).",
+  "§ Endoscopic improvement was defined as Mayo endoscopy subscore of 0 or 1 (modified so that 1 does not include friability).",
+  "† Clinical response was defined as a decrease from baseline in the modified Mayo score by ≥30% and ≥2 points, with either a decrease from baseline in the rectal bleeding subscore ≥1 or a rectal bleeding subscore of 0 or 1.",
+  "‡ Histologic-endoscopic mucosal improvement was defined as combined endoscopic improvement (Mayo endoscopy subscore of 0 or 1) and histologic improvement of the colon tissue (neutrophil infiltration in <5% of crypts, no crypt destruction, and no erosions, ulcerations, or granulation tissue).",
+  "a Adjusted treatment difference (97.5% CI)",
+  "b p < 0.001",
+  "The relationship of histologic-endoscopic mucosal improvement, as defined in UC-1, at Week 8 to disease progression and long-term outcomes was not evaluated during UC-1.",
+  "Rectal Bleeding and Stool Frequency Subscores",
+  "Decreases in rectal bleeding and stool frequency subscores were observed as early as Week 2 in ustekinumab-treated subjects.",
+  "Trial UC-2",
+  "The maintenance trial (UC-2) evaluated 523 subjects who achieved clinical response 8 weeks following the intravenous administration of either induction dose of ustekinumab in UC-1. These subjects were randomized to receive a subcutaneous maintenance regimen of either 90 mg ustekinumab every 8 weeks, or every 12 weeks (a lower dose than recommended), or placebo for 44 weeks.",
+  "The primary endpoint was the proportion of subjects in clinical remission at Week 44. The secondary endpoints included the proportion of subjects maintaining clinical response at Week 44, the proportion of subjects with endoscopic improvement at Week 44, the proportion of subjects"
+ ],
+ "tables": [
+  [
+   [
+    "Endpoint",
+    "Placebo N = 319",
+    "Ustekinumab † N = 322",
+    "Treatment difference and 97.5% CI a"
+   ],
+   [
+    "N",
+    "%",
+    "N",
+    "%"
+   ],
+   [
+    "Clinical Remission *",
+    "22",
+    "7%",
+    "62",
+    "19%",
+    "12% (7%, 18%) b"
+   ],
+   [
+    "Bio-naïve ⸸",
+    "14/151",
+    "9%",
+    "36/147",
+    "24%"
+   ],
+   [
+    "Prior biologic failure",
+    "7/161",
+    "4%",
+    "24/166",
+    "14%"
+   ],
+   [
+    "Endoscopic Improvement §",
+    "40",
+    "13%",
+    "80",
+    "25%",
+    "12% (6%, 19%) b"
+   ],
+   [
+    "Bio-naïve ⸸",
+    "28/151",
+    "19%",
+    "43/147",
+    "29%"
+   ],
+   [
+    "Prior biologic failure",
+    "11/161",
+    "7%",
+    "34/166",
+    "20%"
+   ],
+   [
+    "Clinical Response †",
+    "99",
+    "31%",
+    "186",
+    "58%",
+    "27% (18%, 35%) b"
+   ],
+   [
+    "Bio-naïve ⸸",
+    "55/151",
+    "36%",
+    "94/147",
+    "64%"
+   ],
+   [
+    "Prior biologic failure",
+    "42/161",
+    "26%",
+    "86/166",
+    "52%"
+   ],
+   [
+    "Histologic-Endoscopic Mucosal Improvement ‡",
+    "26",
+    "8%",
+    "54",
+    "17%",
+    "9% (3%, 14%) b"
+   ],
+   [
+    "Bio-naïve ⸸",
+    "19/151",
+    "13%",
+    "30/147",
+    "20%"
+   ],
+   [
+    "Prior biologic failure",
+    "6/161",
+    "4%",
+    "21/166",
+    "13%"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Reference ID: 5498000",
+  "31"
+ ],
+ "note": "Digital label page; table cells checked."
+}

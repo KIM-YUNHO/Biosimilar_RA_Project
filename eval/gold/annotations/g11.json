@@ -1,0 +1,48 @@
+{
+ "id": "g11",
+ "text": [
+  "2.2. Studies Submitted by the Applicant",
+  "Refer to the Product Quality review, including the Comparative Analytical Assessment (CAA) Chapter for information regarding comparative analytical studies provided to support a demonstration of biosimilarity.",
+  "Table 2. Listing of All Relevant Submitted Clinical Studies"
+ ],
+ "tables": [
+  [
+   [
+    "Study Identity",
+    "National Clinical Trial (NCT) no.",
+    "Study Objective",
+    "Study Design",
+    "Study Population",
+    "Treatment Groups"
+   ],
+   [
+    "PK Similarity Study"
+   ],
+   [
+    "SB17-1001",
+    "EudraCT No. 2020-004447-88",
+    "Pharmacokinetic similarity and safety of SB17, U.S.-Stelara, and EU-Stelara",
+    "Randomized, double-blind, parallel-group, active-controlled, three-arm, single-dose",
+    "Healthy Subjects",
+    "SB17: 67 U.S.-Stelara: 67 EU-Stelara: 67"
+   ],
+   [
+    "Comparative Clinical Study"
+   ],
+   [
+    "SB17-3001",
+    "EudraCT No. 2020-006115-19",
+    "Comparative efficacy, safety, and immunogenicity of SB17 vs EU-Stelara",
+    "Randomized, double-blind, parallel-arm, multiple-dose, active comparator",
+    "Patients with moderate to severe plaque psoriasis",
+    "Main Period: SB17: 249 EU-Stelara: 254 Transition Period: SB17: 237 EU-Stelara/SB17:"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5405859",
+  "20"
+ ],
+ "note": "Image page; checked against the rendered page."
+}

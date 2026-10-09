@@ -1,0 +1,100 @@
+{
+ "id": "g27",
+ "text": [
+  "Crohn's Disease",
+  "In the three Phase 3 studies and two Phase 2 studies, 1749 subjects with Crohn's disease were exposed to ustekinumab. with 849 exposed for 6 months and 464 exposed for at least 1 year with a total 1106 subject-years of follow-up.",
+  "The safety of ustekinumab was assessed in three Phase 3 randomized, double-blind, placebo-controlled studies. Two 8-week IV induction studies (UNITI-1 and UNITI-2) were followed by a 44-week subcutaneous randomized withdrawal maintenance study (IM-UNITI) representing 52 weeks of therapy. The overall safety profile of ustekinumab was consistent with the safety profile seen in the psoriasis and psoriatic arthritis clinical studies with the exception of new adverse drug reactions of acne, asthenia, vomiting and vulvovaginal mycotic infections.",
+  "The safety profile remained generally consistent throughout the Week 272 safety analysis.",
+  "Table 7: Adverse drug reactions reported by ≥ 1% # of Ustekinumab I.V. treated patients UNITI-1 and UNITI-2 Induction Studies through Week 8"
+ ],
+ "tables": [
+  [
+   [
+    "Nausea",
+    "8 (2.3%)",
+    "8 (3.8%)",
+    "10 (2.9%)"
+   ],
+   [
+    "Skin and subcutaneous tissue disorders"
+   ],
+   [
+    "Pruritus",
+    "14 (4.0%)",
+    "12 (5.7%)",
+    "16 (4.6%)"
+   ]
+  ],
+  [
+   [
+    "Patients Treated",
+    "Placebo (n=466)",
+    "Ustekinumab I.V. ~6mg/kg¥ (n=470)"
+   ],
+   [
+    "Treatment Emergent Adverse Events (SOC/preferred term)"
+   ],
+   [
+    "Gastrointestinal disorders"
+   ],
+   [
+    "Nausea",
+    "22 (4.7%)",
+    "25 (5.3%)"
+   ],
+   [
+    "Vomiting",
+    "12 (2.6%)",
+    "20 (4.3%)"
+   ],
+   [
+    "General disorders and administration site conditions"
+   ],
+   [
+    "Asthenia",
+    "2 (0.4%)",
+    "7 (1.5%)"
+   ],
+   [
+    "Infections and infestations"
+   ],
+   [
+    "Nasopharyngitis",
+    "23 (4.9%)",
+    "25 (5.3%)"
+   ],
+   [
+    "Musculoskeletal and connective tissue disorders"
+   ],
+   [
+    "Arthralgia",
+    "22 (4.7%)",
+    "24 (5.1%)"
+   ],
+   [
+    "Back Pain",
+    "9 (1.9%)",
+    "10 (2.1%)"
+   ],
+   [
+    "Skin and subcutaneous tissue disorders"
+   ],
+   [
+    "Pruritus",
+    "2 (0.4%)",
+    "7 (1.5%)"
+   ],
+   [
+    "Acne",
+    "2 (0.4%)",
+    "5 (1.1%)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Unclassified / Non classifié",
+  "STEQEYMA® / STEQEYMA® I.V. (ustekinumab)",
+  "Page 19 of 123"
+ ],
+ "note": "Digital HC PM page; line-break hyphens are real hyphens in the source."
+}

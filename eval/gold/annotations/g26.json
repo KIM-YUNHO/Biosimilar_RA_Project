@@ -1,0 +1,190 @@
+{
+ "id": "g26",
+ "text": [
+  "*Placebo controlled periods are through Week 12 in PHOENIX 1 AND 2 and through Week 16 in PSUMMIT 1 and 2.",
+  "Table 6 presents the rates at which the ustekinumab ADRs occurred in treatment groups in the ACCEPT trial.",
+  "Table 6: Adverse drug reactions reported by ≥ 1% of patients through Week 12 in ACCEPT"
+ ],
+ "tables": [
+  [
+   [
+    "Nausea",
+    "10 (1.0%)",
+    "18 (1.9%)",
+    "15 (1.5%)"
+   ],
+   [
+    "General disorders and administration site conditions"
+   ],
+   [
+    "Fatigue",
+    "16 (1.6%)",
+    "24 (2.5%)",
+    "24 (2.5%)"
+   ],
+   [
+    "Injection site erythema",
+    "6 (0.6%)",
+    "8 (0.8%)",
+    "16 (1.6%)"
+   ],
+   [
+    "Infections and infestations"
+   ],
+   [
+    "Nasopharyngitis",
+    "64 (6.6%)",
+    "72 (7.4%)",
+    "70 (7.2%)"
+   ],
+   [
+    "Upper respiratory tract infection",
+    "44 (4.5%)",
+    "46 (4.7%)",
+    "40 (4.1%)"
+   ],
+   [
+    "Dental Infection",
+    "2 (0.2%)",
+    "9 (0.9%)",
+    "10 (1.0%)"
+   ],
+   [
+    "Musculoskeletal and connective tissue disorders"
+   ],
+   [
+    "Arthralgia",
+    "23 (2.4%)",
+    "30 (3.1%)",
+    "26 (2.7%)"
+   ],
+   [
+    "Back pain",
+    "9 (0.9%)",
+    "12 (1.2%)",
+    "19 (2.0%)"
+   ],
+   [
+    "Myalgia",
+    "5 (0.5%)",
+    "8 (0.8%)",
+    "11 (1.1%)"
+   ],
+   [
+    "Nervous system disorders"
+   ],
+   [
+    "Headache",
+    "29 (3.0%)",
+    "48 (4.9%)",
+    "41 (4.2%)"
+   ],
+   [
+    "Dizziness",
+    "9 (0.9%)",
+    "11 (1.1%)",
+    "13 (1.3%)"
+   ],
+   [
+    "Respiratory, thoracic and mediastinal disorders"
+   ],
+   [
+    "Oropharyngeal pain",
+    "9 (0.9%)",
+    "16 (1.6%)",
+    "15 (1.5%)"
+   ],
+   [
+    "Skin and subcutaneous tissue disorders"
+   ],
+   [
+    "Pruritus",
+    "9 (0.9%)",
+    "14 (1.4%)",
+    "12 (1.2%)"
+   ]
+  ],
+  [
+   [
+    "",
+    "ENBREL (etanercept)",
+    "Ustekinumab"
+   ],
+   [
+    "45 mg",
+    "90 mg"
+   ],
+   [
+    "Patients treated",
+    "347",
+    "209",
+    "347"
+   ],
+   [
+    "Gastrointestinal disorders"
+   ],
+   [
+    "Diarrhea",
+    "9 (2.6%)",
+    "8 (3.8%)",
+    "9 (2.6%)"
+   ],
+   [
+    "Nausea",
+    "8 (2.3%)",
+    "8 (3.8%)",
+    "10 (2.9%)"
+   ],
+   [
+    "General disorders and administration site conditions"
+   ],
+   [
+    "Injection site erythema",
+    "51 (14.7%)",
+    "2 (1.0%)",
+    "2 (0.6%)"
+   ],
+   [
+    "Fatigue",
+    "13 (3.7%)",
+    "8 (3.8%)",
+    "19 (5.5%)"
+   ],
+   [
+    "Infections and infestations"
+   ],
+   [
+    "Nasopharyngitis",
+    "29 (8.4%)",
+    "21 (10.0%)",
+    "34 (9.8%)"
+   ],
+   [
+    "Upper respiratory tract infection",
+    "20 (5.8%)",
+    "13 (6.2%)",
+    "22 (6.3%)"
+   ],
+   [
+    "Musculoskeletal and connective tissue disorders"
+   ],
+   [
+    "Arthralgia",
+    "9 (2.6%)",
+    "11 (5.3%)",
+    "10 (2.9%)"
+   ],
+   [
+    "Back pain",
+    "7 (2.0%)",
+    "14 (6.7%)",
+    "15 (4.3%)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "PYZCHIVA (ustekinumab)",
+  "Page 17 of 100"
+ ],
+ "note": "Digital HC product monograph page; both tables checked."
+}

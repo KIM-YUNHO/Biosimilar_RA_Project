@@ -1,0 +1,111 @@
+{
+ "id": "g05",
+ "text": [
+  "Study CT-P43 1.1 Part 2",
+  "The analyses for maximum serum concentration (Cmax) and area under the concentration-time curve from time zero to infinity (AUC0-inf) by post-treatment ADA status regardless of pre-dose result are presented for the PK Set in the below Table.",
+  "The AUC0-inf was lower in ADA positive subjects compared to ADA negative subjects in all treatment groups, while there was little impact of ADA positivity on Cmax.",
+  "Table 15. Impact of ADA positivity (post-treatment ADA status regardless of pre-dose result) on Cmax and AUC0-inf in Study CT-P43 1.1 Part 2 (PK Set)",
+  "In addition, the post-hoc analyses for Cmax and AUC0-inf by ADA titre separated by ADA high and low, are presented in Table below. Highest post-treatment ADA titres of individual subjects were used in the analyses. Impact of ADA titre on AUC0-inf was observed while there was no notable impact on Cmax."
+ ],
+ "tables": [
+  [
+   [
+    "Parameter Statistic",
+    "CT-P43 (N=80)",
+    "EU-Stelara (N=81)",
+    "US-Stelara (N=77)"
+   ],
+   [
+    "ADA Negative",
+    "ADA Positive",
+    "ADA Negative",
+    "ADA Positive",
+    "ADA Negative",
+    "ADA Positive"
+   ],
+   [
+    "Cmax (μg/mL)"
+   ],
+   [
+    "n",
+    "67",
+    "13",
+    "57",
+    "24",
+    "43",
+    "34"
+   ],
+   [
+    "Mean",
+    "5.37",
+    "5.29",
+    "4.48",
+    "4.78",
+    "4.85",
+    "4.88"
+   ],
+   [
+    "Min",
+    "2.1",
+    "2.5",
+    "2.2",
+    "2.1",
+    "1.1",
+    "2.3"
+   ],
+   [
+    "Max",
+    "9.6",
+    "9.5",
+    "7.2",
+    "7.6",
+    "8.3",
+    "8.3"
+   ],
+   [
+    "AUC0-inf (day*μg/mL)"
+   ],
+   [
+    "n",
+    "66",
+    "13",
+    "57",
+    "24",
+    "43",
+    "34"
+   ],
+   [
+    "Mean",
+    "209.70",
+    "177.66",
+    "167.05",
+    "153.27",
+    "177.22",
+    "151.48"
+   ],
+   [
+    "Min",
+    "90.5",
+    "100.2",
+    "84.8",
+    "65.4",
+    "61.4",
+    "39.3"
+   ],
+   [
+    "Max",
+    "363.6",
+    "290.8",
+    "256.7",
+    "277.8",
+    "325.3",
+    "287.4"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/328491/2024",
+  "Page 47/133"
+ ],
+ "note": "Table 15 is a bitmap; transcribed from the rendered page."
+}

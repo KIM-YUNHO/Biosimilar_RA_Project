@@ -1,0 +1,202 @@
+{
+ "id": "g03",
+ "text": [
+  "Ustekinumab primary pharmacokinetic parameters",
+  "Table 5. Primary pharmacokinetic parameters of ustekinumab by treatment group – Part 2 (PK set)",
+  "Abbreviations: AUC0-inf, Area under the concentration-time curve from time zero to infinity; Cmax, Maximum serum concentration; CV%, percent of coefficient of variation; EU, European Union; PK, pharmacokinetic(s); SD, standard deviation; US, United States.",
+  "Statistical analysis of primary PK parameters",
+  "Table 6. Statistical analysis of primary serum PK parameters for ustekinumab (analysis of covariance [ANCOVA]) in study CT-P43 1.1 part 2 - PK set",
+  "Note: The AUC0-inf were not included if adjusted R2 < 0.85 for calculating λz. An ANCOVA was performed with the natural log-"
+ ],
+ "tables": [
+  [
+   [
+    "",
+    "CT-P43 (N=80)",
+    "EU-approved Stelara (N=81)",
+    "US-licensed Stelara (N=77)"
+   ],
+   [
+    "AUC0-inf (day·μg/mL)"
+   ],
+   [
+    "n",
+    "79",
+    "81",
+    "77"
+   ],
+   [
+    "Mean (SD)",
+    "204.43 (54.513)",
+    "162.97 (48.890)",
+    "165.86 (61.111)"
+   ],
+   [
+    "CV%",
+    "26.67",
+    "30.00",
+    "36.85"
+   ],
+   [
+    "Geometric mean",
+    "197.07",
+    "155.33",
+    "154.11"
+   ],
+   [
+    "Median",
+    "204.78",
+    "158.94",
+    "157.86"
+   ],
+   [
+    "Minimum, Maximum",
+    "90.5, 363.6",
+    "65.4, 277.8",
+    "39.3, 325.3"
+   ],
+   [
+    "Cmax (μg/mL)"
+   ],
+   [
+    "n",
+    "80",
+    "81",
+    "77"
+   ],
+   [
+    "Mean (SD)",
+    "5.35 (1.456)",
+    "4.57 (1.368)",
+    "4.86 (1.664)"
+   ],
+   [
+    "CV%",
+    "27.19",
+    "29.93",
+    "34.22"
+   ],
+   [
+    "Geometric mean",
+    "5.16",
+    "4.35",
+    "4.55"
+   ],
+   [
+    "Median",
+    "5.15",
+    "4.57",
+    "4.63"
+   ],
+   [
+    "Minimum, Maximum",
+    "2.1, 9.6",
+    "2.1, 7.6",
+    "1.1, 8.3"
+   ]
+  ],
+  [
+   [
+    "PK Parameter (unit)",
+    "Comparison",
+    "Treatment",
+    "n",
+    "Geometric LS Means 1",
+    "Ratio of Geometric LS Means 1",
+    "90% CI 1"
+   ],
+   [
+    "AUC0-inf (day*μg/mL)",
+    "CT-P43",
+    "Test",
+    "79",
+    "193.75",
+    "124.36",
+    "(115.58, 133.82)"
+   ],
+   [
+    "EU-Stelara",
+    "Reference",
+    "81",
+    "155.79"
+   ],
+   [
+    "CT-P43",
+    "Test",
+    "79",
+    "193.75",
+    "126.40",
+    "(117.37, 136.13)"
+   ],
+   [
+    "US-Stelara",
+    "Reference",
+    "77",
+    "153.28"
+   ],
+   [
+    "EU-Stelara",
+    "Test",
+    "81",
+    "155.79",
+    "101.64",
+    "(94.42, 109.41)"
+   ],
+   [
+    "US-Stelara",
+    "Reference",
+    "77",
+    "153.28"
+   ],
+   [
+    "Cmax (μg/mL)",
+    "CT-P43",
+    "Test",
+    "80",
+    "5.10",
+    "116.18",
+    "(108.42, 124.49)"
+   ],
+   [
+    "EU-Stelara",
+    "Reference",
+    "81",
+    "4.39"
+   ],
+   [
+    "CT-P43",
+    "Test",
+    "80",
+    "5.10",
+    "112.02",
+    "(104.45, 120.13)"
+   ],
+   [
+    "US-Stelara",
+    "Reference",
+    "77",
+    "4.56"
+   ],
+   [
+    "EU-Stelara",
+    "Test",
+    "81",
+    "4.39",
+    "96.42",
+    "(89.92, 103.38)"
+   ],
+   [
+    "US-Stelara",
+    "Reference",
+    "77",
+    "4.56"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/130000/2025",
+  "Page 33/135",
+  "Medicinal product no longer authorised"
+ ],
+ "note": "Table 5 and its abbreviations are a bitmap (no text layer) under a diagonal text watermark; transcribed from the rendered page. Table 6 is digital."
+}

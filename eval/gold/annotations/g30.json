@@ -1,0 +1,26 @@
+{
+ "id": "g30",
+ "text": [
+  "5.2 Non-clinical studies 19",
+  "5.3 Clinical studies 19",
+  "5.3.1 Comparative clinical pharmacology studies 19",
+  "5.3.2 Comparative clinical efficacy studies 22",
+  "6. Indications, labelling and risk-management plan 23",
+  "6.1 Authorization of indications 23",
+  "6.2 Labelling requirements – Product monograph 23",
+  "6.3 Risk management plan 24",
+  "7. Post-market information requirements 24",
+  "7.1 Adverse drug reaction reporting and periodic reports 24",
+  "7.2 Post-notice of compliance (NOC) changes 25",
+  "8. Acronyms and definitions 26",
+  "8.1 Acronyms 26",
+  "8.2 Definitions 27",
+  "9. Contact us 29",
+  "9.1 Consultation and pre-submission meetings 29"
+ ],
+ "tables": [],
+ "furniture": [
+  "2"
+ ],
+ "note": "HC guidance table-of-contents page (dot leaders removed). Selection (P1) should skip TOC pages; kept here to test background artwork + TOC handling."
+}

@@ -1,0 +1,75 @@
+{
+ "id": "g07",
+ "text": [
+  "Abbreviations: FAS, full analysis set; N, number of patients in the treatment group; n, number of patients with available data; Q1, 1st quartile; Q2, 2nd quartile; Q3, 3rd quartile.",
+  "Note: Percentages are based on the number of patients in the treatment group (N).",
+  "Note: Baseline is defined as the last non-missing value before the first dose of study treatment.",
+  "Percentages (%) are based on the number of female patients in each treatment group.",
+  "Percentages (%) are based on the number of current drinkers in each treatment group.",
+  "Baseline Disease Characteristics",
+  "The mean (SD) PASI score, sPGA, BSA, and DLQI was 23.2 (9.2), 3.6 (0.7), 29.9 (16.3), and 14.4 (6.7), respectively. The majority of patients had an sPGA score of 3 (205 patients; 53.4%) or 4 (125 patients; 32.6%). sPGA scores of 4 or 5 were observed in slightly more patients in the Bmab1200 group than the Stelara group. The majority of patients did not have previous exposure to biologic-based therapies (331 patients; 86.2%) and did not have concomitant psoriatic arthritis (322 patients; 83.9%)."
+ ],
+ "tables": [
+  [
+   [
+    "",
+    "Bmab 1200 (N=191) n (%)",
+    "Stelara (N=193) n (%)",
+    "Total (N=384) n (%)"
+   ],
+   [
+    "Smoker Status"
+   ],
+   [
+    "Never Smoked",
+    "108 (56.5)",
+    "122 (63.2)",
+    "230 (59.9)"
+   ],
+   [
+    "Ex-smoker",
+    "22 (11.5)",
+    "19 (9.8)",
+    "41 (10.7)"
+   ],
+   [
+    "Smoker",
+    "61 (31.9)",
+    "52 (26.9)",
+    "113 (29.4)"
+   ],
+   [
+    "Unknown",
+    "0",
+    "0",
+    "0"
+   ],
+   [
+    "Alcohol Status"
+   ],
+   [
+    "Non-drinker",
+    "116 (60.7)",
+    "119 (61.7)",
+    "235 (61.2)"
+   ],
+   [
+    "Ex-drinker",
+    "1 (0.5)",
+    "0",
+    "1 (0.3)"
+   ],
+   [
+    "Current drinker",
+    "74 (38.7)",
+    "73 (37.8)",
+    "147 (38.3)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/820/2025",
+  "Page 66/125"
+ ],
+ "note": "Table (continued, bitmap) and footnotes are a bitmap; checked against the rendered page."
+}

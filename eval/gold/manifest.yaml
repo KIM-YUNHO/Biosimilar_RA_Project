@@ -1,0 +1,34 @@
+# Gold set for the preprocessing benchmark (P6). One PDF page per entry.
+# doc_id refers to the ra-ingest documents table of the 2026-10-08 ingestion run;
+# sha256 pins the exact file version. category says what the page is meant to test.
+pages:
+  - {id: g01, doc_id: 48,  page: 48,  doc_type: assessment_report, sha256: fea275487bb971962201b77aec3d2e12cee7d545be026b378f1980fa272f6e76, category: ema_digital_pk_table,      note: "SB17 EMA AR, merged-header PK table"}
+  - {id: g02, doc_id: 48,  page: 72,  doc_type: assessment_report, sha256: fea275487bb971962201b77aec3d2e12cee7d545be026b378f1980fa272f6e76, category: ema_digital_text_table,    note: "SB17 EMA AR, body text + table"}
+  - {id: g03, doc_id: 281, page: 33,  doc_type: assessment_report, sha256: eef970f2bc3c74459b6bfd53f2daee7fb552d0e8c665d8f9bd24e2ef72ecc746, category: ema_digital_table_watermark, note: "CT-P43 EMA AR (withdrawn MA), diagonal watermark over PK table"}
+  - {id: g04, doc_id: 1,   page: 34,  doc_type: assessment_report, sha256: 513959da3a6d724b63160792cbf18acb7f83d3396ab8147f491d543ce392bcce, category: ema_image_table,           note: "CT-P43 EMA AR, PK table pasted as image"}
+  - {id: g05, doc_id: 1,   page: 47,  doc_type: assessment_report, sha256: 513959da3a6d724b63160792cbf18acb7f83d3396ab8147f491d543ce392bcce, category: ema_image_table,           note: "CT-P43 EMA AR, ADA impact table pasted as image"}
+  - {id: g06, doc_id: 286, page: 46,  doc_type: assessment_report, sha256: 3b49d80363b4902b470372283666257254557efae94c5ae05b30c4c5dc857dfb, category: ema_digital_table_watermark, note: "SB17 (Eksunbi) EMA AR, watermark + stats table"}
+  - {id: g07, doc_id: 41,  page: 66,  doc_type: assessment_report, sha256: 33dccfb37460db78a82596c6b36d0fa470ee4159c6a83c24060f275776bfbb4d, category: ema_image_table,           note: "BMAB1200 EMA AR, baseline table as image"}
+  - {id: g08, doc_id: 143, page: 35,  doc_type: review, sha256: da445e2fae0be1b6478783ecdc7661cfa9647cbabace84b8e23dd8ee58e84325, category: fda_image_text_table,      note: "BMAB1200 BMER, clinical studies table (image page)"}
+  - {id: g09, doc_id: 143, page: 83,  doc_type: review, sha256: da445e2fae0be1b6478783ecdc7661cfa9647cbabace84b8e23dd8ee58e84325, category: fda_image_numeric_table,   note: "BMAB1200 BMER, demographics + SAE n(%) (image page)"}
+  - {id: g10, doc_id: 143, page: 85,  doc_type: review, sha256: da445e2fae0be1b6478783ecdc7661cfa9647cbabace84b8e23dd8ee58e84325, category: fda_image_numeric_table,   note: "BMAB1200 BMER, lab values with (b)(4) (image page)"}
+  - {id: g11, doc_id: 198, page: 39,  doc_type: review, sha256: a45db692abad62f38efbef242f728cf2ea3fc894a48c16fbdc8201417ef4a6fa, category: fda_image_text_table,      note: "SB17 BMER, studies table (image page)"}
+  - {id: g12, doc_id: 183, page: 81,  doc_type: review, sha256: 51516759220bdde66a304b6818d95d27f9406d05fe46b46be1bd1fef674f83c3, category: fda_image_numeric_table,   note: "CT-P43 BMER, exposure table (image page)"}
+  - {id: g13, doc_id: 183, page: 90,  doc_type: review, sha256: 51516759220bdde66a304b6818d95d27f9406d05fe46b46be1bd1fef674f83c3, category: fda_image_numeric_table,   note: "CT-P43 BMER, demographics (image page)"}
+  - {id: g14, doc_id: 183, page: 96,  doc_type: review, sha256: 51516759220bdde66a304b6818d95d27f9406d05fe46b46be1bd1fef674f83c3, category: fda_image_numeric_table,   note: "CT-P43 BMER, SAE by SOC (image page)"}
+  - {id: g15, doc_id: 183, page: 86,  doc_type: review, sha256: 51516759220bdde66a304b6818d95d27f9406d05fe46b46be1bd1fef674f83c3, category: fda_image_prose,           note: "CT-P43 BMER, reviewer comments with redactions (image page)"}
+  - {id: g16, doc_id: 198, page: 37,  doc_type: review, sha256: a45db692abad62f38efbef242f728cf2ea3fc894a48c16fbdc8201417ef4a6fa, category: fda_image_prose,           note: "SB17 BMER, regulatory history bullets (image page)"}
+  - {id: g17, doc_id: 141, page: 5,   doc_type: review, sha256: 840187d6c113d7c39d00891dcfb1db3d850ec91e9f5ff896c8a715648f747bd5, category: fda_image_checkbox,        note: "BMAB1200 chemistry review, checkbox form (image page)"}
+  - {id: g18, doc_id: 143, page: 18,  doc_type: review, sha256: da445e2fae0be1b6478783ecdc7661cfa9647cbabace84b8e23dd8ee58e84325, category: fda_digital_table,         note: "BMAB1200 BMER, digital table"}
+  - {id: g19, doc_id: 134, page: 1,   doc_type: label, sha256: d852c2c8597a1e66c248033bb367f44a0384c721a93db8b018197460148e9580, category: fda_label_table,           note: "BMAB1200 label, highlights page"}
+  - {id: g20, doc_id: 169, page: 31,  doc_type: label, sha256: d7d4673606f5d8654a39363f71d12c19c3cc9f6dbe48fbcaae99fb259fa7a3ff, category: fda_label_table,           note: "CT-P43 label, clinical studies table"}
+  - {id: g21, doc_id: 90,  page: 109, doc_type: review, sha256: bbaa70e16c7a023a1b5aee30d16702cc5b1aa2846487afcbad98c84ece0bf604, category: fda_legacy_scan,           note: "Stelara 2009 review, scan with OCR layer"}
+  - {id: g22, doc_id: 90,  page: 37,  doc_type: review, sha256: bbaa70e16c7a023a1b5aee30d16702cc5b1aa2846487afcbad98c84ece0bf604, category: fda_legacy_scan,           note: "Stelara 2009 review, scan with OCR layer"}
+  - {id: g23, doc_id: 90,  page: 145, doc_type: review, sha256: bbaa70e16c7a023a1b5aee30d16702cc5b1aa2846487afcbad98c84ece0bf604, category: fda_legacy_scan,           note: "Stelara 2009 review, scan with OCR layer"}
+  - {id: g24, doc_id: 199, page: 4,   doc_type: review, sha256: 2bd67f99c676e92cd989bbd238212076b060570e6986f106d3406625e13392ff, category: fda_broken_text_layer,     note: "SB17 nonproprietary name review, font encoding broken"}
+  - {id: g25, doc_id: 176, page: 41,  doc_type: label, sha256: 52899e255fda388d225350fc574b6d1d555cc66602deb0daa02a2e32e43dd858, category: fda_artwork,               note: "CT-P43 carton/container artwork"}
+  - {id: g26, doc_id: 291, page: 17,  doc_type: product_monograph, sha256: 692365dcf3c0b32a2fd7b8c43a8d99545f0a263f36f10866ce6f0fd3d4e2a403, category: hc_pm_table,               note: "SB17 HC product monograph table"}
+  - {id: g27, doc_id: 293, page: 19,  doc_type: product_monograph, sha256: 3aa51d9eafd097ee72e841a3d5776190bb0e5631b53d456f4db8d6d5bdb5c7cd, category: hc_pm_table,               note: "CT-P43 HC product monograph table"}
+  - {id: g28, doc_id: 294, page: 21,  doc_type: product_monograph, sha256: e2be082cde032a66d040502842807c09563b83d36cccc23e6ead7ecc90359aa5, category: hc_pm_table,               note: "BMAB1200 HC product monograph table"}
+  - {id: g29, doc_id: 261, page: 4,   doc_type: guidance, sha256: 6d2ad7d845516770adaddd4d80a7660dff81fab14d0be220aa6b7d7791a829f5, category: fda_draft_guidance_line_numbers, note: "FDA draft guidance with margin line numbers"}
+  - {id: g30, doc_id: 249, page: 5,   doc_type: guidance, sha256: 99c3bf12089c79822b67170b3f8b17bf9e30c7bbf8be36b0585a68f9badf3b4e, category: hc_guidance,               note: "HC biosimilar guidance page"}

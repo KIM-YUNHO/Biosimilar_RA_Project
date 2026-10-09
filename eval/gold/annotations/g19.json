@@ -1,0 +1,132 @@
+{
+ "id": "g19",
+ "text": [
+  "HIGHLIGHTS OF PRESCRIBING INFORMATION",
+  "These highlights do not include all the information needed to use YESINTEK safely and effectively. See full prescribing information for YESINTEK.",
+  "YESINTEK TM (ustekinumab-kfce) injection, for subcutaneous or intravenous use",
+  "Initial U.S. Approval: 2024",
+  "YESINTEK TM (ustekinumab-kfce) is biosimilar* to STELARA ® (ustekinumab).",
+  "----------------------------INDICATIONS AND USAGE---------------------------",
+  "YESINTEK is a human interleukin-12 and -23 antagonist indicated for the treatment of:",
+  "Adult patients with:",
+  "moderate to severe plaque psoriasis (PsO) who are candidates for phototherapy or systemic therapy. (1.1)",
+  "active psoriatic arthritis (PsA). (1.2)",
+  "moderately to severely active Crohn's disease (CD). (1.3)",
+  "moderately to severely active ulcerative colitis. (1.4)",
+  "Pediatric patients 6 years and older with:",
+  "moderate to severe plaque psoriasis, who are candidates for phototherapy or systemic therapy. (1.1)",
+  "active psoriatic arthritis (PsA). (1.2)",
+  "----------------------DOSAGE AND ADMINISTRATION-----------------------",
+  "Psoriasis Adult Subcutaneous Recommended Dosage (2.1):",
+  "Psoriasis Pediatric Patients (6 to 17 years old) Subcutaneous Recommended Dosage (2.1): Weight-based dosing is recommended at the initial dose, 4 weeks later, then every 12 weeks thereafter.",
+  "Psoriatic Arthritis Adult Subcutaneous Recommended Dosage (2.2):",
+  "The recommended dosage is 45 mg administered subcutaneously initially and 4 weeks later, followed by 45 mg administered subcutaneously every 12 weeks.",
+  "For patients with co-existent moderate-to-severe plaque psoriasis weighing greater than 100 kg, the recommended dosage is 90 mg administered subcutaneously initially and 4 weeks later, followed by 90 mg administered subcutaneously every 12 weeks.",
+  "Psoriatic Arthritis Pediatric (6 to 17 years old) Subcutaneous Recommended Dosage (2.2): Weight-based dosing is recommended at the initial dose, 4 weeks later, then every 12 weeks thereafter.",
+  "Crohn's Disease and Ulcerative Colitis Initial Adult Intravenous Recommended Dosage (2.3): A single intravenous infusion using weight-based dosing:",
+  "Crohn's Disease and Ulcerative Colitis Maintenance Adult Subcutaneous Recommended Dosage (2.3): A subcutaneous 90 mg dose 8 weeks after the initial intravenous dose, then every 8 weeks thereafter.",
+  "---------------------DOSAGE FORMS AND STRENGTHS----------------------",
+  "Subcutaneous Injection (3)",
+  "Injection: 45 mg/0.5 mL or 90 mg/mL solution in a single-dose prefilled syringe",
+  "Injection: 45 mg/0.5 mL solution in a single-dose vial",
+  "Intravenous Infusion (3)",
+  "Injection: 130 mg/26 mL (5 mg/mL) solution in a single-dose vial (3)",
+  "---------------------------CONTRAINDICATIONS----------------------------------",
+  "Clinically significant hypersensitivity to ustekinumab products or to any of the excipients in YESINTEK. (4)",
+  "-----------------------WARNINGS AND PRECAUTIONS------------------------",
+  "Infections: Serious infections have occurred. Avoid starting YESINTEK during any clinically important active infection. If a serious infection or clinically significant infection develops, discontinue YESINTEK until the infection resolves. (5.1)",
+  "Theoretical Risk for Particular Infections: Serious infections from mycobacteria, salmonella and Bacillus Calmette-Guerin (BCG) vaccinations have been reported in patients genetically deficient in IL12/IL-23. Consider diagnostic tests for these infections as dictated by clinical circumstances. (5.2).",
+  "Tuberculosis (TB): Evaluate patients for TB prior to initiating treatment with YESINTEK. Initiate treatment of latent TB before administering YESINTEK. (5.3).",
+  "Malignancies: Ustekinumab products may increase risk of malignancy. The safety of ustekinumab products in patients with a history of or a known malignancy has not been evaluated. (5.4)",
+  "Hypersensitivity Reactions: If an anaphylactic or other clinically significant hypersensitivity reaction occurs, institute appropriate therapy and discontinue YESINTEK. (5.5)",
+  "Posterior Reversible Encephalopathy Syndrome (PRES): If PRES is suspected, treat promptly and discontinue YESINTEK. (5.6)",
+  "Immunizations: Avoid use of live vaccines in patients during treatment with YESINTEK. (5.7)",
+  "Noninfectious Pneumonia: Cases of interstitial pneumonia, eosinophilic pneumonia and cryptogenic organizing pneumonia have been reported during post-approval use of ustekinumab products. If diagnosis is confirmed, discontinue YESINTEK and institute appropriate treatment. (5.8)",
+  "------------------------------ADVERSE REACTIONS-------------------------------",
+  "Most common adverse reactions are:",
+  "Psoriasis (≥3%): nasopharyngitis, upper respiratory tract infection, headache, and fatigue. (6.1)",
+  "Crohn's Disease, induction (≥3%): vomiting. (6.1)",
+  "Crohn's Disease, maintenance (≥3%): nasopharyngitis, injection site erythema, vulvovaginal candidiasis/mycotic infection, bronchitis, pruritus, urinary tract infection, and sinusitis. (6.1)",
+  "Ulcerative colitis, induction (≥3%): nasopharyngitis (6.1)",
+  "Ulcerative colitis, maintenance (≥3%): nasopharyngitis, headache, abdominal pain, influenza, fever, diarrhea, sinusitis, fatigue, and nausea (6.1)",
+  "To report SUSPECTED ADVERSE REACTIONS, contact Biocon Biologics at 1-833-986-1468 or FDA at 1-800-FDA-1088 or www.fda.gov/medwatch.",
+  "See 17 for PATIENT COUNSELING INFORMATION and Medication Guide.",
+  "*Biosimilar means that the biological product is approved based on data demonstrating that it is highly similar to an FDA-approved biological product, known as a reference product, and that there are no clinically meaningful differences between the biosimilar product and the reference product. Biosimilarity of YESINTEK has been demonstrated for the condition(s) of use (e.g., indication(s), dosing regimen(s)), strength(s), dosage form(s), and route(s) of administration described in its Full Prescribing Information.",
+  "Revised: 11/2024"
+ ],
+ "tables": [
+  [
+   [
+    "Weight Range (kilograms)",
+    "Recommended Dosage"
+   ],
+   [
+    "less than or equal to 100 kg",
+    "45 mg administered subcutaneously initially and 4 weeks later, followed by 45 mg administered subcutaneously every 12 weeks"
+   ],
+   [
+    "greater than 100 kg",
+    "90 mg administered subcutaneously initially and 4 weeks later, followed by 90 mg administered subcutaneously every 12 weeks"
+   ]
+  ],
+  [
+   [
+    "Weight Range (kilograms)",
+    "Dose"
+   ],
+   [
+    "less than 60 kg",
+    "0.75 mg/kg"
+   ],
+   [
+    "60 kg to 100 kg",
+    "45 mg"
+   ],
+   [
+    "greater than 100 kg",
+    "90 mg"
+   ]
+  ],
+  [
+   [
+    "Weight Range (kilograms)",
+    "Dose"
+   ],
+   [
+    "less than 60 kg",
+    "0.75 mg/kg"
+   ],
+   [
+    "60 kg or more",
+    "45 mg"
+   ],
+   [
+    "greater than 100 kg with co- existent moderate-to-severe plaque psoriasis",
+    "90 mg"
+   ]
+  ],
+  [
+   [
+    "Weight Range (kilograms)",
+    "Dose"
+   ],
+   [
+    "up to 55 kg",
+    "260 mg (2 vials)"
+   ],
+   [
+    "greater than 55 kg to 85 kg",
+    "390 mg (3 vials)"
+   ],
+   [
+    "greater than 85 kg",
+    "520 mg (4 vials)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Reference ID: 5487421",
+  "1"
+ ],
+ "note": "Digital two-column label highlights; reading order and the four dosage tables checked."
+}

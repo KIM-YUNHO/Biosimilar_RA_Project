@@ -1,0 +1,127 @@
+{
+ "id": "g10",
+ "text": [
+  "(ERCP) showed a tight stenosis of the common hepatic duct with post-stenotic dilation of the bile ducts. The patient underwent sphincterotomy of Vater papilla and stenting of the common bile duct. The events were considered resolved on Study Day 172, and the patient was discharged from the hospital on the same day.",
+  "The study drug was permanently discontinued because of the SAEs of abdominal pain and jaundice cholestatic. The subject had received 3 doses in the original Week 28 study and the last dose of the study drug was on Study Day 108. She was withdrawn early from the study on Study Day 199 at the discretion of the investigator because of medical or administrative reasons.",
+  "This reviewer agrees with the investigator and the Applicant that possible causality of the SAEs to the study drug could not be excluded, due to the temporal association, though 'cholestasis of the intrahepatic biliary tract' and tight stenosis of the bile duct could have contributed to them as well.",
+  "Table 35. Relevant Laboratory Values",
+  "Source; Cinical Study Report.",
+  "Abbreviations: ALP, alkaline phosphatase; ALT, alanine aminotransferase; AST, aspartate aminotransferase; GGT, gamma glutamyltransferase; RR, reference range",
+  "Note: Bolded text denotes that the laboratory value was out of the RR.",
+  "During TP3, two subjects reported two SAEs. Neither of these SAEs were considered related to study drug treatment.",
+  "Table 36. SAEs in Subjects with Psoriasis in TP3 (Week 28-52)"
+ ],
+ "tables": [
+  [
+   [
+    "Visit",
+    "Study Day",
+    "Date",
+    "ALT (U/L) (RR: 10 to 33)",
+    "AST (U/L) (RR: 10 to 36)",
+    "GGT (U/L) (RR: 5 to 32)",
+    "ALP (U/L) (RR: 30 to 115)",
+    "Direct Bilirubin (μmol/L) (RR: 0 to 6.8)"
+   ],
+   [
+    "Screening",
+    "-18",
+    "(b) (4)",
+    "31",
+    "28",
+    "69",
+    "107",
+    "3.4"
+   ],
+   [
+    "Baseline",
+    "1",
+    "24",
+    "23",
+    "83",
+    "117",
+    "3.4"
+   ],
+   [
+    "Week 4",
+    "31",
+    "24",
+    "23",
+    "79",
+    "118",
+    "3.4"
+   ],
+   [
+    "Week 8",
+    "66",
+    "51",
+    "51",
+    "143",
+    "119",
+    "3.4"
+   ],
+   [
+    "Week 12",
+    "87",
+    "72",
+    "47",
+    "431",
+    "197",
+    "3.4"
+   ],
+   [
+    "Week 16",
+    "108",
+    "45",
+    "40",
+    "628",
+    "281",
+    "4.1"
+   ],
+   [
+    "Week 20",
+    "143",
+    "566",
+    "347",
+    "837",
+    "419",
+    "10.9"
+   ],
+   [
+    "",
+    "",
+    "",
+    "ALT (U/L) (RR: <55)a",
+    "AST (U/L) (RR: 5 to 34)a",
+    "GGT (U/L) (RR: 9 to 36)a",
+    "ALP (U/L) (RR: 40 to 150)a",
+    "Bilirubin (mg/dL) (RR: 0.2 to 1.2)a"
+   ],
+   [
+    "",
+    "160",
+    "(b) (4)",
+    "328",
+    "166",
+    "622",
+    "341",
+    "3.86"
+   ],
+   [
+    "",
+    "164",
+    "218",
+    "122",
+    "—",
+    "—",
+    "4.43"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5487074",
+  "75"
+ ],
+ "note": "Image page. Date column is redacted ((b) (4), spans rows). 'Cinical' is a typo in the source."
+}

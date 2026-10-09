@@ -1,0 +1,85 @@
+{
+ "id": "g14",
+ "text": [
+  "Source: Clinical Reviewer",
+  "Respiratory failure: Subject (b) (6) was a 44-year-old white male in the Switched to CT-P43 group, and his medical history included duodenal ulcer, plaque psoriasis, psoriatic arthritis, gastrooesophageal reflux disease, gilbert's syndrome, head injury, hypercholesterolaemia, intervertebral disc disorder, intracranial haematoma, psoriatic arthropathy, and spinal osteoarthritis. His concomitant medications included meloxicam and phospholipid soybean.",
+  "On Day 84 during TP1 on EU-Stelara, the subject experienced a Grade 3 SAE of subarachnoid haemorrhage. On Day 113 during TP2 on CT-P43, a TEAE of a venous angioma of brain [developmental venous anomalies - left temporal lobe none additional information] (Grade 1) was recorded. On Days 113 and 197 he experienced a gamma-glutamyltransferase increased [ggt increase] (Grade 1).",
+  "On Day 228 it was reported that he experienced a Grade 2 TEAE of \"pneumonia viral\", and he received cefuroxime, clarithromycin, fenoterol hydrobromide: ipratropium bromide, hydrocortisone, inosine pranobex, metamizole, and althea officinalis. The AE narrative stated that the AE ended on Day 248 with a final outcome of recovered/resolved. However, on Day 249 he was hospitalized with a Grade 3 SAE of respiratory failure. The chest x-ray, CT scan, and high resolution CT scan showed no evidence of pneumonia (\"no signs of pulmonary embolism, pulmonary parenchyma without densities, no evidence of fluid in the pleural cavities, mediastinal structures, large vessels of the chest were normal, no enlargement of the lymph nodes of the pulmonary hila and mediastinum were found, and on the borderline of the test scope, there was an increased steatosis in the liver parenchyma\"). The subject was given TEAE medications of fenofibrate for hypertriglyceridemia (Grade 2), nebivolol and zofenopril for hypertension (Grade 2), metformin for glucose tolerance impaired (Grade 1). Arrhythmia supraventricular (Grade 2) and myocardial ischaemia (Grade 2) were also reported. He was also started on fluticasone propionate:salmetrol xinafoate, ciclesonide, and salbutamol for asthma (Grade 2) and discharged from the hospital on Day 257. The action taken with the study drug was drug withdrawn.",
+  "Clinical Reviewer's Comment: The Applicant assessed the respiratory failure as possibly related to the study drug, citing that the \"onset of date is one day after resolution of another adverse event of viral pneumonia.\" This reviewer's determination on causality for the SAE of respiratory"
+ ],
+ "tables": [
+  [
+   [
+    "System Organ Class Preferred Term",
+    "EU-Stelara",
+    "CT-P43"
+   ],
+   [
+    "TP1 (N=253) n (%)",
+    "TP2 (N=125) n (%)",
+    "TP1 (N=256) n (%)",
+    "TP2 (N=377) n (%)"
+   ],
+   [
+    "Reproductive system and breast disorders"
+   ],
+   [
+    "Menstrual disorder",
+    "1 (0.4%)",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "0 (0.0%)"
+   ],
+   [
+    "Neoplasms, benign, malignant, and unspecified"
+   ],
+   [
+    "Colon adenoma",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "1 (0.4%)"
+   ],
+   [
+    "Tubular breast carcinoma",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "1 (0.4%)"
+   ],
+   [
+    "Psychiatric disorders"
+   ],
+   [
+    "Bipolar disorder",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "1 (0.4%)",
+    "0 (0.0%)"
+   ],
+   [
+    "Pregnancy, puerperium, and perinatal conditions"
+   ],
+   [
+    "Abortion spontaneous",
+    "1 (0.4%)",
+    "0 (0.0%)",
+    "0 (0.0%)",
+    "0 (0.0%)"
+   ],
+   [
+    "All",
+    "4 (1.6%)",
+    "3 (2.4%)",
+    "4 (1.6%)",
+    "7 (1.9%)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5454548",
+  "81"
+ ],
+ "note": "Image page; all cells checked. Subject ID redacted as (b) (6)."
+}

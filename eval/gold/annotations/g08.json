@@ -1,0 +1,41 @@
+{
+ "id": "g08",
+ "text": [
+  "generally be considered unnecessary to support a demonstration of interchangeability for proposed ustekinumab interchangeable biosimilar products.",
+  "At a BPD Type 4 meeting on October 26, 2023, the format and content of a complete application for an original biosimilar biological product application under the Program submitted under 351(k) of the PHS Act was discussed.",
+  "2.2. Studies Submitted by the Applicant",
+  "Refer to the Product Quality review, including the Comparative Analytical Assessment (CAA) Chapter for information regarding comparative analytical studies provided to support a demonstration of biosimilarity.",
+  "Table 2. BAT2206 Clinical Studies Submitted"
+ ],
+ "tables": [
+  [
+   [
+    "Study Identity",
+    "National Clinical Trial (NCT) no.",
+    "",
+    "Study Objective",
+    "Study Design",
+    "Study Population",
+    "Treatment Groups"
+   ],
+   [
+    "PK Similarity Study"
+   ],
+   [
+    "BM12H-NHV-01-G-01",
+    "",
+    "",
+    "Primary Objective: To establish PK similarity between Bmab1200 and US-Stelara, Bmab1200 and EU-Stelara, and EU-Stelara and US-Stelara after single 45 mg SC injection in healthy subjects. Primary Endpoint: AUC0-inf and Cmax of study drugs following a single 45 mg SC injection.",
+    "Randomized, double-blind, 3-arm, parallel design study",
+    "Healthy Subjects",
+    "Bmab1200, US-Stelara and EU-Stelara"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5487074",
+  "25"
+ ],
+ "note": "Image page. 'BAT2206' in the caption is in the source (FDA copy error). Table has an unlabeled empty third column."
+}

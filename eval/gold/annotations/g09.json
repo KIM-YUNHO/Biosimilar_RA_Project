@@ -1,0 +1,123 @@
+{
+ "id": "g09",
+ "text": [
+  "Source: Reviewer's analysis",
+  "SD = Standard Deviation.",
+  "Other Product-Specific Safety Concerns",
+  "Deaths",
+  "There were no deaths reported in BM12H-PSO-03-G-02.",
+  "Treatment Emergent Adverse Events",
+  "Serious adverse events (SAE)s",
+  "Overall, 7 subjects (1.8%) experienced 9 serious treatment emergent adverse events (TEAEs) through the study.",
+  "In TP1, four subjects reported 5 SAEs, none of which was considered related to study drug treatment.",
+  "Table 33. SAEs in Subjects with Psoriasis in TP1 (Up to Week 16)",
+  "Source: Reviewer's analysis"
+ ],
+ "tables": [
+  [
+   [
+    "Light drinker (less than 2 drinks per day)",
+    "73 (38.2)",
+    "71 (36.8)",
+    "144 (37.5)"
+   ],
+   [
+    "Moderate drinker (2-4 drinks per day)",
+    "1 (0.5)",
+    "2 (1.0)",
+    "3 (0.8)"
+   ],
+   [
+    "Ex-drinker",
+    "1 (0.5)",
+    "0",
+    "1 (0.3)"
+   ],
+   [
+    "Non drinker",
+    "116 (60.7)",
+    "119 (61.7)",
+    "235 (61.2)"
+   ],
+   [
+    "Unknown",
+    "0",
+    "1 (0.5)",
+    "1 (0.3)"
+   ],
+   [
+    "Previous exposure to biologic-based therapies"
+   ],
+   [
+    "No prior exposure to biologics",
+    "165 (86.4)",
+    "166 (86.0)",
+    "331 (86.2)"
+   ],
+   [
+    "Prior exposure to biologics",
+    "26 (13.6)",
+    "27 (14.0)",
+    "53 (13.8)"
+   ],
+   [
+    "Concomitant psoriatic arthritis"
+   ],
+   [
+    "Concomitant psoriatic arthritis",
+    "30 (15.7)",
+    "32 (16.6)",
+    "62 (16.1)"
+   ],
+   [
+    "No Concomitant psoriatic arthritis",
+    "161 (84.3)",
+    "161 (83.4)",
+    "322 (83.9)"
+   ]
+  ],
+  [
+   [
+    "Preferred Term",
+    "Bmab 1200 N = 191 n(%)",
+    "EU-Stelara N = 193 n(%)"
+   ],
+   [
+    "Any SAE",
+    "3 (1.6)",
+    "1 (0.5)"
+   ],
+   [
+    "Endometrial adenocarcinoma",
+    "1 (0.5)",
+    "0 (0.0)"
+   ],
+   [
+    "Squamous cell carcinoma of the tongue",
+    "1 (0.5)",
+    "0 (0.0)"
+   ],
+   [
+    "Acute myocardial infarction",
+    "1 (0.5)",
+    "0 (0.0)"
+   ],
+   [
+    "Cardiac failure",
+    "1 (0.5)",
+    "0 (0.0)"
+   ],
+   [
+    "Cholecystitis acute",
+    "0 (0.0)",
+    "1 (0.5)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5487074",
+  "73"
+ ],
+ "note": "Image page; every numeric cell checked against the rendered page (2026-10-09 review)."
+}

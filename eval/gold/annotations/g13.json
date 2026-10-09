@@ -1,0 +1,144 @@
+{
+ "id": "g13",
+ "text": [
+  "Source: Clinical Reviewer",
+  "Clinical Reviewer's Comment: The demographic and disease characteristics, in terms of age, sex, race, ethnicity, and mean baseline body weight, were similar across the two treatment arms, EU-Stelara and CT-P43, for Treatment Period I (TP1) and for Treatment Period II (TP2).",
+  "Overall AE profile",
+  "The phase 3 clinical study, Study CT-P43 3.1, provides the main comparative data for the safety review. During TP1, the overall rate of TEAEs was higher for the CT-P43 treatment group (37.1% - 155 events in 95 subjects), compared to the EU-Stelara treatment group (29.6% - 108 events in 75 subjects) (Table 20). The overall rates of SAEs were similar 1.6% (4 subjects) for the CT-P43 treatment and 1.6% (4 subjects) for the EU-Stelara treatment groups. No subjects discontinued treatment due to an AE during TP1.",
+  "During TP2, TEAEs were reported in 34.0% (144 events in 86 subjects) for the CT-P43 maintenance, in 40.8% (78 events in 51 subjects) for the EU-Stelara maintenance and in 41.9% (95 events in 52 subjects) for the Switched to CT-P43 treatment groups. The overall rates of SAEs were similar in the CT-P43 maintenance, EU-Stelara maintenance (2.4%), and Switched to CT-P43 (1.6%) groups. However, slightly more subjects discontinued due to an AE in the CT-P43 maintenance group (2.0%) compared to the EU-Stelara maintenance (0.8%) and Switched to CT-P43 (TP2) (0.8%) groups (Table 36). The details for the discontinuations are discussed further in the section Dropouts and Discontinuations below."
+ ],
+ "tables": [
+  [
+   [
+    "Demographic Characteristics",
+    "TP1",
+    "TP2"
+   ],
+   [
+    "EU-Stelara (n=253)",
+    "CT-P43 (n=256)",
+    "EU-Stelara (n=125)",
+    "CT-P43 (n=377)"
+   ],
+   [
+    "Mean",
+    "42.18",
+    "42.55",
+    "42.99",
+    "42.13"
+   ],
+   [
+    "Standard Deviation",
+    "19",
+    "19",
+    "20",
+    "19"
+   ],
+   [
+    "Sex"
+   ],
+   [
+    "F",
+    "80 (31.6%)",
+    "95 (37.1%)",
+    "39 (31.2%)",
+    "133 (35.3%)"
+   ],
+   [
+    "M",
+    "173 (68.4%)",
+    "161 (62.9%)",
+    "86 (68.8%)",
+    "244 (64.7%)"
+   ],
+   [
+    "Baseline Body Weight (kg)"
+   ],
+   [
+    "Mean",
+    "86",
+    "85",
+    "86",
+    "85"
+   ],
+   [
+    "Standard Deviation",
+    "1.2",
+    "1.2",
+    "1.7",
+    "1.0"
+   ],
+   [
+    "Race"
+   ],
+   [
+    "Asian",
+    "23 (9.1%)",
+    "25 (9.8%)",
+    "10 (8.0%)",
+    "34 (9.0%)"
+   ],
+   [
+    "White",
+    "230 (90.9%)",
+    "231 (90.2%)",
+    "115 (92.0%)",
+    "343 (91.0%)"
+   ],
+   [
+    "Ethnicity"
+   ],
+   [
+    "Hispanic or Latino",
+    "1 (0.4%)",
+    "1 (0.4%)",
+    "1 (0.8%)",
+    "1 (0.3%)"
+   ],
+   [
+    "Not Hispanic or Latino",
+    "252 (99.6%)",
+    "255 (99.6%)",
+    "124 (99.2%)",
+    "376 (99.7%)"
+   ],
+   [
+    "Country"
+   ],
+   [
+    "Poland",
+    "188 (74.3%)",
+    "189 (73.8%)",
+    "91 (72.8%)",
+    "283 (75.1%)"
+   ],
+   [
+    "Ukraine",
+    "36 (14.2%)",
+    "37 (14.5%)",
+    "21 (16.8%)",
+    "52 (13.8%)"
+   ],
+   [
+    "Korea, South",
+    "23 (9.1%)",
+    "25 (9.8%)",
+    "10 (8.0%)",
+    "34 (9.0%)"
+   ],
+   [
+    "Estonia",
+    "6 (2.4%)",
+    "5 (2/0%)",
+    "3 (2.4%)",
+    "8 (2.1%)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5454548",
+  "75"
+ ],
+ "note": "Image page; all 20 table rows checked against the rendered page. '5 (2/0%)' is in the source."
+}

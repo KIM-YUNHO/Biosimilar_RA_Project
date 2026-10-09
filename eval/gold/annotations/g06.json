@@ -1,0 +1,121 @@
+{
+ "id": "g06",
+ "text": [
+  "Table 5. Statistical Comparison of Primary Pharmacokinetic Parameters between Eksunbi and EU Stelara (Pharmacokinetic Analysis Set, Study SB17-1001)",
+  "A = Eksunbi; B = EU Stelara",
+  "CI = confidence interval; Geometric LSMean = geometric least squares mean; N = number of subjects in Pharmacokinetic Analysis Set; n = number of subjects in the analysis; PK Parameter = pharmacokinetic parameter",
+  "Samples for PK analysis (a total of 23 PK samples from 23 subjects) were excluded due to major protocol deviation (centrifuged in low speed) from the PK parameters calculation.",
+  "The geometric LSMean ratio (90% CI) of Eksunbi and EU sourced Stelara for AUCinf and Cmax were 0.99 (0.90 to 1.08) and 0.90 (0.82 to 0.98), respectively. These values for the 90% CIs were within the predefined equivalence margin of 0.8 to 1.25 however the geometric LS Mean ratio (90% CI) of Eksunbi and EU Stelara for Cmax was 0.90 (0.82 to 0.98), which is within the pre-defined equivalence margin, but does not include 1.",
+  "The statistical comparison between Eksunbi and US Stelara and between EU Stelara and US Stelara showed that the corresponding 90% CIs of the geometric LS Mean ratios of the AUCinf and Cmax were within the pre-defined equivalence margin. Therefore, the PK profiles between Eksunbi and US Stelara and between EU Stelara and US Stelara were equivalent.",
+  "According to the Population-PK analyses performed in patients with PsO and PsA, patient's body weight is considered as the primary covariate affecting PK parameters of apparent clearance (CL/F), and apparent volume of distribution (V/F) of ustekinumab [Zhu et al., 2009; Zhu et al., 2010]. Generally, heavier patients tend to have lower serum ustekinumab concentrations at each dose [Lebwohl et al., 2010]. Based on the baseline comparability of demographics and baseline characteristics between the three treatment groups in Study SB17-1001, body weight was identified as a statistically different variable between the treatment groups (p-value = 0.0199).",
+  "Table 6. Baseline Comparability of Demographic and Baseline Characteristics between Main Treatment Group (Randomised Set, Study SB17-1001) (Ad-hoc Analysis)",
+  "BMI = body mass index",
+  "Accordingly, an ad-hoc analysis of covariance (ANCOVA) for the primary PK parameters with body weight as a covariate was performed after noting the 90% CI did not include 1."
+ ],
+ "tables": [
+  [
+   [
+    "PK Parameter",
+    "Treatment",
+    "N",
+    "n",
+    "Geometric LSMean",
+    "Ratio A/B",
+    "90% CI of Ratio"
+   ],
+   [
+    "AUCinf (ng·h/mL)",
+    "SB17",
+    "67",
+    "62",
+    "4958100",
+    "0.99",
+    "0.90; 1.08"
+   ],
+   [
+    "EU Stelara",
+    "67",
+    "64",
+    "5020000"
+   ],
+   [
+    "Cmax (ng/mL)",
+    "SB17",
+    "67",
+    "62",
+    "4882",
+    "0.90",
+    "0.82; 0.98"
+   ],
+   [
+    "EU Stelara",
+    "67",
+    "64",
+    "5433"
+   ]
+  ],
+  [
+   [
+    "Variables",
+    "Test",
+    "Degrees of Freedom (df)",
+    "Test Statistics",
+    "P-value"
+   ],
+   [
+    "Age (years)",
+    "F-test",
+    "2",
+    "0.581",
+    "0.5604"
+   ],
+   [
+    "Gender",
+    "Chi-squared test",
+    "2",
+    "0.042",
+    "0.9792"
+   ],
+   [
+    "Height (cm)",
+    "F-test",
+    "2",
+    "0.290",
+    "0.7486"
+   ],
+   [
+    "Body weight (kg)",
+    "F-test",
+    "2",
+    "3.996",
+    "0.0199"
+   ],
+   [
+    "BMI (kg/m2)",
+    "F-test",
+    "2",
+    "3.002",
+    "0.0520"
+   ],
+   [
+    "Race",
+    "Fisher's exact test",
+    "",
+    "",
+    "0.8075"
+   ],
+   [
+    "Ethnicity",
+    "Fisher's exact test",
+    "",
+    "",
+    "1.0000"
+   ]
+  ]
+ ],
+ "furniture": [
+  "EMA/371773/2024",
+  "Medicinal product no longer authorised"
+ ],
+ "note": "Both tables are bitmaps under a diagonal text watermark; transcribed from the rendered page."
+}

@@ -1,0 +1,100 @@
+{
+ "id": "g12",
+ "text": [
+  "were initially randomized to the CT-P43 group for TP1 continued their treatment for TP2 with CT-P43. At Week 28, the subjects who achieved at least PASI 75 continued further study drug administration in all groups.",
+  "Extent of Exposure",
+  "The safety database includes a total of 588 participants who received at least one dose of CT-P43 (208 healthy individuals and 380 subjects with PsO).",
+  "Healthy subjects: 602 participants received a single dose of 45 mg/0.5mL product subcutaneously.",
+  "o CT-P43, n=208 (n=14, evaluated up to Day 29; n=80, evaluated up to Day 127; n=114, evaluated up to Day 113)",
+  "o EU-Stelara, n=208 (n=116, evaluated up to Day 29; n=80, evaluated up to Day 127; n=110, evaluated up to Day 113)",
+  "o US-Stelara n=186 (n=79, evaluated up to Day 127; n=107, evaluated up to Day 113)",
+  "Subjects with psoriasis: 509 subjects received at least one dose of 45mg/0.5mL product subcutaneously followed by another dose 4 weeks later, and then every 12 weeks thereafter up to Week 40. Those receiving EU-Stelara were re-randomized 1:1 to receive either CT-P43 or EU-Stelara at Week 16.",
+  "o CT-P43, n=256 (during Treatment Period 1); n=377 (during Treatment Period 2)",
+  "o EU-Stelara, n=253 (during Treatment Period 1); n= 125 (during Treatment Period 2)",
+  "Median treatment durations were comparable across the treatment groups in Study CT-P43 3.1 (Table 18). A similar proportion of subjects in the CT-P43 treatment group received all 5 doses of the study medication (95.3%), compared to the EU-Stelara (96.8%) group. The mean number of doses received was 5.0 for the EU-Stelara (TP1) - EU-Stelara (TP2) and EU-Stelara (TP1) - CT-P43 (TP2) treatment groups and 4.9 for the CT-P43 (TP1) – CT-P43 (TP2) groups.",
+  "Table 34: Exposure to Study Medications, CT-P43 3.1 (Safety Analysis Set)"
+ ],
+ "tables": [
+  [
+   [
+    "",
+    "Stelara (TP1) - Stelara (TP2)",
+    "Stelara (TP1) -CT-P43 (TP2)",
+    "CT-P43 (TP1) -CT-P43 (TP2)",
+    "Stelara (TP1)",
+    "CT-P43 (TP1)"
+   ],
+   [
+    "Number of subjects",
+    "125",
+    "124",
+    "253",
+    "4",
+    "3"
+   ],
+   [
+    "Number of Injections (Duration of Exposure in Weeks)",
+    "Mean",
+    "5 (52)",
+    "5 (52)",
+    "4.9 (51)",
+    "1.5 (10)",
+    "1.7 (12)"
+   ],
+   [
+    "Std Dev",
+    "0.3 (3)",
+    "0.2 (2)",
+    "0.3 (3)",
+    "0.6 (6)",
+    "0.6 (6)"
+   ],
+   [
+    "Min",
+    "3 (28)",
+    "4 (40)",
+    "3 (28)",
+    "1 (4)",
+    "1 (4)"
+   ],
+   [
+    "Quantiles 25",
+    "5 (52)",
+    "5 (52)",
+    "5 (52)",
+    "1 (4)",
+    "1 (4)"
+   ],
+   [
+    "Median",
+    "5 (52)",
+    "5 (52)",
+    "5 (52)",
+    "1.5 (10)",
+    "2 (16)"
+   ],
+   [
+    "Quantiles 75",
+    "5 (52)",
+    "5 (52)",
+    "5 (52)",
+    "2 (16)",
+    "2 (16)"
+   ],
+   [
+    "Max",
+    "5 (52)",
+    "5 (52)",
+    "5 (52)",
+    "2 (16)",
+    "2 (16)"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Biosimilar Multidisciplinary Evaluation and Review (BMER)",
+  "Reference ID: 5454548",
+  "66"
+ ],
+ "note": "Image page; transcribed from the rendered page. Row label spans 7 rows."
+}

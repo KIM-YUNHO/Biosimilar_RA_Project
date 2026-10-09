@@ -1,0 +1,94 @@
+{
+ "id": "g23",
+ "text": [
+  "Table 24. Summary of ACR 20 Response at Week 24 (Sensitivity Analysis 4)",
+  "Source: 24-wk CNTO1275PSA3001 Clinical Study Report, Att.3.4, page 266; 24-wk CNTO1275PSA3002 Clinical Study Report, Att.3.4, page 276.",
+  "Robert Abugov, PhD, (primary statistical reviewer) further explores these different sensitivity analyses in his review. Please see his review for detailed analysis.",
+  "ACR 20 Response Over Time",
+  "Figure 6 and Figure 7 plot out the proportion of ACR 20 responders over time (documented at each visit through Week 24). Both studies have a steady increase in response over time with a maximum response around Weeks 20 and 24. For both studies, there appears to be a decline in ACR 20 responders at Week 16 for subjects receiving ustekinumab, which would coincide with the first dose of maintenance therapy (after loading doses at Weeks 0 and 4 and no dosing for 12 weeks)."
+ ],
+ "tables": [
+  [
+   [
+    "ACR 20 Response at Week 24 (Sensitivity Analysis 4)"
+   ],
+   [
+    "",
+    "Placebo",
+    "Ustekinumab"
+   ],
+   [
+    "",
+    "45 mg",
+    "90 mg"
+   ],
+   [
+    "Study CNTO1275PSA3001"
+   ],
+   [
+    "Subjects randomized",
+    "206",
+    "205",
+    "204"
+   ],
+   [
+    "ACR 20"
+   ],
+   [
+    "N",
+    "206",
+    "205",
+    "204"
+   ],
+   [
+    "Subjects in response",
+    "65 (31.6%)",
+    "96 (46.8%)",
+    "104 (51.0%)"
+   ],
+   [
+    "p-value",
+    "",
+    "<0.001",
+    "<0.001"
+   ],
+   [
+    "Study CNTO1275PSA3002"
+   ],
+   [
+    "Subjects randomized",
+    "104",
+    "103",
+    "105"
+   ],
+   [
+    "ACR 20"
+   ],
+   [
+    "N",
+    "104",
+    "103",
+    "105"
+   ],
+   [
+    "Subjects in response",
+    "21 (20.2%)",
+    "45 (45.7%)",
+    "46 (43.8%)"
+   ],
+   [
+    "p-value",
+    "",
+    "<0.001",
+    "<0.001"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Clinical Review Suzette Peng, MD",
+  "Supplemental BLA 125261-103 Stelara®/ustekinumab",
+  "50",
+  "Reference ID: 3358899"
+ ],
+ "note": "2009 scan with OCR layer; Placebo header spans two rows."
+}

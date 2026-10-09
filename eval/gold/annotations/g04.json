@@ -1,0 +1,103 @@
+{
+ "id": "g04",
+ "text": [
+  "Abbreviations: EU, European Unions; PK, pharmacokinetic; SD, standard deviation; US, United States.",
+  "Figure 1. Mean (±SD) serum concentrations of Ustekinumab by treatment (semi-logarithmic scales) – Part 2 (PK set)",
+  "Ustekinumab primary pharmacokinetic parameters",
+  "Table 5. Primary pharmacokinetic parameters of Ustekinumab by treatment group – Part 2 (PK set)",
+  "Abbreviations: AUC0-inf, Area under the concentration-time curve from time zero to infinity; Cmax, Maximum serum concentration; CV%, percent of coefficient of variation; EU, European Union; PK, pharmacokinetic(s); SD, standard deviation; US, United States."
+ ],
+ "tables": [
+  [
+   [
+    "",
+    "CT-P43 (N=80)",
+    "EU-approved Stelara (N=81)",
+    "US-licensed Stelara (N=77)"
+   ],
+   [
+    "AUC0-inf (day·μg/mL)"
+   ],
+   [
+    "n",
+    "79",
+    "81",
+    "77"
+   ],
+   [
+    "Mean (SD)",
+    "204.43 (54.513)",
+    "162.97 (48.890)",
+    "165.86 (61.111)"
+   ],
+   [
+    "CV%",
+    "26.67",
+    "30.00",
+    "36.85"
+   ],
+   [
+    "Geometric mean",
+    "197.07",
+    "155.33",
+    "154.11"
+   ],
+   [
+    "Median",
+    "204.78",
+    "158.94",
+    "157.86"
+   ],
+   [
+    "Minimum, Maximum",
+    "90.5, 363.6",
+    "65.4, 277.8",
+    "39.3, 325.3"
+   ],
+   [
+    "Cmax (μg/mL)"
+   ],
+   [
+    "n",
+    "80",
+    "81",
+    "77"
+   ],
+   [
+    "Mean (SD)",
+    "5.35 (1.456)",
+    "4.57 (1.368)",
+    "4.86 (1.664)"
+   ],
+   [
+    "CV%",
+    "27.19",
+    "29.93",
+    "34.22"
+   ],
+   [
+    "Geometric mean",
+    "5.16",
+    "4.35",
+    "4.55"
+   ],
+   [
+    "Median",
+    "5.15",
+    "4.57",
+    "4.63"
+   ],
+   [
+    "Minimum, Maximum",
+    "2.1, 9.6",
+    "2.1, 7.6",
+    "1.1, 8.3"
+   ]
+  ]
+ ],
+ "furniture": [
+  "Assessment report EMA/328491/2024",
+  "Page 34/133"
+ ],
+ "note": "Chart axis labels are not part of the gold text. Table 5 is a bitmap; same values as g03 Table 5, checked against this page."
+}
