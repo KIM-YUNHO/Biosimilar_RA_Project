@@ -117,8 +117,14 @@ def search(q, chunks, vecs, mask, k, w_sparse=W_SPARSE):
     return [i for _, i in scored[:k]]
 
 
-def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE):
-    """qvecs: question id -> query vectors (one query form)."""
+def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE, searcher=None):
+    """qvecs: question id (or (id, product) for sub-queries) -> query vectors (one query form).
+    searcher(key, qv, mask, k, w_sparse) replaces the first-stage search (e.g. with re-ranking)."""
+    def run(key, qv, mask):
+        if searcher is not None:
+            return searcher(key, qv, mask, k, w_sparse)
+        return search(qv, chunks, vecs, mask, k, w_sparse)
+
     prog = np.array([c["program"] or "" for c in chunks])
     agency = np.array([c["agency"] for c in chunks])
     guid = np.array([c["guidance"] for c in chunks])
@@ -129,7 +135,7 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
         groups = [g for g in q.get("evidence", []) if "any" in g]
         r = router.route(q["question"])
         if mode == "open" or not (r.products or r.agency or r.guidance):
-            hits = search(qvecs[q["id"]], chunks, vecs, allm, k, w_sparse)
+            hits = run(q["id"], qvecs[q["id"]], allm)
         else:
             base = allm.copy()
             if r.agency:
@@ -139,12 +145,10 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
             if r.products:
                 hits = []
                 for p in r.products:
-                    qv = qvecs[q["id"]]
-                    if mode == "routed_sub" and len(r.products) > 1:
-                        qv = qvecs[(q["id"], p)]
-                    hits += search(qv, chunks, vecs, base & (prog == p), k, w_sparse)
+                    key = (q["id"], p) if mode == "routed_sub" and len(r.products) > 1 else q["id"]
+                    hits += run(key, qvecs[key], base & (prog == p))
             else:
-                hits = search(qvecs[q["id"]], chunks, vecs, base, k, w_sparse)
+                hits = run(q["id"], qvecs[q["id"]], base)
         named = set(r.products) | set(q.get("products") or [])
         for i in hits:
             if chunks[i]["program"] and named:
