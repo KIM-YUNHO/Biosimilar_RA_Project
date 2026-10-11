@@ -148,6 +148,21 @@ def test_structure_furniture_sections_speaker_cells():
     assert cells == ["31", "—", "SB17-1001"] and out[5]["redacted"]
 
 
+def test_ema_speaker_follows_judgement_sections():
+    blocks = [
+        _t("2. Scientific discussion", label="section_header"),
+        _t("2.6.2. Pharmacokinetics", label="section_header"),
+        _t("The 90% CI of the GMR for AUCinf was within 80-125%."),
+        _t("Pharmacokinetic Conclusions (phase III study)", label="section_header"),
+        _t("Trough concentrations were comparable."),
+        _t("2.6.3. Discussion on clinical pharmacology", label="section_header"),
+        _t("The PK similarity has been demonstrated."),
+    ]
+    out = structure(blocks, "ema", "assessment_report", {1: (595.0, 842.0)})
+    assert [b["speaker"] for b in out if b["label"] == "text"] == [
+        "applicant_data", "applicant_data", "regulator"]
+
+
 def test_study_ids():
     ids = study_ids("Study BM12H-PSO-03-G-02 (NCT04967508) and EudraCT No. 2020-004447-88")
     assert "NCT04967508" in ids and "2020-004447-88" in ids and "BM12H-PSO-03-G-02" in ids

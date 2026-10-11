@@ -105,7 +105,12 @@ _APPLICANT_SAYS = re.compile(
 _REGULATOR_SAYS = re.compile(
     r"(reviewer'?s?\s+comment|this reviewer|the (review )?team|fda'?s assessment|the agency|"
     r"chmp'?s? (comment|view|conclusion)|assessor'?s? comment|the committee)", re.I)
-_EMA_REGULATOR_SECTIONS = re.compile(r"discussion|conclusion|benefit.risk|chmp|assessment of", re.I)
+# EMA assessment reports: the agency's own judgement sits in numbered "Discussion on ..." /
+# "Conclusions on ..." sub-sections and the benefit-risk part. "2. Scientific discussion" is
+# the title of the whole scientific part, and unnumbered "Study Conclusion" headings inside
+# results report the applicant's study conclusions, so neither counts.
+_EMA_REGULATOR_HEADING = re.compile(
+    r"^(\d+\.)*\d+\.?\s+(discussion|conclusions?)\b|benefit.risk|\bchmp\b", re.I)
 _LABEL_TYPES = {"label", "product_information", "product_monograph"}
 _REGULATOR_TYPES = {"guidance", "approval_letter", "sbd", "rds", "epar_overview", "procedural_steps"}
 
@@ -124,8 +129,8 @@ def assign_speaker(blocks: list[dict], agency: str | None, doc_type: str | None)
         elif _APPLICANT_SAYS.search(text):
             sp = "applicant"
         elif agency == "ema" and doc_type == "assessment_report":
-            path = " / ".join(b.get("section_path", []))
-            sp = "regulator" if _EMA_REGULATOR_SECTIONS.search(path) else "applicant_data"
+            in_judgement = any(_EMA_REGULATOR_HEADING.search(h) for h in b.get("section_path", []))
+            sp = "regulator" if in_judgement else "applicant_data"
         elif agency == "fda" and doc_type == "review":
             sp = "regulator"  # FDA reviews are written by the agency unless quoted
         else:
