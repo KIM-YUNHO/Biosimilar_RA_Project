@@ -174,7 +174,7 @@ V1·V2n·V3는 첫 실행(각 제품 라우팅 추가 전) 값이라 V2·V4와 �
 - 1단계: 혼합 검색으로 후보 30개를 뽑습니다.
 - 2단계: bge-reranker-v2-m3(교차 인코더)로 다시 점수를 매기고 상위 k개를 남깁니다.
 
-실행: `python eval/retrieval/rerank_test.py --depth 30`. 결과 원본은 `eval/retrieval/results/rerank_V2_depth30.md`에 있습니다.
+실행: `python eval/retrieval/rerank_test.py --depth 30`. 결과 원본은 `eval/retrieval/results/rerank_V2_depth30_corpus_docs.md`에 있습니다.
 
 | 질의 | k | 재순위 없음 (찾음 / 부모 포함) | 재순위 (찾음 / 부모 포함) | 모든 근거를 찾은 문항 |
 |---|---|---|---|---|
