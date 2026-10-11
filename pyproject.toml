@@ -23,6 +23,7 @@ rag = ["transformers>=4.44", "huggingface_hub>=0.24", "numpy>=1.26"]
 [project.scripts]
 ra-ingest = "ra_ingest.cli:main"
 ra-prep = "ra_prep.cli:main"
+ra-index = "ra_chunk.cli:main"
 
 [build-system]
 requires = ["hatchling"]

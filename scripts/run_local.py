@@ -1,8 +1,10 @@
-"""Run the whole pipeline on a local machine: ingest -> model warmup -> preprocessing -> status.
+"""Run the whole pipeline on a local machine: ingest -> model warmup -> preprocessing ->
+chunking + embedding into the index -> status.
 
 Works on Windows, macOS and Linux (only calls this Python's own modules).
 Every step is resumable: ingestion keeps what it already fetched (content-addressed store)
-and preprocessing skips document versions already parsed by the same engine version.
+preprocessing skips document versions already parsed by the same engine version, and
+indexing skips documents whose index already matches (version, engine, chunker, model).
 
 Examples
   python scripts/run_local.py                         # ustekinumab, 4 biosimilars + guidance
@@ -48,6 +50,7 @@ def main() -> int:
     ap.add_argument("--include-holdout", action="store_true")
     ap.add_argument("--skip-ingest", action="store_true")
     ap.add_argument("--skip-guidance", action="store_true")
+    ap.add_argument("--skip-index", action="store_true", help="stop after preprocessing")
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | mps")
     ap.add_argument("--db", help="SQLAlchemy URL (default: RA_DB or SQLite data/ra.db)")
@@ -72,6 +75,9 @@ def main() -> int:
         step(f"preprocess products ({types or 'remaining'})",
              [*run, *prods, "--agencies", a.agencies, *extra])
     step("status", [py, "-m", "ra_prep", *db, "status"])
+    if not a.skip_index:  # everything parsed so far: chunks -> bge-m3 -> index
+        step("index", [py, "-m", "ra_chunk", *db, "run", "--device", a.device])
+        step("index status", [py, "-m", "ra_chunk", *db, "status"])
     return 0
 
 

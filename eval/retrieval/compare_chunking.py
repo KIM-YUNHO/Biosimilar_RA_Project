@@ -43,9 +43,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from ra_chunk.chunker import ChunkConfig, chunk_document  # noqa: E402
-from ra_chunk.embed import BgeM3, sparse_score  # noqa: E402
+from ra_chunk.chunker import ChunkConfig  # noqa: E402
+from ra_chunk.embed import BgeM3  # noqa: E402
+from ra_chunk.index import build_chunks, embed_text  # noqa: E402
 from ra_chunk.query import Glossary, Router, product_subquery  # noqa: E402
+from ra_chunk.search import W_SPARSE, hybrid_search  # noqa: E402
 
 VARIANTS = {
     "V1": dict(narrative="block", rows=False),
@@ -54,22 +56,23 @@ VARIANTS = {
     "V4": dict(target=800, max_tokens=1000),
     "V2n": dict(rows=False, header=False),   # V2 without the context header in the embedded text
 }
-W_SPARSE = 0.3
 
 
 def norm(text: str) -> str:
     return "".join(unicodedata.normalize("NFKC", text).lower().split())
 
 
-def load_docs(db: str, only: set[int] | None = None):
+def load_docs(db: str, only: set[int] | None = None, store_url: str | None = None):
     """Parsed documents (latest ok parse per document) with their metadata."""
     from ra_ingest.db import DocumentRow
     from ra_ingest.metadata import build_document_metadata
+    from ra_ingest.objstore import open_store
     from ra_prep.cli import _store
     from ra_prep.store import PrepDocumentRow
     from sqlalchemy import select
 
     out = []
+    objects = open_store(store_url)
     st = _store(db)
     with st.session() as s:
         rows = s.scalars(select(PrepDocumentRow).where(PrepDocumentRow.status == "ok"))
@@ -79,42 +82,32 @@ def load_docs(db: str, only: set[int] | None = None):
                 continue
             seen.add(r.document_id)
             meta = build_document_metadata(s, s.get(DocumentRow, r.document_id))
-            out.append((json.loads(Path(r.output_path).read_text(encoding="utf-8")), meta))
+            out.append((json.loads(objects.read_text(r.output_path)), meta))
     return out
 
 
 def build(variant: str, docs, count) -> tuple[list[dict], dict]:
-    from ra_ingest.metadata import context_header
-
+    """Chunks of one variant (same chunking and embedded text as ra_chunk.index for V2)."""
     opts = dict(VARIANTS[variant])
     header = opts.pop("header", True)
     cfg = ChunkConfig(count=count, **opts)
     chunks, parents = [], {}
     for doc, meta in docs:
-        ch, par = chunk_document(json.loads(json.dumps(doc)), cfg)
+        ch, par = build_chunks(doc, cfg)
         parents.update({k: v.text for k, v in par.items()})
         for c in ch:
-            m = c.meta()
-            if c.kind == "row":  # the line already carries caption and column names
-                m = {"study_ids": c.study_ids, "speaker": c.speaker}
             chunks.append({
                 "id": c.id, "kind": c.kind, "doc_id": c.doc_id, "text": c.text, "parent": c.parent_id,
                 "pages": c.pages, "program": meta.get("program_id"), "agency": meta.get("agency"),
                 "guidance": meta.get("doc_kind") == "guidance",
-                "embed": (context_header(meta, m) + "\n" + c.text) if header else c.text,
+                "embed": embed_text(c, meta, header),
             })
     return chunks, parents
 
 
 def search(q, chunks, vecs, mask, k, w_sparse=W_SPARSE):
-    dense = vecs["dense"] @ q[0].astype(np.float32)
-    idx = np.flatnonzero(mask)
-    if not len(idx):
-        return []
-    top = idx[np.argsort(-dense[idx])[: max(200, k * 20)]]  # dense shortlist, then hybrid rerank
-    scored = sorted(((float(dense[i]) + w_sparse * sparse_score(q[1], vecs["sparse"][i]), int(i))
-                     for i in top), reverse=True)
-    return [i for _, i in scored[:k]]
+    """Dense shortlist, then dense + w * sparse (ra_chunk.search.hybrid_search)."""
+    return hybrid_search(q, vecs["dense"], vecs["sparse"], mask, k, w_sparse)
 
 
 def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE, searcher=None):
@@ -189,6 +182,7 @@ def main() -> int:
     ap.add_argument("--corpus", default=str(ROOT / "eval" / "retrieval" / "corpus_docs.txt"),
                     help="document ids to search (fixed corpus); 'all' for every parsed document")
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
+    ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--out", default=str(ROOT / "eval" / "retrieval" / "results"))
@@ -199,7 +193,7 @@ def main() -> int:
     only = None
     if a.corpus != "all":
         only = {int(x) for x in Path(a.corpus).read_text().split() if x.isdigit()}
-    docs = load_docs(a.db, only)
+    docs = load_docs(a.db, only, a.store)
     print(f"{len(docs)} parsed documents", flush=True)
     model = BgeM3(cache=a.cache, threads=a.threads)
 
