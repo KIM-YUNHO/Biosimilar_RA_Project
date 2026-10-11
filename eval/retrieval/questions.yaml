@@ -380,7 +380,11 @@ questions:
           - {doc: 41, page: 56, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
           - {doc: 272, page: 66, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
       - group: originator_trials
-        pending: "Stelara 최초 허가 심사(EMA doc 20 / FDA doc 90)의 PHOENIX 1·2 PASI 75 결과 — 전처리 후"
+        note: "Stelara EMA 최초 평가보고서(2008). PHOENIX 1·2의 1차 평가변수(12주 PASI 75)와 효능 판단"
+        any:
+          - {doc: 20, page: 38, quote: "The primary endpoint of both PHOENIX 1 and PHOENIX 2 examined the proportions of subjects achieving PASI 75 response at Week 12"}
+          - {doc: 20, page: 41, quote: "was statistically significantly superior to placebo and etanercept in plaque psoriasis after 12 weeks of treatment"}
+          - {doc: 20, page: 28, quote: "The difference in responder proportions between each level of ustekinumab and placebo was calculated and 95% confidence intervals presented"}
     status: located
 
   - id: Q22
@@ -403,7 +407,10 @@ questions:
           - {doc: 41, page: 123, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
           - {doc: 272, page: 139, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
       - group: originator_review
-        pending: "Stelara X/0049/G 평가보고서(doc 22)의 크론병 근거(UNITI 시험) — 전처리 후"
+        note: "Stelara X/0049/G 평가보고서: 정맥 유도(CRD3001·CRD3002)와 피하 유지(CRD3003) 시험"
+        any:
+          - {doc: 22, page: 52, quote: "Table E2. Summary of efficacy for trial CRD3002"}
+          - {doc: 22, page: 87, quote: "Table E3. Summary of efficacy for trial CRD3003"}
     status: located
 
   - id: Q23
