@@ -135,7 +135,11 @@ questions:
           - {doc: 158, page: 93, quote: "can be expected to produce the same clinical result as US-Stelara in any given patient"}
           - {doc: 158, page: 93, quote: "FDA considers the risk of a clinically impactful immunogenic response when alternating or switching"}
       - group: fda_letter
-        pending: "ABP654 Approval Letter (doc 155) 전처리 후"
+        note: "최초 허가 서한. 첫 인터체인저블 제품으로 첫 인터체인저블 독점 기간 대상"
+        any:
+          - {doc: 155, page: 4, quote: "for subcutaneous use as interchangeable with the corresponding presentations of US-licensed Stelara"}
+          - {doc: 153, page: 1, quote: "for subcutaneous use as interchangeable with the corresponding presentations of US-licensed Stelara"}
+          - {doc: 155, page: 6, quote: "are the first products relying on their respective reference products to receive a determination of interchangeability"}
     status: located
 
   - id: Q08
@@ -208,7 +212,10 @@ questions:
         any:
           - {doc: 255, page: 15, quote: "including any interchangeability statement similar to the biosimilarity statement"}
       - group: wezlana_label
-        pending: "Wezlana 라벨 (doc 156) 전처리 후"
+        note: "최신 라벨(2026-05, doc 168)에는 'interchangeable' 문구가 없고 2023 초안 가이던스대로 'biosimilar*' 문구와 각주만 있음"
+        any:
+          - {doc: 168, page: 1, quote: "WEZLANA ® (ustekinumab-auub) is biosimilar* to STELARA ® (ustekinumab)."}
+          - {doc: 168, page: 2, quote: "Biosimilarity of WEZLANA has been demonstrated for the condition(s) of use"}
     status: located
 
   # ---------------- D4. PK 시험 설계 비교 ----------------
