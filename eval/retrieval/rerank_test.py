@@ -35,13 +35,15 @@ def main() -> int:
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl"])
     ap.add_argument("--modes", nargs="+", default=["routed", "routed_sub"])
     ap.add_argument("--threads", type=int, default=None)
+    ap.add_argument("--corpus", default=str(ROOT / "eval" / "retrieval" / "corpus_docs.txt"),
+                    help="document ids to search (fixed corpus); 'all' for every parsed document")
     ap.add_argument("--out", default=str(ROOT / "eval" / "retrieval" / "results"))
     a = ap.parse_args()
 
     gold = yaml.safe_load((ROOT / "eval" / "retrieval" / "questions.yaml").read_text(encoding="utf-8"))
     router = Router(ROOT / "config" / "products.yaml")
     glossary = Glossary(ROOT / "config" / "query_glossary.yaml")
-    only = {int(x) for x in (ROOT / "eval" / "retrieval" / "corpus_docs.txt").read_text().split() if x.isdigit()}
+    only = None if a.corpus == "all" else {int(x) for x in Path(a.corpus).read_text().split() if x.isdigit()}
     docs = C.load_docs(a.db, only)
     emb = BgeM3(cache=ROOT / "data" / "emb_cache" / "bge-m3.pkl", threads=a.threads)
     chunks, parents = C.build(a.variant, docs, emb.count_tokens)
@@ -93,7 +95,8 @@ def main() -> int:
     print(table)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / f"rerank_{a.variant}_depth{a.depth}.md").write_text(table + "\n", encoding="utf-8")
+    tag = Path(a.corpus).stem if a.corpus != "all" else "all"
+    (out / f"rerank_{a.variant}_depth{a.depth}_{tag}.md").write_text(table + "\n", encoding="utf-8")
     return 0
 
 

@@ -254,9 +254,10 @@ def main() -> int:
                      f"{int(np.median(r['tokens']))} | {oth} |")
     table = "\n".join(lines)
     print(table)
-    name = "summary_" + "_".join(a.variants)
+    tag = Path(a.corpus).stem if a.corpus != "all" else "all"
+    name = f"summary_{'_'.join(a.variants)}_{tag}"
     (out / f"{name}.md").write_text(table + "\n", encoding="utf-8")
-    (out / f"per_question_{'_'.join(a.variants)}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
+    (out / f"per_question_{'_'.join(a.variants)}_{tag}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
     return 0
 
 
