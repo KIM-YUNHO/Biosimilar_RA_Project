@@ -38,7 +38,7 @@ def _device(name: str) -> str:
 def _embedder(a):
     from .embed import BgeM3
 
-    return BgeM3(device=_device(a.device), threads=a.threads)
+    return BgeM3(device=_device(a.device), threads=a.threads, cache=getattr(a, "embed_cache", None))
 
 
 def _program_ids(products: list[str] | None) -> list[str] | None:
@@ -68,6 +68,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--doc-id", type=int, action="append")
     r.add_argument("--guidance", action="store_true", help="guidance documents only")
     r.add_argument("--force", action="store_true", help="index again even if unchanged")
+    r.add_argument("--embed-cache", help="bge-m3 text cache of the evaluation scripts "
+                                         "(data/emb_cache/bge-m3.pkl): reuse vectors computed there")
     sub.add_parser("status")
     q = sub.add_parser("search", help="retrieve chunks for a question")
     q.add_argument("question")
