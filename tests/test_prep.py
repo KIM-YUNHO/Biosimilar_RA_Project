@@ -164,6 +164,16 @@ def test_ema_speaker_follows_judgement_sections():
         "applicant_data", "applicant_data", "regulator"]
 
 
+def test_fda_speaker_verdict_on_applicant_is_regulator():
+    blocks = [
+        _t("The Applicant provided adequate data to establish the scientific bridge."),
+        _t("The Applicant proposes a 45 mg dose."),
+        _t("PK similarity was demonstrated."),
+    ]
+    out = structure(blocks, "fda", "review", {1: (612.0, 792.0)})
+    assert [b["speaker"] for b in out] == ["regulator", "applicant", "regulator"]
+
+
 def test_study_ids():
     ids = study_ids("Study BM12H-PSO-03-G-02 (NCT04967508) and EudraCT No. 2020-004447-88")
     assert "NCT04967508" in ids and "2020-004447-88" in ids and "BM12H-PSO-03-G-02" in ids

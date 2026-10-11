@@ -161,3 +161,4 @@ PaddleOCR-VL이 앞선 곳은 표 구조입니다. 행 병합 라벨이 있는 �
 - 오탐 점검: 전처리된 48개 문서 전체에 적용했을 때 바뀐 블록은 위 BMER 3건뿐이었습니다(EMA·HC 0건). 첫 시안은 약어(HPLC, SAF, NYHA)를 잘못 복원했습니다. 그래서 밀린 기능어가 있어야만 복원하도록 바꾸었습니다.
 - 정답 세트 30쪽 점수: 변화 없음. 이 유형의 쪽이 없기 때문이며, 회귀가 없다는 확인입니다.
 - 이미 처리한 문서는 `ra-prep refix`로 Docling을 다시 돌리지 않고 갱신합니다(48개 문서 7초).
+- 같은 점검에서 말한 주체 규칙의 오류도 찾았습니다. FDA 리뷰의 "The Applicant provided adequate data to establish the scientific bridge"는 심사자의 판단인데 `applicant`로 붙었습니다. 신청자에 대한 평가 문장(provided/submitted + adequate·sufficient 등)은 `regulator`로 고쳤습니다(BMER 3건, 15블록, prep-1.2).

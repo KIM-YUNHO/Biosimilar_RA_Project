@@ -103,7 +103,8 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
     engine = extractor.version()
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    summary = {"ok": 0, "failed": 0, "skipped": 0, "cached": 0, "pages": 0, "seconds": 0.0}
+    summary = {"ok": 0, "failed": 0, "skipped": 0, "cached": 0, "refixed": 0, "pages": 0,
+               "seconds": 0.0}
     t_run = time.time()
 
     todo = []
@@ -120,11 +121,18 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
         if existing is not None and existing.status == "ok" and not force:
             summary["cached"] += 1
             continue
+        if existing is None and not force:
+            old = refixable_row(s, sel.sha256, engine)
+            if old is not None:  # same extraction stage: replay the cheap stages only
+                refix_row(s, old, engine)
+                summary["refixed"] += 1
+                continue
         if existing is not None:
             s.delete(existing)
             s.commit()
         todo.append(sel)
-    log(f"to process: {len(todo)} documents (cached {summary['cached']}, skipped {summary['skipped']})")
+    log(f"to process: {len(todo)} documents (cached {summary['cached']}, "
+        f"refixed {summary['refixed']}, skipped {summary['skipped']})")
 
     def record(sel: Selection, doc: dict | None, err: str | None, el: float) -> None:
         if doc is None:
@@ -191,14 +199,50 @@ def _page_count(path: str) -> int:
         return 0
 
 
-def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
-    """Bring parses made by an earlier engine up to date without re-running Docling:
-    re-apply the text-layer repairs (textfix) and RA post-processing (structure) to the
-    stored blocks, recompute QA, and relabel the row with the new engine version."""
+def refixable_row(s: Session, sha256: str, engine: str):
+    """An ok parse of this version by an earlier engine that differs from `engine` only in a
+    version listed in REFIXABLE_FROM (same Docling version and settings)."""
+    from . import REFIXABLE_FROM
+
+    _, _, suffix = engine.partition("+")
+    for old in REFIXABLE_FROM:
+        row = s.scalar(select(PrepDocumentRow).where(
+            PrepDocumentRow.sha256 == sha256, PrepDocumentRow.engine == f"{old}+{suffix}",
+            PrepDocumentRow.status == "ok"))
+        if row is not None:
+            return row
+    return None
+
+
+def refix_row(s: Session, row: PrepDocumentRow, engine_to: str) -> dict:
+    """Upgrade one stored parse in place without re-running Docling: re-apply the text-layer
+    repairs (textfix) and RA post-processing (structure), recompute QA, relabel the engine."""
     from ra_ingest.db import DocumentRow, DocumentVersionRow
 
     from .textfix import fix_blocks
 
+    doc = json.loads(Path(row.output_path).read_text(encoding="utf-8"))
+    d = s.get(DocumentRow, row.document_id)
+    src = s.scalar(select(DocumentVersionRow.storage_path).where(
+        DocumentVersionRow.sha256 == row.sha256))
+    fixes = {}
+    if src and src.lower().endswith(".pdf"):
+        fixes = fix_blocks(src, doc["blocks"])
+    sizes = {r.page: (r.signals.get("width", 612.0), r.signals.get("height", 792.0))
+             for r in s.scalars(select(PageRouteRow).where(PageRouteRow.sha256 == row.sha256))}
+    doc["blocks"] = structure(doc["blocks"], d.agency, d.doc_type, sizes)
+    doc["qa"] = document_qa(doc["blocks"], doc["routes"])
+    doc["engine"] = engine_to
+    doc["text_fixes"] = fixes
+    Path(row.output_path).write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    row.engine = engine_to
+    row.qa = doc["qa"]
+    s.commit()
+    return fixes
+
+
+def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
+    """Upgrade every ok parse made by `engine_from` to `engine_to` (see refix_row)."""
     rows = list(s.scalars(select(PrepDocumentRow).where(
         PrepDocumentRow.engine == engine_from, PrepDocumentRow.status == "ok")))
     done = 0
@@ -206,24 +250,8 @@ def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
         if s.scalar(select(PrepDocumentRow).where(PrepDocumentRow.sha256 == row.sha256,
                                                   PrepDocumentRow.engine == engine_to)):
             continue
-        doc = json.loads(Path(row.output_path).read_text(encoding="utf-8"))
-        d = s.get(DocumentRow, row.document_id)
-        src = s.scalar(select(DocumentVersionRow.storage_path).where(
-            DocumentVersionRow.sha256 == row.sha256))
-        fixes = {}
-        if src and src.lower().endswith(".pdf"):
-            fixes = fix_blocks(src, doc["blocks"])
-        sizes = {r.page: (r.signals.get("width", 612.0), r.signals.get("height", 792.0))
-                 for r in s.scalars(select(PageRouteRow).where(PageRouteRow.sha256 == row.sha256))}
-        doc["blocks"] = structure(doc["blocks"], d.agency, d.doc_type, sizes)
-        doc["qa"] = document_qa(doc["blocks"], doc["routes"])
-        doc["engine"] = row.engine.replace(engine_from, engine_to, 1)
-        doc["text_fixes"] = fixes
-        Path(row.output_path).write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
-        row.engine = doc["engine"]
-        row.qa = doc["qa"]
-        s.commit()
+        fixes = refix_row(s, row, engine_to)
         done += 1
-        if fixes and (fixes.get("fffd_fixed") or fixes.get("shift_decoded")):
+        if fixes.get("fffd_fixed") or fixes.get("shift_decoded"):
             log(f"doc {row.document_id:>4}: {fixes}")
     return {"updated": done, "candidates": len(rows)}

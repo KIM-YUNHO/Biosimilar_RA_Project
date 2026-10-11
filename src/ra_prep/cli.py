@@ -108,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--artifacts", help="offline model cache (docling-tools models download)")
     sub.add_parser("status")
     rf = sub.add_parser("refix", help="apply newer text repairs/post-processing to stored parses")
-    rf.add_argument("--from-engine", default="prep-1+")
+    rf.add_argument("--from-engine", help="engine version to upgrade (default: all in REFIXABLE_FROM)")
     w = sub.add_parser("warmup", help="download models and run two gold pages (check before a long run)")
     w.add_argument("--artifacts", help="also save Docling/RapidOCR models here for offline runs")
     w.add_argument("--device", default="auto")
@@ -138,15 +138,16 @@ def main(argv: list[str] | None = None) -> int:
         if a.cmd == "refix":
             from sqlalchemy import select
 
-            from . import ENGINE_VERSION
+            from . import ENGINE_VERSION, REFIXABLE_FROM
             from .pipeline import refix
             from .store import PrepDocumentRow
 
+            olds = [a.from_engine] if a.from_engine else list(REFIXABLE_FROM)
             engines = {r for r in s.scalars(select(PrepDocumentRow.engine))
-                       if r.startswith(a.from_engine) and not r.startswith(ENGINE_VERSION + "+")}
+                       if r.split("+", 1)[0] in olds}
             for eng in sorted(engines):
-                old = eng.split("+", 1)[0]
-                print(eng, "->", ENGINE_VERSION, refix(s, eng, eng.replace(old, ENGINE_VERSION, 1)))
+                new = ENGINE_VERSION + "+" + eng.split("+", 1)[1]
+                print(eng, "->", ENGINE_VERSION, refix(s, eng, new))
             return 0
         if a.cmd == "status":
             from sqlalchemy import select

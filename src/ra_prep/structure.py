@@ -109,6 +109,11 @@ _REGULATOR_SAYS = re.compile(
 # "Conclusions on ..." sub-sections and the benefit-risk part. "2. Scientific discussion" is
 # the title of the whole scientific part, and unnumbered "Study Conclusion" headings inside
 # results report the applicant's study conclusions, so neither counts.
+# "The Applicant provided adequate data to establish the scientific bridge" is the reviewer's
+# verdict on what the applicant did, not the applicant speaking.
+_VERDICT_ON_APPLICANT = re.compile(
+    r"^(the\s+)?(applicant|sponsor|mah|company)\s+(has\s+)?(provid\w*|submit\w*|present\w*)\s+"
+    r"(adequate|sufficient|insufficient|inadequate|acceptable|appropriate)", re.I)
 _EMA_REGULATOR_HEADING = re.compile(
     r"^(\d+\.)*\d+\.?\s+(discussion|conclusions?)\b|benefit.risk|\bchmp\b", re.I)
 _LABEL_TYPES = {"label", "product_information", "product_monograph"}
@@ -124,7 +129,7 @@ def assign_speaker(blocks: list[dict], agency: str | None, doc_type: str | None)
             sp = "regulator"
         elif doc_type == "risk_management":
             sp = "applicant"
-        elif _REGULATOR_SAYS.search(text):
+        elif _REGULATOR_SAYS.search(text) or _VERDICT_ON_APPLICANT.search(text):
             sp = "regulator"
         elif _APPLICANT_SAYS.search(text):
             sp = "applicant"
