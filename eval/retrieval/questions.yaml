@@ -347,8 +347,11 @@ questions:
     products: [stelara]
     evidence:
       - group: fda_2009
-        pending: "Stelara 원 허가·보충 심사 문서(스캔본)는 현재 실행 범위(바이오시밀러 4개) 밖. gold 쪽 g23(Clinical review sBLA 125261-103 Table 24)와 같은 표"
-    status: to_locate
+        note: "sBLA 125261-103 임상 심사(2009 스캔본, 내장 OCR층). gold 쪽 g23과 같은 표. 24주 ACR20: 위약 31.6%, 45 mg 46.8%, 90 mg 51.0%(PSA3001, 민감도 분석 4)"
+        any:
+          - {doc: 90, page: 145, quote: "Table 24. Summary of ACR 20 Response at Week 24 (Sensitivity Analysis 4)"}
+          - {doc: 90, page: 144, quote: "For both studies, ACR 20 response in ustekinumab was statistically significant when compared to placebo."}
+    status: located
 
   - id: Q20
     scenario: scope
@@ -426,5 +429,8 @@ questions:
           - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adult patients with moderately to severely active Crohn's disease."}
           - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adults and pediatric patients 6 years of age and older with active psoriatic arthritis."}
       - group: stelara_label
-        pending: "Stelara 최신 미국 라벨 1.x INDICATIONS AND USAGE — 전처리 후"
+        note: "Stelara는 크론병·궤양성 대장염이 2세 이상 소아까지, Wezlana는 성인만 — 적응증이 다름"
+        any:
+          - {doc: 120, page: 3, quote: "STELARA is indicated for the treatment of adults and pediatric patients 2 years of age and older with moderately to severely active Crohn's disease."}
+          - {doc: 133, page: 3, quote: "STELARA is indicated for the treatment of adults and pediatric patients 2 years of age and older with moderately to severely active Crohn's disease."}
     status: located
