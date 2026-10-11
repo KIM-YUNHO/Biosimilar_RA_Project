@@ -19,6 +19,10 @@ _AGENCY = {"ema": re.compile(r"(?<![A-Za-z])EMA(?![A-Za-z])|유럽"),
            "hc": re.compile(r"Health Canada|(?<![A-Za-z])HC(?![A-Za-z])|캐나다")}
 # "each product", "the four products": every biosimilar program in the registry (holdouts excluded)
 _ALL_PRODUCTS = re.compile(r"각 제품|제품별|모든 제품|\d+개 제품|바이오시밀러 \d+개")
+# reference-product (originator) documents serve fixed purposes (config/reference_docs.yaml); a
+# question reaches them only when it names the originator or asks for one of those purposes
+_REFERENCE_ASK = re.compile(r"원 ?제품|오리지널|원개발|원 ?시험|대조약의|외삽|적응증 (?:이력|추가)|originator|"
+                            r"reference product's|pivotal", re.I)
 _GUIDANCE = re.compile(r"가이던스|가이드라인|guidance|guideline|기준", re.I)
 
 
@@ -27,6 +31,7 @@ class Route:
     products: list[str] = field(default_factory=list)
     agency: str | None = None
     guidance: bool = False
+    reference: bool = False   # include reference-product documents
 
 
 class Router:
@@ -36,6 +41,7 @@ class Router:
         self.display: dict[str, list[str]] = {}
         self.biosimilars = [p["id"] for p in cfg["programs"]
                             if p.get("role") == "biosimilar" and not p.get("holdout")]
+        self.references = [p["id"] for p in cfg["programs"] if p.get("role") == "reference"]
         for p in cfg["programs"]:
             brands = sorted({n for v in (p.get("aliases") or {}).values() for n in v
                              if not n.lower().startswith(p.get("ingredient", "~"))})
@@ -62,8 +68,11 @@ class Router:
         if _ALL_PRODUCTS.search(question):
             prods += [p for p in self.biosimilars if p not in prods]
         agencies = [a for a, pat in _AGENCY.items() if pat.search(question)]
+        reference = any(p in self.references for p in prods) or bool(_REFERENCE_ASK.search(question))
+        if reference and prods and not any(p in self.references for p in prods):
+            prods += self.references  # "원 시험" in a product question: search the originator too
         return Route(products=prods, agency=agencies[0] if len(agencies) == 1 else None,
-                     guidance=bool(_GUIDANCE.search(question)))
+                     guidance=bool(_GUIDANCE.search(question)), reference=reference)
 
 
 class Glossary:

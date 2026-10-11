@@ -138,6 +138,8 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
             hits = run(q["id"], qvecs[q["id"]], allm)
         else:
             base = allm.copy()
+            if not r.reference:  # originator documents only for questions that ask for them
+                base &= ~np.isin(prog, router.references)
             if r.agency:
                 base &= agency == r.agency
             if r.guidance:

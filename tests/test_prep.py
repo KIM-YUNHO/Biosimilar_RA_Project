@@ -225,3 +225,25 @@ def test_shifted_font_runs_decoded(text, expected):
 ])
 def test_real_abbreviations_not_decoded(text):
     assert decode_shifted(text) == text
+
+
+# -- reference-product document plan ------------------------------------------------------
+def test_reference_procedure_scopes_and_titles():
+    from ra_prep.reference import _INDICATION_SCOPE, procedure_scopes, title_procedure
+
+    def cell(r, c, t):
+        return {"r": r, "c": c, "text": t}
+    blocks = [{"type": "table", "cells": [
+        cell(0, 0, "Application number"), cell(0, 1, "Scope"),
+        cell(1, 0, "II/0108"), cell(1, 1, "Extension of indication to include treatment of paediatric"),
+        cell(2, 0, "Crohn's disease based on final results"),
+        cell(3, 0, "II/0107"), cell(3, 1, "Update of sections 4.5 and 5.2 of the SmPC (drug-drug interaction)"),
+    ]}]
+    scopes = procedure_scopes(blocks)
+    assert _INDICATION_SCOPE.search(scopes["II/0108"]) and "Crohn" in scopes["II/0108"]
+    assert not _INDICATION_SCOPE.search(scopes["II/0107"])
+    assert title_procedure("Stelara-H-C-958-II-0029 : EPAR - Assessment Report - Variation") == "II/0029"
+    assert title_procedure("Stelara-H-C-000958-X-0049-G : EPAR - Assessment Report - Extension") == "X/0049/G"
+    assert title_procedure("Stelara-VR-0000290099 : EPAR - Assessment report") == "VR/0000290099"
+    assert title_procedure("Stelara-H-C-958-P46-051 : EPAR - Assessment Report") == "P46/051"
+    assert title_procedure("Stelara : EPAR - Public assessment report") is None

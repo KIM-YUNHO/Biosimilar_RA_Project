@@ -97,3 +97,12 @@ def test_tiny_chunks_dropped():
         _t("The applicant submitted a single PK study in healthy subjects.", ["2. PK"])]}
     chunks, _ = chunk_document(doc, ChunkConfig())
     assert [c.text for c in chunks] == ["The applicant submitted a single PK study in healthy subjects."]
+
+
+def test_router_reference_documents():
+    r = Router(ROOT / "config" / "products.yaml")
+    assert not r.route("Wezlana는 어떤 근거로 인터체인저블로 지정됐나?").reference
+    x = r.route("Stelara 2009년 건선성 관절염 적응증 심사 때 24주 ACR20 반응률은?")
+    assert x.reference and x.products == ["stelara"]
+    x = r.route("CT-P43 동등성 한계는 원 시험의 어떤 결과에서 왔나?")
+    assert x.reference and x.products == ["CT-P43", "stelara"]
