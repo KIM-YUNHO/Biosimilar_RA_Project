@@ -118,6 +118,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 - [전처리 비교 시험 (정답 세트 30쪽)](docs/preprocessing-benchmark.md)
 - [청킹·임베딩 전략 (비교·재순위 시험 결과 포함)](docs/chunking-strategy.md)
 - [시험 세트 정리 (전처리 30쪽, 검색 20문항)](docs/test-sets.md)
+- [파이프라인 운영·오케스트레이션 설계 (요청형·감시형, Airflow 검토)](docs/pipeline-operations.md)
 
 - [RA 문서 소스 카탈로그](docs/ra-document-sources.md)
 - [진행 계획](docs/project-plan.md)
