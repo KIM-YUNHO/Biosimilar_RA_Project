@@ -85,8 +85,11 @@ def _date(d: DocumentRow) -> str:
 
 def select_documents(s: Session, program_ids: list[str] | None = None,
                      agencies: list[str] | None = None, dup_threshold: float = 0.6,
-                     include_superseded_labels: bool = False) -> list[Selection]:
+                     include_superseded_labels: bool = False,
+                     doc_kind: str | None = None) -> list[Selection]:
     q = select(DocumentRow).where(DocumentRow.fetch_status == "fetched")
+    if doc_kind:
+        q = q.where(DocumentRow.doc_kind == doc_kind)
     if program_ids:
         q = q.where(DocumentRow.program_id.in_(program_ids))
     if agencies:

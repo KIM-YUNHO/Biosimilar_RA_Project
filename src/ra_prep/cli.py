@@ -1,7 +1,8 @@
 """ra-prep: preprocessing of documents stored by ra-ingest.
 
   ra-prep select  [--product X ...] [--agencies ema,fda,hc]     what would be processed
-  ra-prep run     [--product X ...] [--agencies ...] [--doc-id N ...] [--force]
+  ra-prep run     [--product X ...] [--agencies ...] [--doc-types ...] [--guidance]
+                  [--doc-id N ...] [--force]
   ra-prep status                                                   counts and QA summary
 """
 from __future__ import annotations
@@ -43,7 +44,11 @@ def _selections(s, a):
 
     sels = select_documents(s, program_ids=_programs(s, a.product),
                             agencies=a.agencies.split(",") if a.agencies else None,
-                            include_superseded_labels=a.all_labels)
+                            include_superseded_labels=a.all_labels,
+                            doc_kind="guidance" if a.guidance else None)
+    if a.doc_types:
+        keep_types = set(a.doc_types.split(","))
+        sels = [x for x in sels if x.doc_type in keep_types]
     if a.doc_id:
         keep = set(a.doc_id)
         sels = [x for x in sels if x.document_id in keep]
@@ -61,6 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--agencies", help="comma list: ema,fda,hc,guidance")
         p.add_argument("--doc-id", type=int, action="append")
         p.add_argument("--all-labels", action="store_true", help="also older label versions")
+        p.add_argument("--doc-types", help="comma list, e.g. assessment_report,review,sbd")
+        p.add_argument("--guidance", action="store_true", help="guidance documents only")
         if name == "run":
             p.add_argument("--out", default=str(ROOT / "data" / "parsed"))
             p.add_argument("--force", action="store_true")

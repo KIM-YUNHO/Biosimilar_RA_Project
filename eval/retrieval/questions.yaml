@@ -1,0 +1,199 @@
+# 검색 정답 세트 (초안 v0, 2026-10-11)
+# 목적: 청킹·검색 방식 비교 시험. 답변 문장이 아니라 "반드시 찾아야 하는 근거 위치"를 정답으로 둔다.
+# evidence.where 는 현재 절·표 단위 힌트. 전처리 완료 후 locate 단계에서 doc_id·page·table/row 로 확정한다
+# (status: to_locate -> located -> reviewed).
+# BAT2206 은 holdout 이라 적재하지 않았다(Q18 은 "없음"을 답해야 하는 문항).
+
+questions:
+  # ---------------- D2. 비교임상: 당시 vs 현재 ----------------
+  - id: Q01
+    scenario: D2
+    type: fact
+    question: "Pyzchiva(SB17)는 비교 임상(3상)을 했나? 시험 번호와 대상 환자는?"
+    products: [SB17]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "2.6.5 Clinical efficacy - SB17-3001 design (moderate-to-severe plaque psoriasis)"}
+      - {agency: fda, doc_type: review, where: "BMER 2.2 Table 2 Listing of clinical studies (SB17-3001 row)"}
+      - {agency: hc, doc_type: sbd, where: "7.3 Comparative Clinical Efficacy and Safety"}
+    status: to_locate
+
+  - id: Q02
+    scenario: D2
+    type: compare
+    question: "우스테키누맙 바이오시밀러 4개(SB17, ABP654, CT-P43, BMAB1200)의 비교 효능 시험 1차 평가변수와 동등성 한계를 비교해줘"
+    products: [SB17, ABP654, CT-P43, BMAB1200]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "각 제품 2.6.5 Clinical efficacy - primary endpoint, equivalence margin (제품별 1곳 이상)"}
+    status: to_locate
+
+  - id: Q03
+    scenario: D2
+    type: number
+    question: "CT-P43 3상의 1차 평가변수 결과(군간 차이와 신뢰구간)는?"
+    products: [CT-P43]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "2.6.5 primary efficacy results table (CT-P43 3.1)"}
+      - {agency: fda, doc_type: review, where: "BMER 6.2 primary endpoint results"}
+    status: to_locate
+
+  - id: Q04
+    scenario: D2
+    type: guidance_now
+    question: "EMA 현행 기준으로 우스테키누맙 같은 단클론항체 바이오시밀러를 신청하면 비교 효능 시험이 필요한가? 조건은?"
+    evidence:
+      - {agency: ema, doc_type: guidance, where: "Reflection paper on a tailored clinical approach - when comparative efficacy trial can be waived"}
+    status: to_locate
+
+  - id: Q05
+    scenario: D2
+    type: guidance_change
+    question: "FDA는 비교 임상 효능 시험 요구를 2015 가이던스와 지금 사이에 어떻게 바꿨나?"
+    evidence:
+      - {agency: fda, doc_type: guidance, where: "Scientific Considerations (2015, withdrawn 2026-03-09) - comparative clinical studies section", note: "철회 상태 표시 필요"}
+      - {agency: fda, doc_type: guidance, where: "Scientific Considerations ... Update (draft) - comparative efficacy study section", note: "초안 상태 표시 필요"}
+    status: to_locate
+
+  - id: Q06
+    scenario: D2
+    type: guidance_change
+    question: "Health Canada 바이오시밀러 가이던스 개정에서 비교 임상 시험 관련으로 바뀐 점은?"
+    evidence:
+      - {agency: hc, doc_type: guidance, where: "Summary of changes - clinical studies items"}
+      - {agency: hc, doc_type: guidance, where: "Guidance 5.3 Clinical studies / 5.3.2 Comparative clinical efficacy studies"}
+    status: to_locate
+
+  # ---------------- D3. 인터체인저빌리티 ----------------
+  - id: Q07
+    scenario: D3
+    type: reasoning
+    question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐나?"
+    products: [ABP654]
+    evidence:
+      - {agency: fda, doc_type: review, where: "Multi-discipline review - interchangeability assessment section"}
+      - {agency: fda, doc_type: approval_letter, where: "interchangeability designation statement"}
+    status: to_locate
+
+  - id: Q08
+    scenario: D3
+    type: fact
+    question: "Wezlana 허가 때 스위칭 시험을 했나? 했다면 설계(교대 횟수, 대상, 평가변수)는?"
+    products: [ABP654]
+    evidence:
+      - {agency: fda, doc_type: review, where: "switching study design and PK results"}
+    status: to_locate
+
+  - id: Q09
+    scenario: D3
+    type: compare
+    question: "Pyzchiva, Steqeyma, Yesintek도 FDA 인터체인저블 지정을 받았나? 언제, 어떤 근거로?"
+    products: [SB17, CT-P43, BMAB1200]
+    evidence:
+      - {agency: fda, doc_type: review, where: "각 제품 BMER interchangeability section 또는 regulatory history"}
+      - {agency: fda, doc_type: label, where: "interchangeable 문구 (최신 라벨)"}
+    status: to_locate
+
+  - id: Q10
+    scenario: D3
+    type: guidance_change
+    question: "FDA 인터체인저빌리티 가이던스는 2019 최종본과 2024 초안에서 스위칭 시험 요구가 어떻게 다른가?"
+    evidence:
+      - {agency: fda, doc_type: guidance, where: "Considerations in Demonstrating Interchangeability (2019 final) - switching study section"}
+      - {agency: fda, doc_type: guidance, where: "Considerations in Demonstrating Interchangeability: Update (draft) - switching study"}
+    status: to_locate
+
+  - id: Q11
+    scenario: D3
+    type: fact
+    question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나?"
+    evidence:
+      - {agency: fda, doc_type: guidance, where: "Labeling for Biosimilar and Interchangeable Biosimilar Products (draft) - interchangeability statement"}
+      - {agency: fda, doc_type: label, where: "Wezlana label - interchangeability statement"}
+    status: to_locate
+
+  # ---------------- D4. PK 시험 설계 비교 ----------------
+  - id: Q12
+    scenario: D4
+    type: fact
+    question: "SB17 PK 시험(SB17-1001)의 대상, 군 구성, 용량, 대조약 출처는?"
+    products: [SB17]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "2.6.2 Clinical pharmacology - SB17-1001 methods"}
+      - {agency: fda, doc_type: review, where: "BMER 2.2 Table 2 (SB17-1001 row: healthy subjects, SB17/US-Stelara/EU-Stelara 67 each)"}
+    status: to_locate
+
+  - id: Q13
+    scenario: D4
+    type: compare
+    question: "4개 제품의 PK 시험에서 대조약으로 EU-Stelara와 US-Stelara를 어떻게 썼나(3군 브리징 여부)?"
+    products: [SB17, ABP654, CT-P43, BMAB1200]
+    evidence:
+      - {agency: fda, doc_type: review, where: "각 제품 BMER clinical studies listing / PK study design"}
+      - {agency: ema, doc_type: assessment_report, where: "각 제품 2.6.2 PK study design"}
+    status: to_locate
+
+  - id: Q14
+    scenario: D4
+    type: number
+    question: "BMAB1200 PK 시험에서 AUC0-inf와 Cmax의 기하평균비와 90% 신뢰구간은?"
+    products: [BMAB1200]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "2.6.2 PK statistical analysis table"}
+      - {agency: fda, doc_type: review, where: "BMER 5.x PK similarity results table"}
+    status: to_locate
+
+  - id: Q15
+    scenario: D4
+    type: number
+    question: "CT-P43 PK 시험에서 ADA 양성 여부에 따라 AUC0-inf와 Cmax가 어떻게 달랐나?"
+    products: [CT-P43]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "Table 15 Impact of ADA positivity on Cmax and AUC0-inf (Study CT-P43 1.1 Part 2)", note: "gold 쪽 g05와 같은 표"}
+    status: to_locate
+
+  - id: Q16
+    scenario: D4
+    type: reasoning
+    question: "비미국(EU) 대조약 데이터를 FDA 심사에 쓰려면 무엇이 필요하고, 각 제품은 어떻게 했나?"
+    products: [SB17, ABP654, CT-P43, BMAB1200]
+    evidence:
+      - {agency: fda, doc_type: guidance, where: "Q&As on Biosimilar Development (Revision 4 draft / final) - non-US-licensed comparator items"}
+      - {agency: fda, doc_type: review, where: "각 제품 BMER - scientific bridge / comparator justification"}
+    status: to_locate
+
+  - id: Q17
+    scenario: D4
+    type: fact
+    question: "SB17 PK 시험에서 분석에서 빠진 대상자와 그 이유는?"
+    products: [SB17]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "PK parameters table footnotes (COVID-19, pregnancy, low speed centrifuge)", note: "gold 쪽 g01"}
+    status: to_locate
+
+  # ---------------- 범위·예외 처리 ----------------
+  - id: Q18
+    scenario: scope
+    type: unanswerable
+    question: "BAT2206(Starjemza)의 FDA 심사 결과는?"
+    products: [BAT2206]
+    evidence: []
+    expected_behavior: "적재 문서 없음을 밝히고 추측하지 않는다(holdout)"
+    status: located
+
+  - id: Q19
+    scenario: scope
+    type: number
+    question: "Stelara 2009년 건선성 관절염 적응증 심사 때 24주 ACR20 반응률은?"
+    products: [stelara]
+    evidence:
+      - {agency: fda, doc_type: review, where: "Clinical review (sBLA 125261-103) Table 24 Summary of ACR 20 Response at Week 24", note: "gold 쪽 g23, 2009 스캔본"}
+    status: to_locate
+
+  - id: Q20
+    scenario: scope
+    type: fact
+    question: "Eksunbi의 PK 동등성 결과는?"
+    products: [SB17]
+    evidence:
+      - {agency: ema, doc_type: assessment_report, where: "Pyzchiva AR 2.6.2 PK results (Eksunbi는 중복 허가로 처리에서 제외, 대표 문서로 연결)"}
+    expected_behavior: "Eksunbi와 Pyzchiva가 같은 개발 프로그램(SB17)임을 밝히고 대표 문서 근거를 제시"
+    status: to_locate
