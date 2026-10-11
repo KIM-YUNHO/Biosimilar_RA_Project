@@ -168,7 +168,10 @@ questions:
           - {doc: 143, page: 32, quote: "FDA is unable to approve Bmab1200 injection 45 mg/0.5 mL PFS for subcutaneous use as interchangeable"}
           - {doc: 143, page: 4, quote: "unexpired first interchangeable exclusivity precluded approval"}
       - group: SB17
-        pending: "SB17 후속 Multi-Discipline Review (doc 216) 또는 최신 라벨 전처리 후"
+        note: "인터체인저블 요건은 충족(잠정 판정)했으나 Wezlana의 첫 인터체인저블 독점 기간 때문에 지정 보류"
+        any:
+          - {doc: 216, page: 152, quote: "provisionally determine that SB17 meets the standards for interchangeability"}
+          - {doc: 216, page: 5, quote: "could not be approved as interchangeable due to unexpired first interchangeable exclusivity for Wezlana"}
       - group: CT-P43
         any:
           - {doc: 183, page: 27, quote: "stated that a switching study will not be conducted to demonstrate the interchangeability of CT-P43"}
