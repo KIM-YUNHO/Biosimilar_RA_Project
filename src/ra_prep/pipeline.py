@@ -189,3 +189,41 @@ def _page_count(path: str) -> int:
         return n
     except Exception:
         return 0
+
+
+def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
+    """Bring parses made by an earlier engine up to date without re-running Docling:
+    re-apply the text-layer repairs (textfix) and RA post-processing (structure) to the
+    stored blocks, recompute QA, and relabel the row with the new engine version."""
+    from ra_ingest.db import DocumentRow, DocumentVersionRow
+
+    from .textfix import fix_blocks
+
+    rows = list(s.scalars(select(PrepDocumentRow).where(
+        PrepDocumentRow.engine == engine_from, PrepDocumentRow.status == "ok")))
+    done = 0
+    for row in rows:
+        if s.scalar(select(PrepDocumentRow).where(PrepDocumentRow.sha256 == row.sha256,
+                                                  PrepDocumentRow.engine == engine_to)):
+            continue
+        doc = json.loads(Path(row.output_path).read_text(encoding="utf-8"))
+        d = s.get(DocumentRow, row.document_id)
+        src = s.scalar(select(DocumentVersionRow.storage_path).where(
+            DocumentVersionRow.sha256 == row.sha256))
+        fixes = {}
+        if src and src.lower().endswith(".pdf"):
+            fixes = fix_blocks(src, doc["blocks"])
+        sizes = {r.page: (r.signals.get("width", 612.0), r.signals.get("height", 792.0))
+                 for r in s.scalars(select(PageRouteRow).where(PageRouteRow.sha256 == row.sha256))}
+        doc["blocks"] = structure(doc["blocks"], d.agency, d.doc_type, sizes)
+        doc["qa"] = document_qa(doc["blocks"], doc["routes"])
+        doc["engine"] = row.engine.replace(engine_from, engine_to, 1)
+        doc["text_fixes"] = fixes
+        Path(row.output_path).write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        row.engine = doc["engine"]
+        row.qa = doc["qa"]
+        s.commit()
+        done += 1
+        if fixes and (fixes.get("fffd_fixed") or fixes.get("shift_decoded")):
+            log(f"doc {row.document_id:>4}: {fixes}")
+    return {"updated": done, "candidates": len(rows)}

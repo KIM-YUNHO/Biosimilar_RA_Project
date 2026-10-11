@@ -61,7 +61,7 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 | `src/ra_ingest/db.py` | `programs`, `registrations`, `documents`, `document_versions`, `trials`, `ingest_runs`, `ingest_events` |
 | `src/ra_ingest/metadata.py` | 문서 메타데이터 계약, 청크 메타데이터 스키마, 컨텍스트 헤더 |
 | `data/raw/<agency>/` | 해시 기반 원문 저장소(git 제외) |
-| `src/ra_prep/` | 전처리: `select`(대상 선별), `signals`·`route`(쪽 판정), `sanitize`(워터마크), `extract`(Docling), `reocr`·`grid`(두 번째 판독), `html`(HC 웹 문서), `structure`(RA 후처리), `qa`, `pipeline`, `cli` |
+| `src/ra_prep/` | 전처리: `select`(대상 선별), `signals`·`route`(쪽 판정), `sanitize`(워터마크), `extract`(Docling), `textfix`(텍스트층 교정), `reocr`·`grid`(두 번째 판독), `html`(HC 웹 문서), `structure`(RA 후처리), `qa`, `pipeline`, `cli` |
 | `eval/` | 전처리 정답 세트(`gold/`: 쪽 PDF 30개 + 정답 JSON)와 후보 실행·채점 스크립트 |
 
 **새 기관을 추가하는 방법**
@@ -82,12 +82,13 @@ uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 .venv-prep/bin/ra-prep status                         # 처리 현황, 쪽당 시간, 검토 필요 블록 수
 .venv-prep/bin/ra-prep warmup                         # 모델 다운로드 + 시험 처리(긴 실행 전에 확인)
 .venv-prep/bin/ra-prep run --product SB17 --workers 2 # 문서 단위 병렬 처리
+.venv-prep/bin/ra-prep refix                          # 엔진 갱신 시 저장된 결과에 텍스트 교정·후처리만 다시 적용
 
 # 로컬에서 적재부터 전처리까지 한 번에 (docs/local-run.md)
 .venv-prep/bin/python scripts/run_local.py --workers 2
 ```
 
-처리 순서: 워터마크 제거 → 쪽 단위 경로 판정(`DIGITAL`/`MIXED`/`IMAGE`/`LEGACY_OCR`/`BROKEN_TEXT`/`ARTWORK`/`BLANK`, HTML은 DOM) → Docling 추출(경로별 OCR 설정) → 두 번째 OCR 판독으로 깨진 줄 교정·그림으로 잡힌 표 복원 → RA 후처리(머리말·꼬리말, 섹션, 말한 주체, 가림 표시) → QA 지표.
+처리 순서: 워터마크 제거 → 쪽 단위 경로 판정(`DIGITAL`/`MIXED`/`IMAGE`/`LEGACY_OCR`/`BROKEN_TEXT`/`ARTWORK`/`BLANK`, HTML은 DOM) → Docling 추출(경로별 OCR 설정) → 텍스트층 교정(깨진 글자를 pdfium 판독으로, 밀린 글꼴 인코딩 복원) → 두 번째 OCR 판독으로 깨진 줄 교정·그림으로 잡힌 표 복원 → RA 후처리(머리말·꼬리말, 섹션, 말한 주체, 가림 표시) → QA 지표.
 같은 문서 버전과 같은 엔진 버전 조합이면 다시 처리하지 않습니다(`--force`로 재처리).
 
 비교 시험(정답 세트 30쪽)과 결과는 [전처리 비교 시험](docs/preprocessing-benchmark.md)에 있습니다.

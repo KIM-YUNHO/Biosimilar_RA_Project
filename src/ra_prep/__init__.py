@@ -4,4 +4,4 @@ Deterministic by design: Docling layout/table models, RapidOCR and rules only.
 No LLM is called anywhere in this package.
 """
 
-ENGINE_VERSION = "prep-1"
+ENGINE_VERSION = "prep-1.1"  # 1.1: text-layer repairs (textfix)

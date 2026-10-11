@@ -46,11 +46,11 @@ uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 설치 확인:
 
 ```bash
-.venv-prep/bin/python -m pytest -q          # 48개 통과 (모델 없이 도는 규칙 시험)
+.venv-prep/bin/python -m pytest -q          # 59개 통과 (모델 없이 도는 규칙 시험)
 .venv-prep/bin/python -m ra_prep warmup     # 모델 다운로드 + 정답 세트 2쪽 처리 (1~3분)
 ```
 
-`warmup`이 `ok - engine prep-1+docling2.137.0+...`로 끝나면 준비가 끝난 것입니다.
+`warmup`이 `ok - engine prep-1.1+docling2.137.0+...`로 끝나면 준비가 끝난 것입니다.
 
 ## 3. 한 번에 실행
 
@@ -87,7 +87,10 @@ $P -m ra_prep run --guidance --workers 2
 $P -m ra_prep run --product SB17 --doc-types assessment_report,review,sbd,rds --workers 2
 $P -m ra_prep run --doc-id 48 --force                     # 문서 하나 다시 처리
 $P -m ra_prep status
+$P -m ra_prep refix                                       # 엔진이 바뀌었을 때 이미 처리한 문서를 갱신(재파싱 없음)
 ```
+
+**코드를 새로 받은 뒤(엔진 버전이 올라갔을 때):** `run`은 엔진 버전이 다른 문서를 다시 처리합니다. 바뀐 것이 텍스트 교정·후처리뿐이면(예: prep-1 → prep-1.1) 먼저 `ra-prep refix`를 돌리면 Docling을 다시 돌리지 않고 몇 초 만에 갱신됩니다.
 
 ## 5. 걸리는 시간 (참고)
 

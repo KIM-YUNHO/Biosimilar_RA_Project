@@ -13,6 +13,7 @@ from ra_prep.sanitize import remove_watermarks  # noqa: E402
 from ra_prep.select import jaccard  # noqa: E402
 from ra_prep.signals import PageSignals, document_signals  # noqa: E402
 from ra_prep.structure import structure, study_ids  # noqa: E402
+from ra_prep.textfix import decode_controls, decode_shifted, repair_replacement_chars  # noqa: E402
 from ra_prep.textquality import garbled_spans  # noqa: E402
 
 GOLD = Path(__file__).resolve().parents[1] / "eval" / "gold" / "pages"
@@ -170,3 +171,40 @@ def test_study_ids():
 
 def test_jaccard():
     assert jaccard({1, 2, 3}, {1, 2, 3}) == 1.0 and jaccard(set(), {1}) == 0.0
+
+
+# -- text-layer repairs (textfix) ----------------------------------------------------------
+def test_replacement_chars_filled_from_pdfium_reading():
+    assert repair_replacement_chars("a comparative clinical stu\ufffdy is needed",
+                                    "a comparative clinical study is needed") == \
+        "a comparative clinical study is needed"
+    # a different reading elsewhere (reading order) is not taken over
+    assert repair_replacement_chars("PK study in healthy subjects", "PK study in healthy subjects") is None
+    assert repair_replacement_chars("Gui\ufffdance", "") is None
+
+
+def test_control_chars_are_shifted_digits():
+    assert decode_controls("\x14\x13\x11\x18\x08") == "10.5%"
+    assert decode_controls("weight \x94100 kg, BSA \x95 10%") == "weight \u2264100 kg, BSA \u2265 10%"
+    assert decode_controls("tab\tand\nnewline") == "tab\tand\nnewline"
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("gamma F\\WRNLQH DQG GULYHV CD4+ cells", "gamma cytokine and drives CD4+ cells"),
+    ("incidence of NAb ZDV 75% IRU ERWK WUHDWPHQW JURXSV.", "incidence of NAb was 75% for both treatment groups."),
+    ("comparable EHWZHHQ WKH 6%17 DQG EU-6WHODUD arms", "comparable between the 6%17 and EU-Stelara arms"),
+])
+def test_shifted_font_runs_decoded(text, expected):
+    assert decode_shifted(text) == expected
+
+
+@pytest.mark.parametrize("text", [
+    "The results of SE-HPLC, CE-SDS non-reduced and CE-SDS reduced are consistent",
+    "Safety Set (SAF): SAF consists of all subjects who received IP.",
+    "New York Heart Association (NYHA) III/IV",
+    "A = SB17; B = EU Stelara",
+    "CLINICAL PHARMACOLOGY REVIEW BLA 761285 PK AUC CI",
+    "LV ejection fraction",
+])
+def test_real_abbreviations_not_decoded(text):
+    assert decode_shifted(text) == text

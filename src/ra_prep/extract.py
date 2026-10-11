@@ -24,6 +24,7 @@ from . import ENGINE_VERSION
 from . import grid
 from .reocr import decide, page_lines, read_region, text_in
 from .route import OCR_MODE
+from .textfix import fix_blocks
 
 _log = logging.getLogger(__name__)
 
@@ -110,6 +111,8 @@ class Extractor:
             blocks.extend(self._blocks(res.document, by_page))
             timing[str(mode)] = timing.get(str(mode), 0.0) + time.time() - t
 
+        fixes = fix_blocks(path, blocks)
+
         if self.repair_ocr or self.picture_tables:
             t = time.time()
             lines = self._second_reader(path, blocks, by_page)
@@ -118,7 +121,7 @@ class Extractor:
             if self.picture_tables:
                 blocks = self._pictures_to_tables(blocks, lines)
             timing["second_reader"] = time.time() - t
-        return {"engine": self.version(), "blocks": blocks, "timing": timing}
+        return {"engine": self.version(), "blocks": blocks, "timing": timing, "text_fixes": fixes}
 
     # -- HTML (HC SBD / RDS pages) ------------------------------------------------------
     def extract_html(self, path: str) -> dict:

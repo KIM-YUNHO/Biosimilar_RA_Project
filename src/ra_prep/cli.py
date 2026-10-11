@@ -5,6 +5,7 @@
                   [--doc-id N ...] [--force]
   ra-prep status                                                   counts and QA summary
   ra-prep warmup  [--artifacts DIR]                                model download + smoke test
+  ra-prep refix                                                    upgrade stored parses (no re-OCR)
 """
 from __future__ import annotations
 
@@ -106,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--device", default="auto", help="auto | cpu | cuda | mps")
             p.add_argument("--artifacts", help="offline model cache (docling-tools models download)")
     sub.add_parser("status")
+    rf = sub.add_parser("refix", help="apply newer text repairs/post-processing to stored parses")
+    rf.add_argument("--from-engine", default="prep-1+")
     w = sub.add_parser("warmup", help="download models and run two gold pages (check before a long run)")
     w.add_argument("--artifacts", help="also save Docling/RapidOCR models here for offline runs")
     w.add_argument("--device", default="auto")
@@ -132,6 +135,19 @@ def main(argv: list[str] | None = None) -> int:
             rate = res["wall_seconds"] / res["pages"] if res["pages"] else 0
             print(f"done: {res} ({rate:.2f} s/page wall clock)")
             return 1 if res["failed"] else 0
+        if a.cmd == "refix":
+            from sqlalchemy import select
+
+            from . import ENGINE_VERSION
+            from .pipeline import refix
+            from .store import PrepDocumentRow
+
+            engines = {r for r in s.scalars(select(PrepDocumentRow.engine))
+                       if r.startswith(a.from_engine) and not r.startswith(ENGINE_VERSION + "+")}
+            for eng in sorted(engines):
+                old = eng.split("+", 1)[0]
+                print(eng, "->", ENGINE_VERSION, refix(s, eng, eng.replace(old, ENGINE_VERSION, 1)))
+            return 0
         if a.cmd == "status":
             from sqlalchemy import select
 
