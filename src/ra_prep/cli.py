@@ -16,8 +16,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DB = f"sqlite:///{ROOT / 'data' / 'ra.db'}"
+from ra_ingest.settings import ROOT, default_db, default_store
 
 
 def _store(url: str):
@@ -42,13 +41,19 @@ def _programs(s, products: list[str] | None) -> list[str] | None:
     return ids
 
 
+def _objstore(a):
+    from ra_ingest.objstore import open_store
+
+    return open_store(a.store)
+
+
 def _selections(s, a):
     from .select import select_documents
 
     sels = select_documents(s, program_ids=_programs(s, a.product),
                             agencies=a.agencies.split(",") if a.agencies else None,
                             include_superseded_labels=a.all_labels,
-                            doc_kind="guidance" if a.guidance else None)
+                            doc_kind="guidance" if a.guidance else None, store=_objstore(a))
     if a.doc_types:
         keep_types = set(a.doc_types.split(","))
         sels = [x for x in sels if x.doc_type in keep_types]
@@ -86,7 +91,9 @@ def _warmup(a) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="ra-prep")
-    ap.add_argument("--db", default=DEFAULT_DB)
+    ap.add_argument("--db", default=default_db(), help="SQLAlchemy URL (default: RA_DB or SQLite data/ra.db)")
+    ap.add_argument("--store", default=default_store(),
+                    help="object store: directory or s3://bucket/prefix (default: RA_STORE or data/)")
     ap.add_argument("-v", "--verbose", action="store_true")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("select", "run"):
@@ -98,7 +105,6 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--doc-types", help="comma list, e.g. assessment_report,review,sbd")
         p.add_argument("--guidance", action="store_true", help="guidance documents only")
         if name == "run":
-            p.add_argument("--out", default=str(ROOT / "data" / "parsed"))
             p.add_argument("--force", action="store_true")
             p.add_argument("--threads", type=int, default=os.cpu_count() or 4,
                            help="CPU threads in total (split across workers)")
@@ -131,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
             from .pipeline import run
 
             ex = Extractor(num_threads=a.threads, device=a.device, artifacts_path=a.artifacts)
-            res = run(s, _selections(s, a), a.out, ex, force=a.force, workers=a.workers)
+            res = run(s, _selections(s, a), _objstore(a), ex, force=a.force, workers=a.workers)
             rate = res["wall_seconds"] / res["pages"] if res["pages"] else 0
             print(f"done: {res} ({rate:.2f} s/page wall clock)")
             return 1 if res["failed"] else 0
@@ -147,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
                        if r.split("+", 1)[0] in olds}
             for eng in sorted(engines):
                 new = ENGINE_VERSION + "+" + eng.split("+", 1)[1]
-                print(eng, "->", ENGINE_VERSION, refix(s, eng, new))
+                print(eng, "->", ENGINE_VERSION, refix(s, eng, new, store=_objstore(a)))
             return 0
         if a.cmd == "status":
             from sqlalchemy import select

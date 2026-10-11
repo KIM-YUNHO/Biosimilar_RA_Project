@@ -16,6 +16,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from ra_ingest.objstore import open_store  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -63,14 +66,16 @@ def main() -> int:
     ap.add_argument("--any", nargs="*", default=[], help="at least one must occur")
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--width", type=int, default=260)
+    ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     a = ap.parse_args()
+    store = open_store(a.store)
 
     must = [re.compile(t, re.I) for t in a.all]
     some = [re.compile(t, re.I) for t in a.any]
     hits = []
     for did, agency, dtype, prog, title, path in docs(Path(a.db), a.program, a.agency, a.doc_type,
                                                       a.guidance, a.doc_id):
-        d = json.loads(Path(path).read_text(encoding="utf-8"))
+        d = json.loads(store.read_text(path))
         for i, b in enumerate(d["blocks"]):
             if b.get("furniture"):
                 continue

@@ -50,11 +50,12 @@ def main() -> int:
     ap.add_argument("--skip-guidance", action="store_true")
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--device", default="auto", help="auto | cpu | cuda | mps")
-    ap.add_argument("--db", help="SQLAlchemy URL (default: SQLite data/ra.db)")
+    ap.add_argument("--db", help="SQLAlchemy URL (default: RA_DB or SQLite data/ra.db)")
+    ap.add_argument("--store", help="object store: directory or s3://bucket/prefix (default: RA_STORE or data/)")
     a = ap.parse_args()
 
     py = sys.executable
-    db = ["--db", a.db] if a.db else []
+    db = (["--db", a.db] if a.db else []) + (["--store", a.store] if a.store else [])
     prods = [x for p in a.products for x in ("--product", p)]
 
     if not a.skip_ingest:

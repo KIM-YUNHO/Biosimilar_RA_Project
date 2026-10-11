@@ -4,7 +4,11 @@ import hashlib
 import mimetypes
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
+
+if TYPE_CHECKING:
+    from .objstore import ObjectStore
 
 
 def guess_ext(url: str, content_type: str | None) -> str:
@@ -50,18 +54,22 @@ def fingerprint(content: bytes, ext: str) -> str:
 
 
 class RawStore:
-    """Content-addressed raw store: data/raw/<agency>/<sha[:2]>/<sha><ext>.
-    Identical bytes are stored once; versions are tracked in the database."""
+    """Content-addressed raw store: key raw/<agency>/<sha[:2]>/<sha><ext> in an ObjectStore.
+    Identical bytes are stored once; versions are tracked in the database (by key)."""
 
-    def __init__(self, root: str | Path):
-        self.root = Path(root)
+    def __init__(self, store: "ObjectStore | str | Path"):
+        from .objstore import ObjectStore, open_store
 
-    def put(self, agency: str, content: bytes, ext: str) -> tuple[str, Path]:
+        self.store = store if isinstance(store, ObjectStore) else open_store(str(store))
+
+    @staticmethod
+    def key(agency: str, sha: str, ext: str) -> str:
+        return f"raw/{agency}/{sha[:2]}/{sha}{ext}"
+
+    def put(self, agency: str, content: bytes, ext: str) -> tuple[str, str]:
+        """Returns (sha256, key)."""
         sha = fingerprint(content, ext)
-        path = self.root / "raw" / agency / sha[:2] / f"{sha}{ext}"
-        if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(path.suffix + ".part")
-            tmp.write_bytes(content)
-            tmp.replace(path)
-        return sha, path
+        key = self.key(agency, sha, ext)
+        if not self.store.exists(key):
+            self.store.put_bytes(key, content)
+        return sha, key

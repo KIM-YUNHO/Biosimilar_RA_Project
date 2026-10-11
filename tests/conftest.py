@@ -170,6 +170,8 @@ def db_url(tmp_path) -> str:
         return f"sqlite:///{tmp_path / 'ra.db'}"
     from sqlalchemy import create_engine
     from ra_ingest.db import Base
+    from ra_ingest.migrate import load_all_tables
+    load_all_tables()  # later stages' tables reference documents; drop them too
     eng = create_engine(url)
     Base.metadata.drop_all(eng)
     eng.dispose()

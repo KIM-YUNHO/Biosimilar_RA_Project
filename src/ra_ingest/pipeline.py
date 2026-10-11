@@ -20,7 +20,9 @@ from .connectors.hc import HcConnector
 from .db import DocumentRow, Store
 from .http import FetchError, Fetcher
 from .models import AGENCIES, DocumentRecord
+from .objstore import LocalStore, open_store
 from .registry import Registry, Target, validate_agencies
+from .settings import default_db
 from .storage import RawStore, guess_ext
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,8 +39,9 @@ class IngestConfig:
     download: bool = True
     doc_types: list[str] | None = None       # restrict downloads, e.g. ["assessment_report", "review"]
     expand_index_pages: bool = True
-    db_url: str = f"sqlite:///{ROOT / 'data' / 'ra.db'}"
-    data_dir: Path = ROOT / "data"
+    db_url: str = field(default_factory=default_db)
+    data_dir: Path = ROOT / "data"           # local store directory, used when store_url is None
+    store_url: str | None = None             # object store (directory or s3://...), see objstore
     registry_path: Path = ROOT / "config" / "products.yaml"
     guidances_path: Path = ROOT / "config" / "guidances.yaml"
 
@@ -53,7 +56,7 @@ class IngestResult:
 class _Run:
     def __init__(self, cfg: IngestConfig, store: Store, fetcher: Fetcher, connectors: dict[str, Connector] | None):
         self.cfg, self.store, self.fetcher = cfg, store, fetcher
-        self.raw = RawStore(cfg.data_dir)
+        self.raw = RawStore(open_store(cfg.store_url) if cfg.store_url else LocalStore(cfg.data_dir))
         self.stats: dict[str, Any] = {"registrations": 0, "unmapped_registrations": 0, "documents": 0,
                                       "fetched": 0, "new_versions": 0, "fetch_failed": 0, "skipped": 0,
                                       "trials": 0, "errors": 0, "warnings": 0}
@@ -163,10 +166,10 @@ class _Run:
             self._set_fetch(row.id, "failed", "HTML page returned instead of PDF (blocked or moved)")
             self.stats["fetch_failed"] += 1
             return
-        sha, path = self.raw.put(doc.agency, res.content, guess_ext(res.url, res.content_type))
+        sha, key = self.raw.put(doc.agency, res.content, guess_ext(res.url, res.content_type))
         with self.store.session() as s:
             r = s.get(DocumentRow, row.id)
-            if self.store.add_version(s, r, sha, str(path), len(res.content), res.content_type,
+            if self.store.add_version(s, r, sha, key, len(res.content), res.content_type,
                                       res.last_modified, res.etag):
                 self.stats["new_versions"] += 1
             r.fetch_status, r.fetch_error = "fetched", None
@@ -228,6 +231,7 @@ def run_ingest(cfg: IngestConfig, fetcher: Fetcher | None = None,
     validate_agencies(cfg.agencies)
     registry = Registry.load(cfg.registry_path)
     target = registry.resolve(cfg.ingredient, cfg.products or None, cfg.include_holdout)
-    cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    if cfg.store_url is None:
+        cfg.data_dir.mkdir(parents=True, exist_ok=True)
     store = Store(cfg.db_url)
     return _Run(cfg, store, fetcher or Fetcher(), connectors).execute(target)

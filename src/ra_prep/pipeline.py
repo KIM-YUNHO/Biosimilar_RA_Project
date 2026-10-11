@@ -1,5 +1,5 @@
 """Preprocessing of stored documents: sanitize -> page signals -> routes -> extraction ->
-RA post-processing -> QA -> data/parsed/<sha256>.json + database rows.
+RA post-processing -> QA -> parse output (object store key parsed/<sha256>.json) + database rows.
 
 Deterministic: Docling layout/table models, RapidOCR and rules. No LLM is called.
 """
@@ -13,6 +13,8 @@ from pathlib import Path
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
+
+from ra_ingest.objstore import ObjectStore, open_store
 
 from .extract import Extractor
 from .qa import document_qa
@@ -91,7 +93,11 @@ def _work(sel: Selection) -> tuple[Selection, dict | None, str | None, float]:
         return sel, None, f"{type(e).__name__}: {e}", time.time() - t
 
 
-def run(s: Session, selections: list[Selection], out_dir: str | Path,
+def parsed_key(sha256: str) -> str:
+    return f"parsed/{sha256}.json"
+
+
+def run(s: Session, selections: list[Selection], store: ObjectStore | None = None,
         extractor: Extractor | None = None, force: bool = False, log=print,
         workers: int = 1) -> dict:
     """Process selected documents, skipping versions already parsed by this engine.
@@ -99,10 +105,9 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
     workers > 1 runs documents in parallel processes (each with its own Docling models,
     num_threads split between them). Results are written by this process only, so the
     database never sees concurrent writers (safe for SQLite)."""
+    store = store or open_store()
     extractor = extractor or Extractor()
     engine = extractor.version()
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     summary = {"ok": 0, "failed": 0, "skipped": 0, "cached": 0, "refixed": 0, "pages": 0,
                "seconds": 0.0}
     t_run = time.time()
@@ -124,7 +129,7 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
         if existing is None and not force:
             old = refixable_row(s, sel.sha256, engine)
             if old is not None:  # same extraction stage: replay the cheap stages only
-                refix_row(s, old, engine)
+                refix_row(s, old, engine, store)
                 summary["refixed"] += 1
                 continue
         if existing is not None:
@@ -143,15 +148,15 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
             log(f"FAILED doc {sel.document_id}: {err}")
             return
         signals = doc.pop("_signals")
-        path = out_dir / f"{sel.sha256}.json"
-        path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        key = parsed_key(sel.sha256)
+        store.put_bytes(key, json.dumps(doc, ensure_ascii=False).encode("utf-8"))
         s.execute(delete(PageRouteRow).where(PageRouteRow.sha256 == sel.sha256))
         for r in doc["routes"]:
             s.add(PageRouteRow(document_id=sel.document_id, sha256=sel.sha256, page=r["page"],
                                route=r["route"], reason=r["reason"][:256],
                                signals=signals.get(r["page"], {})))
         s.add(PrepDocumentRow(document_id=sel.document_id, sha256=sel.sha256, engine=engine,
-                              status="ok", output_path=str(path), pages=doc["qa"]["pages"],
+                              status="ok", output_path=key, pages=doc["qa"]["pages"],
                               seconds=el, qa=doc["qa"]))
         s.commit()
         summary["ok"] += 1
@@ -214,35 +219,39 @@ def refixable_row(s: Session, sha256: str, engine: str):
     return None
 
 
-def refix_row(s: Session, row: PrepDocumentRow, engine_to: str) -> dict:
+def refix_row(s: Session, row: PrepDocumentRow, engine_to: str,
+              store: ObjectStore | None = None) -> dict:
     """Upgrade one stored parse in place without re-running Docling: re-apply the text-layer
     repairs (textfix) and RA post-processing (structure), recompute QA, relabel the engine."""
     from ra_ingest.db import DocumentRow, DocumentVersionRow
 
     from .textfix import fix_blocks
 
-    doc = json.loads(Path(row.output_path).read_text(encoding="utf-8"))
+    store = store or open_store()
+    doc = json.loads(store.read_text(row.output_path))
     d = s.get(DocumentRow, row.document_id)
     src = s.scalar(select(DocumentVersionRow.storage_path).where(
         DocumentVersionRow.sha256 == row.sha256))
     fixes = {}
     if src and src.lower().endswith(".pdf"):
-        fixes = fix_blocks(src, doc["blocks"])
+        fixes = fix_blocks(store.resolve(src), doc["blocks"])
     sizes = {r.page: (r.signals.get("width", 612.0), r.signals.get("height", 792.0))
              for r in s.scalars(select(PageRouteRow).where(PageRouteRow.sha256 == row.sha256))}
     doc["blocks"] = structure(doc["blocks"], d.agency, d.doc_type, sizes)
     doc["qa"] = document_qa(doc["blocks"], doc["routes"])
     doc["engine"] = engine_to
     doc["text_fixes"] = fixes
-    Path(row.output_path).write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    store.write_text(row.output_path, json.dumps(doc, ensure_ascii=False))
     row.engine = engine_to
     row.qa = doc["qa"]
     s.commit()
     return fixes
 
 
-def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
+def refix(s: Session, engine_from: str, engine_to: str, log=print,
+          store: ObjectStore | None = None) -> dict:
     """Upgrade every ok parse made by `engine_from` to `engine_to` (see refix_row)."""
+    store = store or open_store()
     rows = list(s.scalars(select(PrepDocumentRow).where(
         PrepDocumentRow.engine == engine_from, PrepDocumentRow.status == "ok")))
     done = 0
@@ -250,7 +259,7 @@ def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
         if s.scalar(select(PrepDocumentRow).where(PrepDocumentRow.sha256 == row.sha256,
                                                   PrepDocumentRow.engine == engine_to)):
             continue
-        fixes = refix_row(s, row, engine_to)
+        fixes = refix_row(s, row, engine_to, store)
         done += 1
         if any(fixes.values()):
             log(f"doc {row.document_id:>4}: {fixes}")

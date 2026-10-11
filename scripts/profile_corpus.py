@@ -9,6 +9,9 @@ import time
 
 import pymupdf
 
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "src"))
+from ra_ingest.objstore import open_store  # noqa: E402
+
 DB = sys.argv[1]
 OUT = sys.argv[2]
 
@@ -69,12 +72,13 @@ def main():
                         d.program_id, d.title, v.storage_path from documents d
                         join document_versions v on v.document_id=d.id
                         where d.fetch_status='fetched' and v.storage_path like '%.pdf'""").fetchall()
+    store = open_store()
     out = []
     t0 = time.time()
     for did, ag, kind, dt, nd, pid, title, path in rows:
         t = time.time()
         try:
-            doc = pymupdf.open(path)
+            doc = pymupdf.open(store.resolve(path))
         except Exception as e:
             out.append(dict(doc_id=did, error=str(e)))
             continue
