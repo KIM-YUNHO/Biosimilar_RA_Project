@@ -4,11 +4,13 @@
   ra-prep run     [--product X ...] [--agencies ...] [--doc-types ...] [--guidance]
                   [--doc-id N ...] [--force]
   ra-prep status                                                   counts and QA summary
+  ra-prep warmup  [--artifacts DIR]                                model download + smoke test
 """
 from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from collections import Counter
 from pathlib import Path
@@ -55,6 +57,32 @@ def _selections(s, a):
     return sels
 
 
+def _warmup(a) -> int:
+    """Fetch every model the pipeline uses and run one digital and one image page from the
+    gold set, so network or install problems show up in a minute, not hours into a run."""
+    import time
+
+    if a.artifacts:
+        from docling.utils.model_downloader import download_models
+
+        print(f"downloading Docling models to {a.artifacts} ...")
+        download_models(Path(a.artifacts), progress=True, with_code_formula=False,
+                        with_picture_classifier=False)
+    from .extract import Extractor
+    from .pipeline import process_pdf
+
+    ex = Extractor(device=a.device, artifacts_path=a.artifacts)
+    gold = ROOT / "eval" / "gold" / "pages"
+    for gid, doc_type in (("g01", "assessment_report"), ("g08", "review")):
+        t = time.time()
+        res = process_pdf(str(gold / f"{gid}.pdf"), doc_type, ex)
+        n_tables = sum(1 for b in res["blocks"] if b["type"] == "table")
+        print(f"{gid}: route={res['routes'][0]['route']} blocks={len(res['blocks'])} "
+              f"tables={n_tables} {time.time() - t:.1f}s")
+    print(f"ok - engine {ex.version()}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="ra-prep")
     ap.add_argument("--db", default=DEFAULT_DB)
@@ -71,12 +99,21 @@ def main(argv: list[str] | None = None) -> int:
         if name == "run":
             p.add_argument("--out", default=str(ROOT / "data" / "parsed"))
             p.add_argument("--force", action="store_true")
-            p.add_argument("--threads", type=int, default=4)
+            p.add_argument("--threads", type=int, default=os.cpu_count() or 4,
+                           help="CPU threads in total (split across workers)")
+            p.add_argument("--workers", type=int, default=1,
+                           help="documents processed in parallel (each loads its own models, ~2-3 GB RAM)")
             p.add_argument("--device", default="auto", help="auto | cpu | cuda | mps")
             p.add_argument("--artifacts", help="offline model cache (docling-tools models download)")
     sub.add_parser("status")
+    w = sub.add_parser("warmup", help="download models and run two gold pages (check before a long run)")
+    w.add_argument("--artifacts", help="also save Docling/RapidOCR models here for offline runs")
+    w.add_argument("--device", default="auto")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if a.verbose else logging.WARNING)
+
+    if a.cmd == "warmup":
+        return _warmup(a)
 
     st = _store(a.db)
     with st.session() as s:
@@ -91,9 +128,9 @@ def main(argv: list[str] | None = None) -> int:
             from .pipeline import run
 
             ex = Extractor(num_threads=a.threads, device=a.device, artifacts_path=a.artifacts)
-            res = run(s, _selections(s, a), a.out, ex, force=a.force)
-            rate = res["seconds"] / res["pages"] if res["pages"] else 0
-            print(f"done: {res} ({rate:.2f} s/page)")
+            res = run(s, _selections(s, a), a.out, ex, force=a.force, workers=a.workers)
+            rate = res["wall_seconds"] / res["pages"] if res["pages"] else 0
+            print(f"done: {res} ({rate:.2f} s/page wall clock)")
             return 1 if res["failed"] else 0
         if a.cmd == "status":
             from sqlalchemy import select

@@ -74,14 +74,39 @@ def process_document(sel: Selection, extractor: Extractor) -> dict:
     }
 
 
+_WORKER_EXTRACTOR: Extractor | None = None
+
+
+def _init_worker(cfg: dict) -> None:
+    global _WORKER_EXTRACTOR
+    logging.getLogger("docling").setLevel(logging.WARNING)
+    _WORKER_EXTRACTOR = Extractor(**cfg)
+
+
+def _work(sel: Selection) -> tuple[Selection, dict | None, str | None, float]:
+    t = time.time()
+    try:
+        return sel, process_document(sel, _WORKER_EXTRACTOR), None, time.time() - t
+    except Exception as e:  # recorded by the parent
+        return sel, None, f"{type(e).__name__}: {e}", time.time() - t
+
+
 def run(s: Session, selections: list[Selection], out_dir: str | Path,
-        extractor: Extractor | None = None, force: bool = False, log=print) -> dict:
-    """Process selected documents, skipping versions already parsed by this engine."""
+        extractor: Extractor | None = None, force: bool = False, log=print,
+        workers: int = 1) -> dict:
+    """Process selected documents, skipping versions already parsed by this engine.
+
+    workers > 1 runs documents in parallel processes (each with its own Docling models,
+    num_threads split between them). Results are written by this process only, so the
+    database never sees concurrent writers (safe for SQLite)."""
     extractor = extractor or Extractor()
     engine = extractor.version()
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     summary = {"ok": 0, "failed": 0, "skipped": 0, "cached": 0, "pages": 0, "seconds": 0.0}
+    t_run = time.time()
+
+    todo = []
     for sel in selections:
         existing = s.scalar(select(PrepDocumentRow).where(
             PrepDocumentRow.sha256 == sel.sha256, PrepDocumentRow.engine == engine))
@@ -98,27 +123,25 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
         if existing is not None:
             s.delete(existing)
             s.commit()
-        t = time.time()
-        try:
-            doc = process_document(sel, extractor)
-        except Exception as e:  # keep going; the failure is recorded
-            _log.exception("preprocessing failed: %s", sel.path)
+        todo.append(sel)
+    log(f"to process: {len(todo)} documents (cached {summary['cached']}, skipped {summary['skipped']})")
+
+    def record(sel: Selection, doc: dict | None, err: str | None, el: float) -> None:
+        if doc is None:
             s.add(PrepDocumentRow(document_id=sel.document_id, sha256=sel.sha256, engine=engine,
-                                  status="failed", reason=f"{type(e).__name__}: {e}"[:2000],
-                                  seconds=time.time() - t))
+                                  status="failed", reason=(err or "")[:2000], seconds=el))
             s.commit()
             summary["failed"] += 1
-            log(f"FAILED doc {sel.document_id}: {e}")
-            continue
+            log(f"FAILED doc {sel.document_id}: {err}")
+            return
         signals = doc.pop("_signals")
         path = out_dir / f"{sel.sha256}.json"
-        path.write_text(json.dumps(doc, ensure_ascii=False))
+        path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
         s.execute(delete(PageRouteRow).where(PageRouteRow.sha256 == sel.sha256))
         for r in doc["routes"]:
             s.add(PageRouteRow(document_id=sel.document_id, sha256=sel.sha256, page=r["page"],
                                route=r["route"], reason=r["reason"][:256],
                                signals=signals.get(r["page"], {})))
-        el = time.time() - t
         s.add(PrepDocumentRow(document_id=sel.document_id, sha256=sel.sha256, engine=engine,
                               status="ok", output_path=str(path), pages=doc["qa"]["pages"],
                               seconds=el, qa=doc["qa"]))
@@ -129,4 +152,40 @@ def run(s: Session, selections: list[Selection], out_dir: str | Path,
         q = doc["qa"]
         log(f"doc {sel.document_id:>4} {sel.agency}/{sel.doc_type:<18} {q['pages']:>4} p "
             f"{el:6.1f}s routes={q['routes']} review={q['needs_review_blocks']}")
+
+    if workers <= 1 or len(todo) <= 1:
+        for sel in todo:
+            t = time.time()
+            try:
+                doc, err = process_document(sel, extractor), None
+            except Exception as e:  # keep going; the failure is recorded
+                _log.exception("preprocessing failed: %s", sel.path)
+                doc, err = None, f"{type(e).__name__}: {e}"
+            record(sel, doc, err, time.time() - t)
+    else:
+        import multiprocessing as mp
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+
+        cfg = dict(extractor.config(), num_threads=max(1, extractor.num_threads // workers))
+        # largest documents first so the pool does not end on one long straggler
+        todo.sort(key=lambda x: -_page_count(x.path))
+        with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn"),
+                                 initializer=_init_worker, initargs=(cfg,)) as pool:
+            for fut in as_completed([pool.submit(_work, sel) for sel in todo]):
+                record(*fut.result())
+    summary["wall_seconds"] = time.time() - t_run
     return summary
+
+
+def _page_count(path: str) -> int:
+    if not path.lower().endswith(".pdf"):
+        return 0
+    try:
+        import pypdfium2 as pdfium
+
+        pdf = pdfium.PdfDocument(path)
+        n = len(pdf)
+        pdf.close()
+        return n
+    except Exception:
+        return 0

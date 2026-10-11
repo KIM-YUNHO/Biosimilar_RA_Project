@@ -40,6 +40,12 @@ class Extractor:
         self.device = device
         self._converters: dict = {}
 
+    def config(self) -> dict:
+        """Constructor arguments, to rebuild the same extractor in a worker process."""
+        return {"num_threads": self.num_threads, "table_mode": self.table_mode,
+                "artifacts_path": self.artifacts_path, "repair_ocr": self.repair_ocr,
+                "picture_tables": self.picture_tables, "device": self.device}
+
     def version(self) -> str:
         import docling
 

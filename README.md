@@ -80,6 +80,11 @@ uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 .venv-prep/bin/ra-prep run --product SB17 --agencies ema,fda,hc
 .venv-prep/bin/ra-prep run --doc-id 232               # 문서 하나만
 .venv-prep/bin/ra-prep status                         # 처리 현황, 쪽당 시간, 검토 필요 블록 수
+.venv-prep/bin/ra-prep warmup                         # 모델 다운로드 + 시험 처리(긴 실행 전에 확인)
+.venv-prep/bin/ra-prep run --product SB17 --workers 2 # 문서 단위 병렬 처리
+
+# 로컬에서 적재부터 전처리까지 한 번에 (docs/local-run.md)
+.venv-prep/bin/python scripts/run_local.py --workers 2
 ```
 
 처리 순서: 워터마크 제거 → 쪽 단위 경로 판정(`DIGITAL`/`MIXED`/`IMAGE`/`LEGACY_OCR`/`BROKEN_TEXT`/`ARTWORK`/`BLANK`, HTML은 DOM) → Docling 추출(경로별 OCR 설정) → 두 번째 OCR 판독으로 깨진 줄 교정·그림으로 잡힌 표 복원 → RA 후처리(머리말·꼬리말, 섹션, 말한 주체, 가림 표시) → QA 지표.
@@ -108,6 +113,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 - [적재 실행 결과 (2026-10-08)](docs/ingestion-report.md)
 - [전처리 파이프라인 설계](docs/preprocessing-design.md)
 - [전처리 실행 계획 (확정안)](docs/preprocessing-plan.md)
+- [로컬 실행 안내 (설치 → 적재 → 전처리 한 번에)](docs/local-run.md)
 - [전처리 비교 시험 (정답 세트 30쪽)](docs/preprocessing-benchmark.md)
 - [청킹·임베딩 전략 (초안)](docs/chunking-strategy.md)
 
