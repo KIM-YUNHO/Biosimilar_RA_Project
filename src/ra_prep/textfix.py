@@ -146,21 +146,31 @@ def decode_shifted(text: str, min_gain: float = 0.3) -> str:
     return "".join(out)
 
 
-def _pdfium_text(page: pdfium.PdfPage, bbox, pad: float = 1.0) -> str:
+# Shifted codes that Python treats as whitespace: "\x0b" "\x0c" = "(" ")", "\x1c".."\x1f" =
+# "9" ":" ";" "<". Whitespace normalisation (ours and Docling's) silently drops them, so
+# "\x1c\x13\x08 confidence interval \x0b&,\x0c" ends up as "0% confidence interval CI".
+_HIDDEN = {chr(c) for c in (11, 12, 28, 29, 30, 31)}
+_HIDDEN_DECODED = {chr(ord(c) + SHIFT) for c in _HIDDEN}
+
+
+def _pdfium_raw(tp: pdfium.PdfTextPage, bbox, pad: float = 1.0) -> str:
     l, b, r, t = bbox
-    tp = page.get_textpage()
-    try:
-        return " ".join(tp.get_text_bounded(left=l - pad, bottom=b - pad, right=r + pad, top=t + pad).split())
-    finally:
-        tp.close()
+    return tp.get_text_bounded(left=l - pad, bottom=b - pad, right=r + pad, top=t + pad)
+
+
+def _normalise(raw: str) -> str:
+    """Control characters decoded before whitespace is collapsed, so none are lost."""
+    return " ".join(decode_controls(raw).split())
 
 
 def repair_replacement_chars(original: str, alt: str) -> str | None:
-    """Fill U+FFFD runs in `original` with the characters pdfium read at the same place.
+    """Fill U+FFFD runs in `original` with the characters pdfium read at the same place, and
+    put back shifted characters that were dropped as whitespace ("0%" -> "90%").
 
     The two strings are aligned; only aligned segments where the original is nothing but
-    U+FFFD (and spaces) are replaced, and only when both neighbours of the segment match,
-    so differences elsewhere (hyphenation, reading order) do not leak in."""
+    U+FFFD (and spaces), or where pdfium has extra characters that are all such dropped
+    characters, are changed, and only when both neighbours of the segment match, so
+    differences elsewhere (hyphenation, reading order) do not leak in."""
     if not alt:
         return None
     a = " ".join(original.split())
@@ -170,14 +180,17 @@ def repair_replacement_chars(original: str, alt: str) -> str | None:
     ops = m.get_opcodes()
     out, changed = [], False
     for k, (tag, i1, i2, j1, j2) in enumerate(ops):
-        seg = a[i1:i2]
-        if (tag == "replace" and "\ufffd" in seg and not set(seg) - {"\ufffd", " "}
-                and 0 < k < len(ops) - 1 and ops[k - 1][0] == "equal" and ops[k + 1][0] == "equal"
+        seg, new = a[i1:i2], alt[j1:j2]
+        anchored = 0 < k < len(ops) - 1 and ops[k - 1][0] == "equal" and ops[k + 1][0] == "equal"
+        if (tag == "replace" and anchored and "\ufffd" in seg and not set(seg) - {"\ufffd", " "}
                 and (j2 - j1) <= 3 * (i2 - i1) + 2):
-            out.append(alt[j1:j2])
+            out.append(new)
+            changed = True
+        elif tag == "insert" and anchored and not set(new) - _HIDDEN_DECODED - {" "}:
+            out.append(new)
             changed = True
         elif tag == "insert":
-            continue  # text only pdfium has: not ours to add
+            continue  # other text only pdfium has: not ours to add
         else:
             out.append(seg)
     return "".join(out) if changed else None
@@ -185,37 +198,43 @@ def repair_replacement_chars(original: str, alt: str) -> str | None:
 
 def fix_blocks(path: str, blocks: list[dict]) -> dict:
     """Repair text_layer blocks and table cells in place. Returns counts."""
-    stats = {"fffd_fixed": 0, "fffd_left": 0, "shift_decoded": 0}
+    stats = {"fffd_fixed": 0, "fffd_left": 0, "shift_decoded": 0, "hidden_restored": 0}
     pdf = None
-    pages: dict[int, pdfium.PdfPage] = {}
+    pages: dict[int, tuple] = {}
 
     def page(n):
+        """(textpage, page has dropped-as-whitespace shifted codes)"""
         nonlocal pdf
         if pdf is None:
             pdf = pdfium.PdfDocument(path)
         if n not in pages:
-            pages[n] = pdf[n - 1]
-        return pages[n]
+            pg = pdf[n - 1]
+            tp = pg.get_textpage()
+            pages[n] = (pg, tp, bool(_HIDDEN & set(tp.get_text_range())))
+        return pages[n][1], pages[n][2]
 
     def fix(obj: dict, key: str, bbox, page_no: int):
         t = obj[key]
-        if "�" in t and bbox:
-            alt = decode_controls(_pdfium_text(page(page_no), bbox))
-            readable = t.replace("�", "").strip(" .,;:()-%")
-            if not readable and alt and "�" not in alt:
-                new = alt  # nothing usable in Docling's text: take pdfium's reading
-            else:
-                new = repair_replacement_chars(t, alt)
-            if new is not None:
-                t = new
-                stats["fffd_fixed"] += 1
-            else:
-                stats["fffd_left"] += 1
+        if not t:
+            return
+        has_fffd = "\ufffd" in t
+        tp, hidden = page(page_no) if bbox else (None, False)  # one pdfium text page per page
         d = decode_shifted(decode_controls(t))
         if d != t:
             stats["shift_decoded"] += 1
-            t = d
-        obj[key] = t
+        if tp is not None and (has_fffd or hidden):
+            alt = decode_shifted(_normalise(_pdfium_raw(tp, bbox)))
+            readable = d.replace("\ufffd", "").strip(" .,;:()-%")
+            if has_fffd and not readable and alt and "\ufffd" not in alt:
+                new = alt  # nothing usable in Docling's text: take pdfium's reading
+            else:
+                new = repair_replacement_chars(d, alt)
+            if new is not None and new != d:
+                stats["fffd_fixed" if has_fffd else "hidden_restored"] += 1
+                d = new
+            elif has_fffd:
+                stats["fffd_left"] += 1
+        obj[key] = d
 
     try:
         for blk in blocks:
@@ -227,8 +246,9 @@ def fix_blocks(path: str, blocks: list[dict]) -> dict:
                 for c in blk["cells"]:
                     fix(c, "text", c.get("bbox"), blk["page"])
     finally:
-        for p in pages.values():
-            p.close()
+        for pg, tp, _ in pages.values():
+            tp.close()
+            pg.close()
         if pdf is not None:
             pdf.close()
     return stats

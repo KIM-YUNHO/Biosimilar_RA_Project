@@ -252,6 +252,6 @@ def refix(s: Session, engine_from: str, engine_to: str, log=print) -> dict:
             continue
         fixes = refix_row(s, row, engine_to)
         done += 1
-        if fixes.get("fffd_fixed") or fixes.get("shift_decoded"):
+        if any(fixes.values()):
             log(f"doc {row.document_id:>4}: {fixes}")
     return {"updated": done, "candidates": len(rows)}

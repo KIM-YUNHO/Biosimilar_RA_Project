@@ -191,6 +191,13 @@ def test_replacement_chars_filled_from_pdfium_reading():
     # a different reading elsewhere (reading order) is not taken over
     assert repair_replacement_chars("PK study in healthy subjects", "PK study in healthy subjects") is None
     assert repair_replacement_chars("Gui\ufffdance", "") is None
+    # "\x1c" (= "9") is whitespace to Python and was dropped; pdfium's decoded reading has it
+    assert repair_replacement_chars("125% for the 0% confidence interval of the GMR",
+                                    "125% for the 90% confidence interval of the GMR") == \
+        "125% for the 90% confidence interval of the GMR"
+    # other extra text in pdfium's reading is not added
+    assert repair_replacement_chars("the confidence interval of the GMR",
+                                    "the 95 percent confidence interval of the GMR") is None
 
 
 def test_control_chars_are_shifted_digits():
