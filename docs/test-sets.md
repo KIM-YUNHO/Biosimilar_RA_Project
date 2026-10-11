@@ -8,7 +8,7 @@
 |---|---|---|
 | 무엇을 재나 | PDF → 텍스트·표 추출이 원문과 같은가 | 질문에 대한 근거 청크를 찾아오는가 |
 | 위치 | `eval/gold/` (manifest, 쪽 PDF 30개, 정답 JSON) | `eval/retrieval/questions.yaml` (+ `corpus_docs.txt`) |
-| 규모 | 30쪽: 본문 단락 301, 표 칸 1,190(숫자 808), 표 행 326 | 20문항, 근거 묶음 45개(채점 18문항·41묶음) |
+| 규모 | 30쪽: 본문 단락 301, 표 칸 1,190(숫자 808), 표 행 326 | 23문항, 근거 묶음 54개(1차 시험은 20문항 중 18문항·41묶음으로 채점) |
 | 정답 형식 | 쪽마다 본문·표·머리말 목록 | 문항마다 근거 묶음, 묶음마다 (문서, 쪽, 원문 인용) |
 | 채점 코드 | `eval/evaluate.py` | `eval/retrieval/compare_chunking.py`, `rerank_test.py` (검증: `check_gold.py`) |
 | 결과 문서 | [전처리 비교 시험](preprocessing-benchmark.md) | [청킹·임베딩 전략](chunking-strategy.md) 7·8장 |
@@ -63,10 +63,14 @@
 | Q18 | 범위·예외 | unanswerable | BAT2206(Starjemza)의 FDA 심사 결과는? | 없음(답이 없어야 함) | 0/0 | - |
 | Q19 | 범위·예외 | number | Stelara 2009년 건선성 관절염 적응증 심사 때 24주 ACR20 반응률은? | fda_2009 (대기) | 0/1 | - |
 | Q20 | 범위·예외 | fact | Eksunbi의 PK 동등성 결과는? | representative_doc | 1/1 | 48 |
-- 시나리오별 문항 수: D2 6, D3 5, D4 6, 범위·예외 3(Q18 홀드아웃: "문서 없음"이라고 답해야 함, Q19 Stelara 2009, Q20 중복 허가 Eksunbi)
+| Q21 | 원 제품(baseline_trials) | reasoning | Pyzchiva(SB17)와 Yesintek(BMAB1200) 비교임상의 동등성 한계는 원 제품 Stelara의 어떤 시험 결과에서 도출됐나? | SB17, BMAB1200, originator_trials (대기) | 2/3 | 41, 48, 272 |
+| Q22 | 원 제품(indication_history) | reasoning | Stelara의 크론병 적응증은 EU에서 어떤 절차로 추가됐고, Pyzchiva(SB17)와 Yesintek(BMAB1200)은 크론병 적응증을 어떤 근거로 외삽받았나? | originator_history, SB17, BMAB1200, originator_review (대기) | 3/4 | 33, 41, 48, 272 |
+| Q23 | 원 제품(reference_label) | compare | Wezlana 미국 라벨의 적응증은 원 제품 Stelara 미국 라벨의 적응증과 같은가? | wezlana_label, stelara_label (대기) | 1/2 | 168 |
+- Q21~Q23(2026-10-11 추가): 원 제품 문서의 세 목적(원 시험 근거, 적응증 이력, 현행 원 제품 라벨)을 시험합니다. 바이오시밀러 근거와 Stelara 근거를 함께 찾아야 맞는 문항입니다. Stelara 쪽 근거는 해당 문서 전처리 후 채웁니다.
+- 시나리오별 문항 수: D2 6, D3 5, D4 6, 범위·예외 3(Q18 홀드아웃: "문서 없음"이라고 답해야 함, Q19 Stelara 2009, Q20 중복 허가 Eksunbi), 원 제품 3
 - 유형별 문항 수:
-  - fact 6, number 4, compare 3
-  - guidance_change 3, reasoning 2, guidance_now 1, unanswerable 1
+  - fact 6, number 4, compare 4
+  - reasoning 4, guidance_change 3, guidance_now 1, unanswerable 1
 - 모든 문항에 영어 번역(`question_en`)이 붙어 있습니다. 언어 차이를 재기 위한 참고용이며, 검색 시스템의 입력은 아닙니다.
 - **채점 대상(18문항, 41묶음, 시험 당시):** Q18은 근거가 없어 채점하지 않습니다. 당시 처리되지 않은 문서가 필요한 4묶음도 뺐습니다(Q07 허가 서한, Q09 SB17, Q11 Wezlana 라벨, Q19 Stelara 2009). 이후 Q09 SB17(doc 216), Q07 허가 서한(doc 155·153), Q11 Wezlana 최신 라벨(doc 168)을 채워 지금은 44묶음이 확정, Q19 1묶음만 대기입니다(Stelara 원 허가 문서는 처리 대상 밖).
 
@@ -126,7 +130,7 @@ $P eval/retrieval/rerank_test.py --depth 30      # 재순위 시험 (CPU에서 �
 2. **작성자가 한 명이고 사람 검토가 없다.** 질문, 근거, 표 정답 모두 Claude가 작성했습니다. 상태가 `located`이고 `reviewed`가 아닙니다. RA 담당자가 근거가 맞는지, 빠진 근거가 없는지 봐야 합니다.
 3. **같은 세트로 고르고 고쳤다(과적합 위험).** 아래는 모두 이 20문항의 실패를 보고 만든 규칙이라, 이 세트에서는 점수가 실제보다 높게 나올 수 있습니다.
    - 라우터의 "각 제품" 규칙, "FDA는" 같은 조사 처리, "EU-Stelara" 제외
-   - 용어집(`config/query_glossary.yaml`): 일반 RA 용어로 적었지만 질문을 본 뒤 작성
+   - 용어집(`config/query_glossary.yaml`): 일반 RA 용어로 적었지만 질문을 본 뒤 작성(Q21~Q23용 외삽·원 제품·크론병 등도 문항 작성 후 추가)
    - 머리말 누락 수정
 
    새 문항으로 다시 확인해야 합니다.

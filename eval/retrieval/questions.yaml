@@ -362,3 +362,62 @@ questions:
         any:
           - {doc: 48, page: 64, quote: "The PK bioequivalence has been demonstrated between Pyzchiva and EU Stelara in Study SB17-1001"}
     status: located
+
+  # ---------------- 원 제품(Stelara) 문서의 목적별 문항 (2026-10-11 추가) ----------------
+  - id: Q21
+    scenario: reference
+    purpose: baseline_trials
+    type: reasoning
+    question: "Pyzchiva(SB17)와 Yesintek(BMAB1200) 비교임상의 동등성 한계는 원 제품 Stelara의 어떤 시험 결과에서 도출됐나?"
+    question_en: "From which results of the originator Stelara's trials were the equivalence margins of the Pyzchiva (SB17) and Yesintek (BMAB1200) comparative studies derived?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [SB17, BMAB1200, stelara]
+    evidence:
+      - group: SB17
+        any:
+          - {doc: 48, page: 119, quote: "The equivalence margin of 15% was derived from the meta-analysis of the reference product pivotal studies (PHOENIX 1 and 2)"}
+      - group: BMAB1200
+        any:
+          - {doc: 41, page: 56, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
+          - {doc: 272, page: 66, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
+      - group: originator_trials
+        pending: "Stelara 최초 허가 심사(EMA doc 20 / FDA doc 90)의 PHOENIX 1·2 PASI 75 결과 — 전처리 후"
+    status: located
+
+  - id: Q22
+    scenario: reference
+    purpose: indication_history
+    type: reasoning
+    question: "Stelara의 크론병 적응증은 EU에서 어떤 절차로 추가됐고, Pyzchiva(SB17)와 Yesintek(BMAB1200)은 크론병 적응증을 어떤 근거로 외삽받았나?"
+    question_en: "Through which EU procedure was the Crohn's disease indication added to Stelara, and on what basis did Pyzchiva (SB17) and Yesintek (BMAB1200) receive the Crohn's disease indication by extrapolation?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [SB17, BMAB1200, stelara]
+    evidence:
+      - group: originator_history
+        note: "X/0049/G: 새 함량·제형·투여 경로(정맥) + 적응증 추가 묶음 변경, CHMP 의견 2016-09-15"
+        any:
+          - {doc: 33, page: 18, quote: "Annex I_2.(e) Change or addition of a new route of administration C.I.6.a - Change(s) to therapeutic indication(s)"}
+      - group: SB17
+        any:
+          - {doc: 48, page: 166, quote: "the extrapolation to full indications also implies extrapolation of data generated with subcutaneous administration to intravenous administration"}
+      - group: BMAB1200
+        any:
+          - {doc: 41, page: 123, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
+          - {doc: 272, page: 139, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
+      - group: originator_review
+        pending: "Stelara X/0049/G 평가보고서(doc 22)의 크론병 근거(UNITI 시험) — 전처리 후"
+    status: located
+
+  - id: Q23
+    scenario: reference
+    purpose: reference_label
+    type: compare
+    question: "Wezlana 미국 라벨의 적응증은 원 제품 Stelara 미국 라벨의 적응증과 같은가?"
+    question_en: "Are the indications in the US Wezlana label the same as those in the US label of the originator Stelara?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [ABP654, stelara]
+    evidence:
+      - group: wezlana_label
+        any:
+          - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adult patients with moderately to severely active Crohn's disease."}
+          - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adults and pediatric patients 6 years of age and older with active psoriatic arthritis."}
+      - group: stelara_label
+        pending: "Stelara 최신 미국 라벨 1.x INDICATIONS AND USAGE — 전처리 후"
+    status: located
