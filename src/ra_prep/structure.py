@@ -31,10 +31,16 @@ _FURNITURE_PATTERNS = [re.compile(p, re.I) for p in (
     r"^unclassified\s*/\s*non classifi[ée]$",
 )]
 _DIGITS = re.compile(r"\d+")
+# running headers often carry the page number: "xiv Biosimilar Multidisciplinary ... (BMER)"
+_PAGE_NO_EDGE = re.compile(r"^(?:[ivxlc]{1,6}|\d{1,4})\s+(?=\S)|(?<=\S)\s+(?:[ivxlc]{1,6}|\d{1,4})$", re.I)
+
+
+def _strip_page_no(text: str) -> str:
+    return _PAGE_NO_EDGE.sub("", text)
 
 
 def _norm_key(text: str) -> str:
-    return _DIGITS.sub("#", " ".join(text.lower().split()))
+    return _DIGITS.sub("#", " ".join(_strip_page_no(text).lower().split()))
 
 
 def mark_furniture(blocks: list[dict], page_sizes: dict[int, tuple[float, float]]) -> None:
@@ -60,6 +66,8 @@ def mark_furniture(blocks: list[dict], page_sizes: dict[int, tuple[float, float]
             or b.get("label") in ("page_header", "page_footer")
             or margin_number
             or any(p.match(t) for p in _FURNITURE_PATTERNS)
+            or (re.search(r"[a-z]{3}", _strip_page_no(t), re.I) is not None
+                and any(p.match(_strip_page_no(t)) for p in _FURNITURE_PATTERNS))
             or _norm_key(t) in repeated
         )
 

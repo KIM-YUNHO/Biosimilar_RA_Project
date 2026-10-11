@@ -21,7 +21,7 @@ from typing import Callable, Iterable
 # sections that are kept in the parse but not worth retrieving
 _SKIP_SECTION = re.compile(
     r"table of contents|^contents$|list of (abbreviations|tables|figures)|^abbreviations$|"
-    r"signature|financial disclosure|reviewers? (list|team)|^review team|"
+    r"signature|financial disclosure|reviewers? (list|team)|^review team|^glossary$|"
     r"application (information|data sheet)", re.I)
 _TOC_LEADER = re.compile(r"\.{6,}|…{3,}")
 _NUM = re.compile(r"\d")
@@ -73,6 +73,7 @@ class ChunkConfig:
     max_tokens: int = 600            # hard limit for one narrative or table chunk
     rows: bool = True                # row chunks for numeric / study tables
     parent_max: int = 2000           # tokens of a parent passed to the answer step
+    min_words: int = 5               # narrative chunks shorter than this are dropped
     count: Callable[[str], int] = approx_tokens
 
 
@@ -235,6 +236,8 @@ def chunk_document(doc: dict, cfg: ChunkConfig) -> tuple[list[Chunk], dict[str, 
             return
         path = buf[0].get("section_path", [])
         text = "\n".join(b["text"] for b in buf)
+        if len(text.split()) < cfg.min_words:  # stray titles, page labels: nothing to retrieve
+            return
         pid = _cid(did, "sec", *path)
         chunks.append(Chunk(
             id=_cid(did, "n", buf[0]["ref"] if "ref" in buf[0] else buf[0]["page"], len(chunks)),

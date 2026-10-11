@@ -5,9 +5,14 @@ Variants (docs/chunking-strategy.md 6):
   V2  section chunks of ~400 tokens, whole tables, parents
   V3  V2 + table row chunks
   V4  section chunks of ~800 tokens, whole tables + row chunks, parents
+  V2n V2 with the chunk text alone embedded (no context header)
 
 Retrieval: bge-m3 dense + sparse (score = dense + 0.3 * sparse) over chunk text with the
-context header. Two modes:
+context header. Query forms:
+  ko      the Korean question as asked
+  ko+gl   Korean question + English RA terms from config/query_glossary.yaml (rule-based)
+  en      a human English translation (question_en; reference only, shows the language gap)
+Two modes:
   open    search everything
   routed  rule-based filters from the question (products, agency, guidance; ra_chunk.query).
           Each detected product is searched separately and gets its own k results.
@@ -39,13 +44,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ra_chunk.chunker import ChunkConfig, chunk_document  # noqa: E402
 from ra_chunk.embed import BgeM3, sparse_score  # noqa: E402
-from ra_chunk.query import Router  # noqa: E402
+from ra_chunk.query import Glossary, Router  # noqa: E402
 
 VARIANTS = {
     "V1": dict(narrative="block", rows=False),
     "V2": dict(rows=False),
     "V3": dict(),
     "V4": dict(target=800, max_tokens=1000),
+    "V2n": dict(rows=False, header=False),   # V2 without the context header in the embedded text
 }
 W_SPARSE = 0.3
 
@@ -79,7 +85,9 @@ def load_docs(db: str):
 def build(variant: str, docs, count) -> tuple[list[dict], dict]:
     from ra_ingest.metadata import context_header
 
-    cfg = ChunkConfig(count=count, **VARIANTS[variant])
+    opts = dict(VARIANTS[variant])
+    header = opts.pop("header", True)
+    cfg = ChunkConfig(count=count, **opts)
     chunks, parents = [], {}
     for doc, meta in docs:
         ch, par = chunk_document(json.loads(json.dumps(doc)), cfg)
@@ -92,23 +100,24 @@ def build(variant: str, docs, count) -> tuple[list[dict], dict]:
                 "id": c.id, "kind": c.kind, "doc_id": c.doc_id, "text": c.text, "parent": c.parent_id,
                 "pages": c.pages, "program": meta.get("program_id"), "agency": meta.get("agency"),
                 "guidance": meta.get("doc_kind") == "guidance",
-                "embed": context_header(meta, m) + "\n" + c.text,
+                "embed": (context_header(meta, m) + "\n" + c.text) if header else c.text,
             })
     return chunks, parents
 
 
-def search(q, chunks, vecs, mask, k):
+def search(q, chunks, vecs, mask, k, w_sparse=W_SPARSE):
     dense = vecs["dense"] @ q[0].astype(np.float32)
     idx = np.flatnonzero(mask)
     if not len(idx):
         return []
     top = idx[np.argsort(-dense[idx])[: max(200, k * 20)]]  # dense shortlist, then hybrid rerank
-    scored = sorted(((float(dense[i]) + W_SPARSE * sparse_score(q[1], vecs["sparse"][i]), int(i))
+    scored = sorted(((float(dense[i]) + w_sparse * sparse_score(q[1], vecs["sparse"][i]), int(i))
                      for i in top), reverse=True)
     return [i for _, i in scored[:k]]
 
 
-def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k):
+def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE):
+    """qvecs: question id -> query vectors (one query form)."""
     prog = np.array([c["program"] or "" for c in chunks])
     agency = np.array([c["agency"] for c in chunks])
     guid = np.array([c["guidance"] for c in chunks])
@@ -119,7 +128,7 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k):
         groups = [g for g in q.get("evidence", []) if "any" in g]
         r = router.route(q["question"])
         if mode == "open" or not (r.products or r.agency or r.guidance):
-            hits = search(qvecs[q["id"]], chunks, vecs, allm, k)
+            hits = search(qvecs[q["id"]], chunks, vecs, allm, k, w_sparse)
         else:
             base = allm.copy()
             if r.agency:
@@ -129,9 +138,9 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k):
             if r.products:
                 hits = []
                 for p in r.products:
-                    hits += search(qvecs[q["id"]], chunks, vecs, base & (prog == p), k)
+                    hits += search(qvecs[q["id"]], chunks, vecs, base & (prog == p), k, w_sparse)
             else:
-                hits = search(qvecs[q["id"]], chunks, vecs, base, k)
+                hits = search(qvecs[q["id"]], chunks, vecs, base, k, w_sparse)
         named = set(r.products) | set(q.get("products") or [])
         for i in hits:
             if chunks[i]["program"] and named:
@@ -169,6 +178,7 @@ def main() -> int:
     ap.add_argument("--db", default=f"sqlite:///{ROOT / 'data' / 'ra.db'}")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS))
     ap.add_argument("--k", nargs="+", type=int, default=[5, 10])
+    ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--out", default=str(ROOT / "eval" / "retrieval" / "results"))
@@ -194,34 +204,41 @@ def main() -> int:
           f"(~{sum(len(t) for t in todo) // 4} tokens)", flush=True)
     t0 = time.time()
     model.encode(texts, log=lambda m: print(m, f"{time.time() - t0:.0f}s", flush=True))
-    qtexts = {q["id"]: q["question"] for q in gold["questions"]}
-    qv = model.encode(list(qtexts.values()))
-    qvecs = dict(zip(qtexts, qv))
+    glossary = Glossary(ROOT / "config" / "query_glossary.yaml")
+    forms = {"ko": lambda q: q["question"], "ko+gl": lambda q: glossary.expand(q["question"]),
+             "en": lambda q: q["question_en"]}
+    qvecs = {}
+    for f in a.queries:
+        qtexts = {q["id"]: forms[f](q) for q in gold["questions"]}
+        qvecs[f] = dict(zip(qtexts, model.encode(list(qtexts.values()))))
 
     rows, detail = [], {}
     for v in a.variants:
         chunks, parents = built[v]
         enc = model.encode([c["embed"] for c in chunks])
         vecs = {"dense": np.stack([e[0] for e in enc]).astype(np.float32), "sparse": [e[1] for e in enc]}
-        for mode in ("open", "routed"):
-            for k in a.k:
-                r = evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k)
-                rows.append((v, mode, k, r))
-                detail[f"{v} {mode} @{k}"] = r["per_q"]
+        for f in a.queries:
+            for mode in ("open", "routed"):
+                for k in a.k:
+                    for score, w in (("hybrid", W_SPARSE), ("dense", 0.0)):
+                        r = evaluate(gold, chunks, parents, vecs, qvecs[f], router, mode, k, w)
+                        rows.append((v, f, mode, k, score, r))
+                        detail[f"{v} {f} {mode} @{k} {score}"] = r["per_q"]
 
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    lines = ["| variant | mode | k | recall | ctx_recall | full (ctx) | ctx_tokens (median) | other_product |",
-             "|---|---|---|---|---|---|---|---|"]
-    for v, mode, k, r in rows:
+    lines = ["| variant | query | mode | k | score | recall | ctx_recall | full (ctx) | ctx_tokens (median) | other_product |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for v, f, mode, k, score, r in rows:
         oth = f"{100 * r['other'][0] / r['other'][1]:.0f}%" if r["other"][1] else "-"
-        lines.append(f"| {v} | {mode} | {k} | {100 * r['hit'] / r['groups']:.1f}% | "
+        lines.append(f"| {v} | {f} | {mode} | {k} | {score} | {100 * r['hit'] / r['groups']:.1f}% | "
                      f"{100 * r['ctx'] / r['groups']:.1f}% | {r['full']}/{r['questions']} | "
                      f"{int(np.median(r['tokens']))} | {oth} |")
     table = "\n".join(lines)
     print(table)
-    (out / "summary.md").write_text(table + "\n", encoding="utf-8")
-    (out / "per_question.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
+    name = "summary_" + "_".join(a.variants)
+    (out / f"{name}.md").write_text(table + "\n", encoding="utf-8")
+    (out / f"per_question_{'_'.join(a.variants)}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
     return 0
 
 

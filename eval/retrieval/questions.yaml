@@ -19,6 +19,7 @@ questions:
     scenario: D2
     type: fact
     question: "Pyzchiva(SB17)는 비교 임상(3상)을 했나? 시험 번호와 대상 환자는?"
+    question_en: "Did Pyzchiva (SB17) have a comparative clinical (Phase III) study? What was the study number and patient population?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17]
     evidence:
       - group: ema
@@ -37,6 +38,7 @@ questions:
     scenario: D2
     type: compare
     question: "우스테키누맙 바이오시밀러 4개(SB17, ABP654, CT-P43, BMAB1200)의 비교 효능 시험 1차 평가변수와 동등성 한계를 비교해줘"
+    question_en: "Compare the primary endpoint and equivalence margin of the comparative efficacy studies of the four ustekinumab biosimilars SB17, ABP654, CT-P43 and BMAB1200."  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17, ABP654, CT-P43, BMAB1200]
     evidence:
       - group: SB17
@@ -59,19 +61,24 @@ questions:
     scenario: D2
     type: number
     question: "CT-P43 3상의 1차 평가변수 결과(군간 차이와 신뢰구간)는?"
+    question_en: "What were the primary endpoint results (treatment difference and confidence interval) of the CT-P43 Phase III study?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [CT-P43]
     evidence:
       - group: ema
         any:
           - {doc: 1, page: 86, quote: "the 95% CI of the adjusted treatment difference was -2.29 to 4.16"}
       - group: fda
-        pending: "CT-P43 Multi-Discipline Review (doc 183) 전처리 후"
+        note: "FDA는 90% CI로 판단"
+        any:
+          - {doc: 183, page: 56, quote: "The 90% confidence interval (CI) for the treatment difference based on the mean percent change from baseline in PASI at Week 12"}
+          - {doc: 183, page: 122, quote: "The 90% confidence interval (CI) for the treatment difference based on the mean percent change from baseline in PASI at Week 12"}
     status: located
 
   - id: Q04
     scenario: D2
     type: guidance_now
     question: "EMA 현행 기준으로 우스테키누맙 같은 단클론항체 바이오시밀러를 신청하면 비교 효능 시험이 필요한가? 조건은?"
+    question_en: "Under current EMA standards, is a comparative efficacy study required for a monoclonal antibody biosimilar such as ustekinumab? Under what conditions?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     evidence:
       - group: when_waivable
         any:
@@ -87,6 +94,7 @@ questions:
     scenario: D2
     type: guidance_change
     question: "FDA는 비교 임상 효능 시험 요구를 2015 가이던스와 지금 사이에 어떻게 바꿨나?"
+    question_en: "How did FDA change its expectation for comparative clinical efficacy studies between the 2015 guidance and now?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     evidence:
       - group: fda_2015
         note: "철회(2026-03-09) 상태가 함께 제시되어야 함"
@@ -103,6 +111,7 @@ questions:
     scenario: D2
     type: guidance_change
     question: "Health Canada 바이오시밀러 가이던스 개정에서 비교 임상 시험 관련으로 바뀐 점은?"
+    question_en: "What changed regarding comparative clinical studies in the revision of the Health Canada biosimilar guidance?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     evidence:
       - group: summary_of_changes
         any:
@@ -118,6 +127,7 @@ questions:
     scenario: D3
     type: reasoning
     question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐나?"
+    question_en: "On what basis was Wezlana (ABP654) designated as interchangeable?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [ABP654]
     evidence:
       - group: fda_review
@@ -132,6 +142,7 @@ questions:
     scenario: D3
     type: fact
     question: "Wezlana 허가 때 스위칭 시험을 했나? 했다면 설계(교대 횟수, 대상, 평가변수)는?"
+    question_en: "Was a switching study conducted for the Wezlana approval? If so, what was the design (number of switches, population, endpoints)?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [ABP654]
     note: "정답은 '별도 스위칭 시험 없이 지정'. FDA가 2023-09-01 서한으로 우스테키누맙에는 스위칭 시험이 일반적으로 불필요하다고 알림"
     evidence:
@@ -148,6 +159,7 @@ questions:
     scenario: D3
     type: compare
     question: "Pyzchiva, Steqeyma, Yesintek도 FDA 인터체인저블 지정을 받았나? 언제, 어떤 근거로?"
+    question_en: "Did Pyzchiva, Steqeyma and Yesintek also receive FDA interchangeable designation? When and on what basis?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17, CT-P43, BMAB1200]
     evidence:
       - group: BMAB1200
@@ -158,13 +170,16 @@ questions:
       - group: SB17
         pending: "SB17 후속 Multi-Discipline Review (doc 216) 또는 최신 라벨 전처리 후"
       - group: CT-P43
-        pending: "CT-P43 Multi-Discipline Review (doc 183) 전처리 후"
+        any:
+          - {doc: 183, page: 27, quote: "stated that a switching study will not be conducted to demonstrate the interchangeability of CT-P43"}
+          - {doc: 183, page: 21, quote: "CT-P43 can be expected to produce the same clinical result as that of US-Stelara in any given patient"}
     status: located
 
   - id: Q10
     scenario: D3
     type: guidance_change
     question: "FDA 인터체인저빌리티 가이던스는 2019 최종본과 2024 초안에서 스위칭 시험 요구가 어떻게 다른가?"
+    question_en: "How do the 2019 final and 2024 draft FDA interchangeability guidances differ in what they expect for switching studies?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     evidence:
       - group: fda_2019
         any:
@@ -180,6 +195,7 @@ questions:
     scenario: D3
     type: fact
     question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나?"
+    question_en: "How is interchangeability indicated in the labeling of an interchangeable biosimilar?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     note: "2018 최종본은 인터체인저블 표시를 추후 가이던스로 미룸 → 2023 초안은 인터체인저블도 같은 'biosimilar' 문구를 권고"
     evidence:
       - group: guidance_2023_draft
@@ -197,6 +213,7 @@ questions:
     scenario: D4
     type: fact
     question: "SB17 PK 시험(SB17-1001)의 대상, 군 구성, 용량, 대조약 출처는?"
+    question_en: "In the SB17 PK study (SB17-1001), what were the subjects, treatment arms, dose and source of the reference product?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17]
     evidence:
       - group: design
@@ -212,6 +229,7 @@ questions:
     scenario: D4
     type: compare
     question: "4개 제품의 PK 시험에서 대조약으로 EU-Stelara와 US-Stelara를 어떻게 썼나(3군 브리징 여부)?"
+    question_en: "How did the PK studies of the four products use EU-Stelara and US-Stelara as comparators (three-arm bridging or not)?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17, ABP654, CT-P43, BMAB1200]
     evidence:
       - group: SB17
@@ -234,6 +252,7 @@ questions:
     scenario: D4
     type: number
     question: "BMAB1200 PK 시험에서 AUC0-inf와 Cmax의 기하평균비와 90% 신뢰구간은?"
+    question_en: "In the BMAB1200 PK study, what were the geometric mean ratios and 90% confidence intervals for AUC0-inf and Cmax?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [BMAB1200]
     evidence:
       - group: ema
@@ -248,6 +267,7 @@ questions:
     scenario: D4
     type: number
     question: "CT-P43 PK 시험에서 ADA 양성 여부에 따라 AUC0-inf와 Cmax가 어떻게 달랐나?"
+    question_en: "In the CT-P43 PK study, how did AUC0-inf and Cmax differ by ADA status?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [CT-P43]
     evidence:
       - group: ema
@@ -261,6 +281,7 @@ questions:
     scenario: D4
     type: reasoning
     question: "비미국(EU) 대조약 데이터를 FDA 심사에 쓰려면 무엇이 필요하고, 각 제품은 어떻게 했나?"
+    question_en: "What is needed to use data with a non-US (EU) comparator in an FDA submission, and how did each product do it?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17, ABP654, CT-P43, BMAB1200]
     evidence:
       - group: guidance
@@ -277,13 +298,15 @@ questions:
         any:
           - {doc: 143, page: 28, quote: "establish the scientific bridge to justify the relevance of data generated from the comparative clinical study BM12H-PSO-03-G-02"}
       - group: CT-P43
-        pending: "CT-P43 Multi-Discipline Review (doc 183) 전처리 후"
+        any:
+          - {doc: 183, page: 18, quote: "establish the scientific bridge to justify the relevance of data generated from the comparative clinical study CT-P43 3.1"}
     status: located
 
   - id: Q17
     scenario: D4
     type: fact
     question: "SB17 PK 시험에서 분석에서 빠진 대상자와 그 이유는?"
+    question_en: "Which subjects or samples were excluded from the analysis in the SB17 PK study, and why?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17]
     evidence:
       - group: excluded_samples
@@ -300,6 +323,7 @@ questions:
     scenario: scope
     type: unanswerable
     question: "BAT2206(Starjemza)의 FDA 심사 결과는?"
+    question_en: "What was the outcome of the FDA review of BAT2206 (Starjemza)?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [BAT2206]
     evidence: []
     expected_behavior: "적재 문서 없음을 밝히고 추측하지 않는다(holdout)"
@@ -309,6 +333,7 @@ questions:
     scenario: scope
     type: number
     question: "Stelara 2009년 건선성 관절염 적응증 심사 때 24주 ACR20 반응률은?"
+    question_en: "What was the Week 24 ACR20 response rate in the 2009 review of Stelara for psoriatic arthritis?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [stelara]
     evidence:
       - group: fda_2009
@@ -319,6 +344,7 @@ questions:
     scenario: scope
     type: fact
     question: "Eksunbi의 PK 동등성 결과는?"
+    question_en: "What were the PK equivalence results for Eksunbi?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [SB17]
     expected_behavior: "Eksunbi(doc 286)는 Pyzchiva 평가보고서(doc 48)와 중복 허가 문서라 처리에서 제외됨. 같은 SB17 프로그램임을 밝히고 대표 문서 근거를 제시"
     evidence:

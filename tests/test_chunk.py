@@ -50,7 +50,7 @@ def test_narrative_chunks_break_at_section_and_speaker():
         PK_TABLE,
         {**_t("a Geometric mean", ["2.6.2 PK"], page=2, label="footnote")},
     ]}
-    chunks, parents = chunk_document(doc, ChunkConfig())
+    chunks, parents = chunk_document(doc, ChunkConfig(min_words=1))
     narr = [c for c in chunks if c.kind == "narrative"]
     assert [c.text for c in narr] == [
         "Study design was adequate.\nResults were comparable.",
@@ -69,7 +69,7 @@ def test_block_variant_and_skipped_sections():
         _t("Table of Contents", ["Table of Contents"]),
         _t("One.", ["1. Intro"]), _t("Two.", ["1. Intro"]),
     ]}
-    chunks, _ = chunk_document(doc, ChunkConfig(narrative="block", rows=False))
+    chunks, _ = chunk_document(doc, ChunkConfig(narrative="block", rows=False, min_words=1))
     assert [c.text for c in chunks] == ["One.", "Two."]
     assert all(c.parent_id is None for c in chunks)
 
@@ -89,3 +89,11 @@ def test_router():
     # comparator mentions of the reference product do not filter to it
     assert r.route("PK 시험에서 EU-Stelara와 US-Stelara를 어떻게 썼나?").products == []
     assert r.route("Eksunbi의 PK 동등성 결과는?").products == ["SB17"]
+
+
+def test_tiny_chunks_dropped():
+    doc = {"document_id": 3, "doc_type": "review", "blocks": [
+        _t("xiv", ["Glossary"]), _t("BLA 761373", ["1. Title"]),
+        _t("The applicant submitted a single PK study in healthy subjects.", ["2. PK"])]}
+    chunks, _ = chunk_document(doc, ChunkConfig())
+    assert [c.text for c in chunks] == ["The applicant submitted a single PK study in healthy subjects."]

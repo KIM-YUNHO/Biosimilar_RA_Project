@@ -54,3 +54,20 @@ class Router:
         agencies = [a for a, pat in _AGENCY.items() if pat.search(question)]
         return Route(products=prods, agency=agencies[0] if len(agencies) == 1 else None,
                      guidance=bool(_GUIDANCE.search(question)))
+
+
+class Glossary:
+    """Append the English source-document terms for Korean RA terms found in a question
+    (config/query_glossary.yaml). Longest terms first, each English term once."""
+
+    def __init__(self, path: str | Path):
+        terms = yaml.safe_load(Path(path).read_text(encoding="utf-8"))["terms"]
+        self.terms = sorted(terms.items(), key=lambda kv: -len(kv[0]))
+
+    def expand(self, question: str) -> str:
+        rest, extra = question, []
+        for ko, en in self.terms:
+            if ko in rest:
+                rest = rest.replace(ko, " ")
+                extra += [e for e in en if e not in extra]
+        return f"{question}\n{'; '.join(extra)}" if extra else question
