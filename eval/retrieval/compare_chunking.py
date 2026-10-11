@@ -16,6 +16,7 @@ Two modes:
   open    search everything
   routed  rule-based filters from the question (products, agency, guidance; ra_chunk.query).
           Each detected product is searched separately and gets its own k results.
+  routed_sub  as routed, but each product's search uses a sub-query naming only that product
 
 Metrics per variant and mode, over evidence groups that are located (pending ones skipped):
   recall@k         groups whose evidence quote is inside a retrieved chunk
@@ -44,7 +45,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ra_chunk.chunker import ChunkConfig, chunk_document  # noqa: E402
 from ra_chunk.embed import BgeM3, sparse_score  # noqa: E402
-from ra_chunk.query import Glossary, Router  # noqa: E402
+from ra_chunk.query import Glossary, Router, product_subquery  # noqa: E402
 
 VARIANTS = {
     "V1": dict(narrative="block", rows=False),
@@ -60,7 +61,7 @@ def norm(text: str) -> str:
     return "".join(unicodedata.normalize("NFKC", text).lower().split())
 
 
-def load_docs(db: str):
+def load_docs(db: str, only: set[int] | None = None):
     """Parsed documents (latest ok parse per document) with their metadata."""
     from ra_ingest.db import DocumentRow
     from ra_ingest.metadata import build_document_metadata
@@ -74,7 +75,7 @@ def load_docs(db: str):
         rows = s.scalars(select(PrepDocumentRow).where(PrepDocumentRow.status == "ok"))
         seen = set()
         for r in sorted(rows, key=lambda r: r.engine, reverse=True):
-            if r.document_id in seen:
+            if r.document_id in seen or (only is not None and r.document_id not in only):
                 continue
             seen.add(r.document_id)
             meta = build_document_metadata(s, s.get(DocumentRow, r.document_id))
@@ -138,7 +139,10 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
             if r.products:
                 hits = []
                 for p in r.products:
-                    hits += search(qvecs[q["id"]], chunks, vecs, base & (prog == p), k, w_sparse)
+                    qv = qvecs[q["id"]]
+                    if mode == "routed_sub" and len(r.products) > 1:
+                        qv = qvecs[(q["id"], p)]
+                    hits += search(qv, chunks, vecs, base & (prog == p), k, w_sparse)
             else:
                 hits = search(qvecs[q["id"]], chunks, vecs, base, k, w_sparse)
         named = set(r.products) | set(q.get("products") or [])
@@ -178,6 +182,8 @@ def main() -> int:
     ap.add_argument("--db", default=f"sqlite:///{ROOT / 'data' / 'ra.db'}")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS))
     ap.add_argument("--k", nargs="+", type=int, default=[5, 10])
+    ap.add_argument("--corpus", default=str(ROOT / "eval" / "retrieval" / "corpus_docs.txt"),
+                    help="document ids to search (fixed corpus); 'all' for every parsed document")
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
@@ -186,7 +192,10 @@ def main() -> int:
 
     gold = yaml.safe_load((ROOT / "eval" / "retrieval" / "questions.yaml").read_text(encoding="utf-8"))
     router = Router(ROOT / "config" / "products.yaml")
-    docs = load_docs(a.db)
+    only = None
+    if a.corpus != "all":
+        only = {int(x) for x in Path(a.corpus).read_text().split() if x.isdigit()}
+    docs = load_docs(a.db, only)
     print(f"{len(docs)} parsed documents", flush=True)
     model = BgeM3(cache=a.cache, threads=a.threads)
 
@@ -210,6 +219,11 @@ def main() -> int:
     qvecs = {}
     for f in a.queries:
         qtexts = {q["id"]: forms[f](q) for q in gold["questions"]}
+        for q in gold["questions"]:
+            prods = router.route(q["question"]).products
+            if len(prods) > 1:
+                for p in prods:
+                    qtexts[(q["id"], p)] = product_subquery(qtexts[q["id"]], router, p, router.display)
         qvecs[f] = dict(zip(qtexts, model.encode(list(qtexts.values()))))
 
     rows, detail = [], {}
@@ -218,7 +232,7 @@ def main() -> int:
         enc = model.encode([c["embed"] for c in chunks])
         vecs = {"dense": np.stack([e[0] for e in enc]).astype(np.float32), "sparse": [e[1] for e in enc]}
         for f in a.queries:
-            for mode in ("open", "routed"):
+            for mode in ("open", "routed", "routed_sub"):
                 for k in a.k:
                     for score, w in (("hybrid", W_SPARSE), ("dense", 0.0)):
                         r = evaluate(gold, chunks, parents, vecs, qvecs[f], router, mode, k, w)
