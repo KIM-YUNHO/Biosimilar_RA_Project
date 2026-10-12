@@ -46,7 +46,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ra_chunk.chunker import ChunkConfig, chunk_document  # noqa: E402
 from ra_chunk.embed import BgeM3, sparse_score  # noqa: E402
-from ra_chunk.query import Glossary, Router, product_subquery  # noqa: E402
+from ra_chunk.query import Glossary, Router, in_label_section, product_subquery  # noqa: E402
 
 VARIANTS = {
     "V1": dict(narrative="block", rows=False),
@@ -102,7 +102,7 @@ def build(variant: str, docs, count) -> tuple[list[dict], dict]:
             chunks.append({
                 "id": c.id, "kind": c.kind, "doc_id": c.doc_id, "text": c.text, "parent": c.parent_id,
                 "pages": c.pages, "program": meta.get("program_id"), "agency": meta.get("agency"),
-                "doc_type": meta.get("doc_type"),
+                "doc_type": meta.get("doc_type"), "section_path": c.section_path,
                 "guidance": meta.get("doc_kind") == "guidance",
                 "embed": (context_header(meta, m) + "\n" + c.text) if header else c.text,
             })
@@ -121,7 +121,7 @@ def search(q, chunks, vecs, mask, k, w_sparse=W_SPARSE):
 
 
 def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE, searcher=None,
-             doc_type_search=True):
+             doc_type_search=True, label_sections=True):
     """qvecs: question id (or (id, product) for sub-queries) -> query vectors (one query form).
     searcher(key, qv, mask, k, w_sparse) replaces the first-stage search (e.g. with re-ranking)."""
     def run(key, qv, mask):
@@ -159,8 +159,13 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
                 key = (q["id"], p) if p and mode == "routed_sub" and len(r.products) > 1 else q["id"]
                 found = run(key, qvecs[key], mask)
                 if use_types and type_scope is not None:  # also search the document types it names
-                    found += [i for i in run(key, qvecs[key], type_scope & np.isin(dtype, r.doc_types))
-                              if i not in found]
+                    tmask = type_scope & np.isin(dtype, r.doc_types)
+                    if r.label_sections and label_sections:  # within labels, the sections it asks about
+                        sec = np.array([in_label_section(c["doc_type"], c["section_path"], r.label_sections)
+                                        for c in chunks])
+                        if (tmask & sec).any():
+                            tmask &= sec
+                    found += [i for i in run(key, qvecs[key], tmask) if i not in found]
                 hits += [i for i in found if i not in hits]
         named = set(r.products) | set(q.get("products") or [])
         for i in hits:
@@ -203,6 +208,7 @@ def main() -> int:
                     help="document ids to search (fixed corpus); 'all' for every parsed document")
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
     ap.add_argument("--no-doc-types", action="store_true", help="routing without the document-type search")
+    ap.add_argument("--no-label-sections", action="store_true", help="document-type search without label sections")
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--out", default=str(ROOT / "eval" / "retrieval" / "results"))
@@ -254,7 +260,8 @@ def main() -> int:
                 for k in a.k:
                     for score, w in (("hybrid", W_SPARSE), ("dense", 0.0)):
                         r = evaluate(gold, chunks, parents, vecs, qvecs[f], router, mode, k, w,
-                                     doc_type_search=not a.no_doc_types)
+                                     doc_type_search=not a.no_doc_types,
+                                     label_sections=not a.no_label_sections)
                         rows.append((v, f, mode, k, score, r))
                         detail[f"{v} {f} {mode} @{k} {score}"] = r["per_q"]
 
@@ -269,7 +276,7 @@ def main() -> int:
                      f"{int(np.median(r['tokens']))} | {oth} |")
     table = "\n".join(lines)
     print(table)
-    tag = (Path(a.corpus).stem if a.corpus != "all" else "all") + ("_nodt" if a.no_doc_types else "")
+    tag = (Path(a.corpus).stem if a.corpus != "all" else "all") + ("_nodt" if a.no_doc_types else "") + ("_nols" if a.no_label_sections else "")
     name = f"summary_{'_'.join(a.variants)}_{tag}"
     (out / f"{name}.md").write_text(table + "\n", encoding="utf-8")
     (out / f"per_question_{'_'.join(a.variants)}_{tag}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")
