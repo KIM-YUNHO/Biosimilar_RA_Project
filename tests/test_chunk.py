@@ -106,3 +106,18 @@ def test_router_reference_documents():
     assert x.reference and x.products == ["stelara"]
     x = r.route("CT-P43 동등성 한계는 원 시험의 어떤 결과에서 왔나?")
     assert x.reference and x.products == ["CT-P43", "stelara"]
+
+
+def test_short_sibling_sections_merge_under_parent():
+    ind = "1 INDICATIONS AND USAGE"
+    doc = {"document_id": 4, "doc_type": "label", "blocks": [
+        _t("X is indicated for adults with moderate to severe plaque psoriasis.", [ind, "1.1 Plaque Psoriasis (PsO)"], speaker="label"),
+        _t("X is indicated for adults with active psoriatic arthritis.", [ind, "1.2 Psoriatic Arthritis (PsA)"], speaker="label"),
+        _t("X is indicated for adults with moderately to severely active Crohn's disease.", [ind, "1.3 Crohn's Disease (CD)"], speaker="label"),
+    ]}
+    chunks, parents = chunk_document(doc, ChunkConfig(min_section=120))
+    assert len(chunks) == 1 and chunks[0].section_path == [ind]
+    assert "1.3 Crohn's Disease (CD): X is indicated" in chunks[0].text
+    assert "Crohn" in parents[chunks[0].parent_id].text
+    # without merging: one chunk per indication
+    assert len(chunk_document(doc, ChunkConfig())[0]) == 3

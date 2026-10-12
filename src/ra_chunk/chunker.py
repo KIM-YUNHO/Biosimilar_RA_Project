@@ -74,6 +74,7 @@ class ChunkConfig:
     rows: bool = True                # row chunks for numeric / study tables
     parent_max: int = 2000           # tokens of a parent passed to the answer step
     min_words: int = 5               # narrative chunks shorter than this are dropped
+    min_section: int = 0             # leaf sections under this many tokens join their parent section
     count: Callable[[str], int] = approx_tokens
 
 
@@ -216,6 +217,29 @@ def chunk_document(doc: dict, cfg: ChunkConfig) -> tuple[list[Chunk], dict[str, 
 
     def gid(path):
         return guidance_section_id(path) if is_guidance else None
+
+    # short leaf sections (one-sentence label indications, short Q&A items) join their siblings
+    # under the parent section; each keeps its heading as a lead-in so the text stays specific
+    if cfg.min_section and cfg.narrative == "section":
+        def eligible(b):
+            return (b["type"] == "text" and b.get("label") != "section_header" and not b.get("_attached")
+                    and b.get("label") in TEXT_LABELS and b["text"].strip())
+        size: dict[tuple, int] = {}
+        for b in blocks:
+            if eligible(b):
+                key = tuple(b.get("section_path", []))
+                size[key] = size.get(key, 0) + cfg.count(b["text"])
+        last_leaf = None
+        for i, b in enumerate(blocks):
+            if not eligible(b):
+                continue
+            path = list(b.get("section_path", []))
+            if len(path) > 1 and size.get(tuple(path), 0) < cfg.min_section:
+                lead = f"{path[-1]}: " if tuple(path) != last_leaf else ""
+                blocks[i] = {**b, "section_path": path[:-1], "text": lead + b["text"]}
+                last_leaf = tuple(path)
+            else:
+                last_leaf = None
 
     # sections: parents of narrative chunks
     sec_text: dict[tuple, list[tuple[int, str]]] = {}

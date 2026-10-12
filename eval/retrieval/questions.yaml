@@ -126,8 +126,9 @@ questions:
   - id: Q07
     scenario: D3
     type: reasoning
-    question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐나?"
-    question_en: "On what basis was Wezlana (ABP654) designated as interchangeable?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐고, 허가 서한에는 어떻게 적혀 있나?"
+    revised: "2026-10-12 질문 수정: 원래 질문('어떤 근거로 지정됐나')은 허가 서한 근거를 가리키지 않았음(10.3장)"
+    question_en: "On what basis was Wezlana (ABP654) designated as interchangeable, and what does the approval letter say?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [ABP654]
     evidence:
       - group: fda_review
@@ -201,8 +202,9 @@ questions:
   - id: Q11
     scenario: D3
     type: fact
-    question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나?"
-    question_en: "How is interchangeability indicated in the labeling of an interchangeable biosimilar?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나? 실제 Wezlana 라벨에는 어떻게 적혀 있나?"
+    revised: "2026-10-12 질문 수정: 원래 질문은 특정 제품 라벨 근거를 가리키지 않았음(10.3장)"
+    question_en: "How is interchangeability indicated in the labeling of an interchangeable biosimilar, and what does the actual Wezlana label say?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     note: "2018 최종본은 인터체인저블 표시를 추후 가이던스로 미룸 → 2023 초안은 인터체인저블도 같은 'biosimilar' 문구를 권고"
     evidence:
       - group: guidance_2023_draft

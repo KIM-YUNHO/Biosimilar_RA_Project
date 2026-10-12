@@ -23,7 +23,18 @@ _ALL_PRODUCTS = re.compile(r"각 제품|제품별|모든 제품|\d+개 제품|�
 # question reaches them only when it names the originator or asks for one of those purposes
 _REFERENCE_ASK = re.compile(r"원 ?제품|오리지널|원개발|원 ?시험|대조약의|외삽|적응증 (?:이력|추가)|originator|"
                             r"reference product's|pivotal", re.I)
-_GUIDANCE = re.compile(r"가이던스|가이드라인|guidance|guideline|기준", re.I)
+# document types a question points at; searched in addition to (not instead of) the normal search,
+# so "라벨에는 어떻게 표시하나" still finds the guidance and also reaches the label text
+_DOC_TYPE_ASK = [
+    (re.compile(r"라벨|처방 ?정보|제품 ?정보|제품설명서|SmPC|prescribing information|\blabel", re.I),
+     ["label", "product_information", "product_monograph"]),
+    (re.compile(r"허가 ?서한|승인 ?서한|approval letter", re.I), ["approval_letter"]),
+    (re.compile(r"절차|변경 이력|procedural steps", re.I), ["procedural_steps"]),
+    (re.compile(r"심사|평가보고서|assessment report|\breview", re.I), ["review", "assessment_report", "sbd", "rds"]),
+]
+# rules and requirements live in guidance: filter to guidance when no product is named, and add a
+# guidance search next to the product searches when one is ("FDA 심사에 쓰려면 무엇이 필요하고, 각 제품은")
+_GUIDANCE = re.compile(r"가이던스|가이드라인|guidance|guideline|기준|필요한가|무엇이 필요|요구|권고|어떻게 표시", re.I)
 
 
 @dataclass
@@ -32,6 +43,7 @@ class Route:
     agency: str | None = None
     guidance: bool = False
     reference: bool = False   # include reference-product documents
+    doc_types: list[str] = field(default_factory=list)  # extra search within these document types
 
 
 class Router:
@@ -71,8 +83,9 @@ class Router:
         reference = any(p in self.references for p in prods) or bool(_REFERENCE_ASK.search(question))
         if reference and prods and not any(p in self.references for p in prods):
             prods += self.references  # "원 시험" in a product question: search the originator too
+        doc_types = [t for pat, types in _DOC_TYPE_ASK if pat.search(question) for t in types]
         return Route(products=prods, agency=agencies[0] if len(agencies) == 1 else None,
-                     guidance=bool(_GUIDANCE.search(question)), reference=reference)
+                     guidance=bool(_GUIDANCE.search(question)), reference=reference, doc_types=doc_types)
 
 
 class Glossary:
