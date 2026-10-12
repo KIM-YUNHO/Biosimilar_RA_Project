@@ -80,18 +80,21 @@ def _parsed(doc_id, sha, topic):
 
 @pytest.fixture
 def env(tmp_path, db_url):
-    """Three parsed documents: SB17 (EMA), CT-P43 (FDA), one FDA guidance."""
+    """Four parsed documents: SB17 (EMA), CT-P43 (FDA), one FDA guidance, a Stelara label."""
     st = Store(db_url)
     store = LocalStore(tmp_path / "store")
     with st.session() as s:
         s.add_all([ProgramRow(id="SB17", role="biosimilar", ingredient="ustekinumab", codes=["SB17"],
                               aliases={"ema": ["Pyzchiva"]}),
                    ProgramRow(id="CT-P43", role="biosimilar", ingredient="ustekinumab", codes=["CT-P43"],
-                              aliases={"fda": ["Steqeyma"]})])
+                              aliases={"fda": ["Steqeyma"]}),
+                   ProgramRow(id="stelara", role="reference", ingredient="ustekinumab", codes=[],
+                              aliases={"ema": ["Stelara"]})])
         s.flush()
         docs = [("ema", "product", "assessment_report", "SB17", "pyzchiva switching"),
                 ("fda", "product", "review", "CT-P43", "steqeyma interchangeability"),
-                ("fda", "guidance", "guidance", None, "comparative efficacy guidance")]
+                ("fda", "guidance", "guidance", None, "comparative efficacy guidance"),
+                ("ema", "product", "product_information", "stelara", "stelara label indications")]
         ids = []
         for agency, kind, dtype, prog, topic in docs:
             d = DocumentRow(agency=agency, doc_kind=kind, doc_type=dtype, title=topic, program_id=prog,
@@ -126,17 +129,17 @@ def test_index_is_incremental(env):
     emb = FakeEmbedder()
     with st.session() as s:
         res = run(s, candidates(s), emb, store, log=lambda *_: None)
-        assert (res.indexed, res.failed) == (3, 0) and res.chunks == _active(s) > 0
+        assert (res.indexed, res.failed) == (4, 0) and res.chunks == _active(s) > 0
         first_calls = emb.calls
         res = run(s, candidates(s), emb, store, log=lambda *_: None)
-        assert (res.indexed, res.cached, emb.calls) == (0, 3, first_calls)  # nothing to redo
+        assert (res.indexed, res.cached, emb.calls) == (0, 4, first_calls)  # nothing to redo
 
         # guidance status goes into the context header -> that document is indexed again
         g = s.get(DocumentRow, ids[2])
         g.guidance = {"status": "final"}
         s.commit()
         res = run(s, candidates(s), emb, store, log=lambda *_: None)
-        assert (res.indexed, res.cached) == (1, 2) and res.embedded > 0
+        assert (res.indexed, res.cached) == (1, 3) and res.embedded > 0
         olds = s.scalars(select(IndexDocumentRow).where(IndexDocumentRow.document_id == ids[2])).all()
         assert sorted(o.retired_at is None for o in olds) == [False, True]
         assert all("status=final" in c.embed_text for c in s.scalars(
@@ -226,6 +229,14 @@ def test_retriever_routes_by_product(env):
         assert {h.product for h in both} == {"SB17", "CT-P43"} and len(both) == 6
         guid = ret.retrieve("FDA 가이던스에서 비교 효능 시험", k=5)
         assert guid and all(h.chunk.doc_kind == "guidance" for h in guid)
+        # the originator's documents only when the question asks for them
+        ema = ret.retrieve("EMA 위원회의 면역원성 판단", k=20)
+        assert ema and "stelara" not in {h.chunk.program_id for h in ema}
+        ref = ret.retrieve("SB17 시험의 원 시험 근거", k=3)
+        assert {h.product for h in ref} == {"SB17", "stelara"}
+        # a document type named in the question adds a search within that type
+        lab = ret.retrieve("Stelara 제품 정보의 적응증", k=2)
+        assert {h.chunk.doc_type for h in lab} == {"product_information"}
 
 
 def test_v2_config_is_the_evaluated_one():
@@ -250,14 +261,17 @@ def test_parity_script_on_synthetic_corpus(env):
     gold = {"questions": [{"id": "Q1", "question": "SB17 PK 동등성 한계"},
                           {"id": "Q2", "question": "각 제품의 면역원성"},
                           {"id": "Q3", "question": "FDA 가이던스 비교 효능 시험"},
-                          {"id": "Q4", "question": "healthy subjects pharmacokinetics"}]}
+                          {"id": "Q4", "question": "healthy subjects pharmacokinetics"},
+                          {"id": "Q5", "question": "EMA 위원회 판단"},
+                          {"id": "Q6", "question": "SB17 원 시험과 라벨"},
+                          {"id": "Q7", "question": "각 제품은 무엇이 필요한가"}]}
     with st.session() as s:
         run(s, candidates(s), emb, store, log=lambda *_: None)
         docs = [(json.loads(store.read_text(r.output_path)), build_document_metadata(s, s.get(DocumentRow, r.document_id)))
                 for r in s.scalars(select(PrepDocumentRow).order_by(PrepDocumentRow.document_id))]
         res = P.compare(s, gold, Router(ROOT / "config" / "products.yaml"),
                         Glossary(ROOT / "config" / "query_glossary.yaml"), emb, docs, 10, log=lambda *_: None)
-    assert res["mismatch"] == 0 and res["chunks_not_indexed"] == 0 and res["match"] >= 4
+    assert res["mismatch"] == 0 and res["chunks_not_indexed"] == 0 and res["match"] >= 10
 
 
 def test_cli_run_status_search(env, db_url, monkeypatch, capsys):
@@ -267,7 +281,7 @@ def test_cli_run_status_search(env, db_url, monkeypatch, capsys):
     monkeypatch.setattr(cli, "_embedder", lambda a: FakeEmbedder())
     base = ["--db", db_url, "--store", store.url]
     assert cli.main([*base, "run"]) == 0
-    assert "indexed=3" in capsys.readouterr().out
+    assert "indexed=4" in capsys.readouterr().out
     assert cli.main([*base, "run", "--product", "SB17"]) == 0
     assert "cached=1" in capsys.readouterr().out
     assert cli.main([*base, "status"]) == 0

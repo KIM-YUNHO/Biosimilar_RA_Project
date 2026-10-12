@@ -122,6 +122,7 @@ uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 파싱 결과를 청크로 나누고 bge-m3(dense + sparse)로 임베딩해 색인 표(`index_documents`, `index_chunks`, `index_parents`)에 넣습니다. 청크 방식과 검색 흐름은 비교 시험으로 정한 것을 그대로 씁니다([청킹·임베딩 전략](docs/chunking-strategy.md) 7·8장).
 - 청크: V2(절 단위 약 400토큰, 표 전체, 부모, 컨텍스트 헤더)
 - 검색: 규칙 라우팅 → 용어집 → 혼합 점수(dense + 0.3 × sparse) → 선택적 재순위
+- 라우팅으로 정해지는 검색 묶음은 `ra_chunk.search.search_plan` 한 곳에 있습니다(제품별 검색, 규칙 질문의 가이던스 검색, 원 제품 문서 제외, 문서 유형 검색). 평가 스크립트와 `ra-index search`가 같은 함수를 씁니다.
 
 ```bash
 uv pip install -p .venv-prep -e ".[prep,rag,postgres]"

@@ -18,6 +18,8 @@ from pathlib import Path
 
 from ra_ingest.settings import ROOT, default_db, default_store
 
+DEFAULT_DB = default_db()  # kept for scripts that import it
+
 
 def _store(url: str):
     from . import store as _tables  # noqa: F401  (registers the prep tables)

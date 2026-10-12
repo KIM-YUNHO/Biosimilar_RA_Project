@@ -52,7 +52,12 @@ terms:
   분석에서 빠진: [excluded from the analysis]
   제외: [excluded]
   이유: [reason, due to]
-  # 대조약·브리징
+  # 대조약·브리징·원 제품
+  원 제품: [reference product, originator]
+  원 시험: [pivotal studies, originator registration studies]
+  외삽: [extrapolation, extrapolated]
+  도출: [derived]
+  절차: [procedure, variation]
   대조약: [reference product, comparator]
   비미국: [non-U.S.-licensed comparator]
   EU 대조약: [EU-approved reference product, EU-Stelara]
@@ -91,4 +96,7 @@ terms:
   우스테키누맙: [ustekinumab]
   건선성 관절염: [psoriatic arthritis]
   건선: [psoriasis]
+  크론병: [Crohn's disease]
+  궤양성 대장염: [ulcerative colitis]
+  소아: [paediatric, pediatric]
   적응증: [indication]

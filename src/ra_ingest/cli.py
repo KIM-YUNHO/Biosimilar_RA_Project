@@ -23,6 +23,8 @@ from .models import AGENCIES
 from .pipeline import ROOT, IngestConfig, run_ingest
 from .settings import default_db, default_store
 
+DEFAULT_DB = default_db()  # kept for scripts that import it
+
 
 def _ingest(a: argparse.Namespace) -> int:
     cfg = IngestConfig(

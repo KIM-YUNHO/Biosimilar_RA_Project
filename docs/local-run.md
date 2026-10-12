@@ -161,7 +161,7 @@ export RA_DB=postgresql+psycopg://ra:ra@localhost:5432/ra      # Windows PowerSh
 # 6) 색인. 평가 때 계산한 임베딩 캐시를 재사용하면 다시 임베딩하지 않음
 $P -m ra_chunk run --embed-cache data/emb_cache/bge-m3.pkl
 
-# 7) 색인 검색이 평가 때 검색과 같은지 확인(같으면 exit 0)
+# 7) 색인 검색이 평가 때 검색과 같은지 확인(같으면 exit 0). 확장 코퍼스는 --corpus eval/retrieval/corpus_docs_v2.txt
 $P eval/retrieval/check_index_parity.py
 ```
 

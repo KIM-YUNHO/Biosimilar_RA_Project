@@ -1,9 +1,11 @@
 """Question -> chunks from the index, the query flow decided in docs/chunking-strategy.md:
 
-  rule routing (products, agency, guidance) -> Korean RA glossary expansion -> hybrid search,
-  one search per named product -> optional cross-encoder re-ranking -> parents for the answer
+  rule routing (products, agency, guidance, reference product, document types) -> Korean RA
+  glossary expansion -> the searches of ra_chunk.search.search_plan (one per named product,
+  guidance beside them when rules are asked, document-type searches) -> optional cross-encoder
+  re-ranking -> parents for the answer
 
-Same steps as the evaluation (eval/retrieval/compare_chunking.py, rerank_test.py), so the
+The evaluation (eval/retrieval/compare_chunking.py, rerank_test.py) runs the same plan, so the
 measured recall applies to what the answer step receives.
 """
 from __future__ import annotations
@@ -13,7 +15,7 @@ from dataclasses import dataclass, replace
 from sqlalchemy.orm import Session
 
 from .query import Glossary, Router, product_subquery
-from .search import W_SPARSE, ChunkIndex, Filters, Hit
+from .search import W_SPARSE, ChunkIndex, Hit, search_plan
 from .store import IndexChunkRow
 
 
@@ -52,24 +54,25 @@ class Retriever:
         return [Hit(cand[j].chunk_id, scores[j]) for j in order[:k]]
 
     def retrieve(self, question: str, k: int = 10, mode: str = "routed",
-                 document_ids: list[int] | None = None) -> list[Retrieved]:
+                 document_ids: list[int] | None = None, doc_type_search: bool = True) -> list[Retrieved]:
         """mode: "routed" (filters from the question; each product searched separately) or "open"."""
         qtext = self.glossary.expand(question) if self.glossary else question
         r = self.router.route(question)
-        base = Filters(document_ids=document_ids)
         found: list[tuple[Hit, str | None]] = []
-        if mode == "open" or not (r.products or r.agency or r.guidance):
-            found = [(h, None) for h in self.search(qtext, base, k)]
-        else:
-            base = replace(base, agency=r.agency, guidance=r.guidance)
-            if r.products:
-                for p in r.products:
-                    qt = qtext
-                    if self.subqueries and len(r.products) > 1:
-                        qt = product_subquery(qtext, self.router, p, self.router.display)
-                    found += [(h, p) for h in self.search(qt, replace(base, program_id=p), k)]
-            else:
-                found = [(h, None) for h in self.search(qtext, base, k)]
+        seen: set[int] = set()
+        for ps in search_plan(r, self.router.references, mode, doc_type_search):
+            qt = qtext
+            if ps.product and self.subqueries and len(r.products) > 1:
+                qt = product_subquery(qtext, self.router, ps.product, self.router.display)
+            hits = self.search(qt, replace(ps.filters, document_ids=document_ids), k)
+            if ps.types is not None:  # also search the document types the question names
+                ids = {h.chunk_id for h in hits}
+                hits += [h for h in self.search(qt, replace(ps.types, document_ids=document_ids), k)
+                         if h.chunk_id not in ids]
+            for h in hits:
+                if h.chunk_id not in seen:
+                    seen.add(h.chunk_id)
+                    found.append((h, ps.product))
         rows = self.index.chunks([h.chunk_id for h, _ in found])
         parents = self.index.parents(list(rows.values()))
         out = []

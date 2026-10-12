@@ -9,10 +9,10 @@ ChunkIndex runs it in SQL on PostgreSQL (pgvector halfvec / sparsevec) and in nu
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
-from sqlalchemy import Float, and_, bindparam, select
+from sqlalchemy import Float, and_, bindparam, or_, select
 from sqlalchemy.orm import Session
 
 from .store import Dense, IndexChunkRow, IndexParentRow, Sparse
@@ -50,6 +50,62 @@ class Filters:
     agency: str | None = None
     guidance: bool = False
     document_ids: list[int] | None = None
+    exclude_programs: list[str] | None = None   # e.g. reference products unless asked for
+    doc_types: list[str] | None = None
+
+    def mask(self, cols: dict) -> np.ndarray:
+        """Boolean mask over in-memory chunks; cols holds equal-length arrays "program" ("" when
+        none), "agency", "guidance", "doc_type" and "doc"."""
+        m = np.ones(len(cols["program"]), bool)
+        if self.program_id:
+            m &= cols["program"] == self.program_id
+        if self.exclude_programs:
+            m &= ~np.isin(cols["program"], self.exclude_programs)
+        if self.agency:
+            m &= cols["agency"] == self.agency
+        if self.guidance:
+            m &= cols["guidance"]
+        if self.doc_types:
+            m &= np.isin(cols["doc_type"], self.doc_types)
+        if self.document_ids is not None:
+            m &= np.isin(cols["doc"], list(self.document_ids))
+        return m
+
+
+@dataclass
+class PlannedSearch:
+    product: str | None             # the routed product this search is for (None: no product)
+    filters: Filters
+    types: Filters | None = None    # extra search within the document types the question names
+
+
+def search_plan(route, references: list[str], mode: str = "routed",
+                doc_type_search: bool = True) -> list[PlannedSearch]:
+    """The searches one question runs (docs/chunking-strategy.md 7.3, 9, 10.4). Shared by the
+    evaluation (eval/retrieval/compare_chunking.py) and the retriever, so what is measured is
+    what runs.
+
+      no routing signal (or mode "open")  one search over everything
+      otherwise, within scope              reference-product documents only when the question
+                                           asks for them; the named agency
+        products named                     one search per product, plus a guidance search when
+                                           the question asks for rules
+        no product                         one search (guidance only when it asks for rules)
+      each search may add a search within the document types the question names
+    """
+    use_types = bool(route.doc_types and doc_type_search)
+    if mode == "open" or not (route.products or route.agency or route.guidance or use_types):
+        return [PlannedSearch(None, Filters())]
+    scope = Filters(agency=route.agency,
+                    exclude_programs=None if route.reference else list(references) or None)
+    typed = (lambda f: replace(f, doc_types=list(route.doc_types))) if use_types else (lambda f: None)
+    if route.products:
+        plan = [PlannedSearch(p, replace(scope, program_id=p), typed(replace(scope, program_id=p)))
+                for p in route.products]
+        if route.guidance:
+            plan.append(PlannedSearch(None, replace(scope, guidance=True)))
+        return plan
+    return [PlannedSearch(None, replace(scope, guidance=route.guidance), typed(scope))]
 
 
 @dataclass
@@ -79,6 +135,10 @@ class ChunkIndex:
             cond.append(c.doc_kind == "guidance")
         if f.document_ids is not None:
             cond.append(c.document_id.in_(f.document_ids))
+        if f.exclude_programs:
+            cond.append(or_(c.program_id.is_(None), c.program_id.notin_(f.exclude_programs)))
+        if f.doc_types:
+            cond.append(c.doc_type.in_(f.doc_types))
         return and_(*cond)
 
     def _search_pg(self, q, f: Filters, k: int, w: float) -> list[Hit]:
@@ -98,7 +158,7 @@ class ChunkIndex:
         if self._mem is None:
             c = IndexChunkRow
             rows = self.s.execute(select(c.id, c.dense, c.sparse, c.program_id, c.agency, c.doc_kind,
-                                         c.document_id)
+                                         c.document_id, c.doc_type)
                                   .where(c.active.is_(True), c.embed_model == self.model)
                                   .order_by(c.id)).all()
             self._mem = {
@@ -110,20 +170,13 @@ class ChunkIndex:
                 "agency": np.array([r[4] or "" for r in rows], dtype=object),
                 "guidance": np.array([r[5] == "guidance" for r in rows], dtype=bool),
                 "doc": np.array([r[6] for r in rows], dtype=np.int64),
+                "doc_type": np.array([r[7] or "" for r in rows], dtype=object),
             }
         return self._mem
 
     def _search_mem(self, q, f: Filters, k: int, w: float) -> list[Hit]:
         m = self._load()
-        mask = np.ones(len(m["id"]), bool)
-        if f.program_id:
-            mask &= m["program"] == f.program_id
-        if f.agency:
-            mask &= m["agency"] == f.agency
-        if f.guidance:
-            mask &= m["guidance"]
-        if f.document_ids is not None:
-            mask &= np.isin(m["doc"], list(f.document_ids))
+        mask = f.mask(m)
         dq = np.asarray(q[0]).astype(np.float32)
         out = hybrid_search(q, m["dense"], m["sparse"], mask, k, w)
         return [Hit(int(m["id"][i]), float(m["dense"][i] @ dq + w * sparse_score(q[1], m["sparse"][i])))

@@ -126,8 +126,9 @@ questions:
   - id: Q07
     scenario: D3
     type: reasoning
-    question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐나?"
-    question_en: "On what basis was Wezlana (ABP654) designated as interchangeable?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    question: "Wezlana(ABP654)는 어떤 근거로 인터체인저블로 지정됐고, 허가 서한에는 어떻게 적혀 있나?"
+    revised: "2026-10-12 질문 수정: 원래 질문('어떤 근거로 지정됐나')은 허가 서한 근거를 가리키지 않았음(10.3장)"
+    question_en: "On what basis was Wezlana (ABP654) designated as interchangeable, and what does the approval letter say?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     products: [ABP654]
     evidence:
       - group: fda_review
@@ -135,7 +136,11 @@ questions:
           - {doc: 158, page: 93, quote: "can be expected to produce the same clinical result as US-Stelara in any given patient"}
           - {doc: 158, page: 93, quote: "FDA considers the risk of a clinically impactful immunogenic response when alternating or switching"}
       - group: fda_letter
-        pending: "ABP654 Approval Letter (doc 155) 전처리 후"
+        note: "최초 허가 서한. 첫 인터체인저블 제품으로 첫 인터체인저블 독점 기간 대상"
+        any:
+          - {doc: 155, page: 4, quote: "for subcutaneous use as interchangeable with the corresponding presentations of US-licensed Stelara"}
+          - {doc: 153, page: 1, quote: "for subcutaneous use as interchangeable with the corresponding presentations of US-licensed Stelara"}
+          - {doc: 155, page: 6, quote: "are the first products relying on their respective reference products to receive a determination of interchangeability"}
     status: located
 
   - id: Q08
@@ -197,8 +202,9 @@ questions:
   - id: Q11
     scenario: D3
     type: fact
-    question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나?"
-    question_en: "How is interchangeability indicated in the labeling of an interchangeable biosimilar?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    question: "인터체인저블 바이오시밀러 라벨에는 인터체인저블임을 어떻게 표시하나? 실제 Wezlana 라벨에는 어떻게 적혀 있나?"
+    revised: "2026-10-12 질문 수정: 원래 질문은 특정 제품 라벨 근거를 가리키지 않았음(10.3장)"
+    question_en: "How is interchangeability indicated in the labeling of an interchangeable biosimilar, and what does the actual Wezlana label say?"  # 비교용 사람 번역(검색 시스템 입력 아님)
     note: "2018 최종본은 인터체인저블 표시를 추후 가이던스로 미룸 → 2023 초안은 인터체인저블도 같은 'biosimilar' 문구를 권고"
     evidence:
       - group: guidance_2023_draft
@@ -208,7 +214,10 @@ questions:
         any:
           - {doc: 255, page: 15, quote: "including any interchangeability statement similar to the biosimilarity statement"}
       - group: wezlana_label
-        pending: "Wezlana 라벨 (doc 156) 전처리 후"
+        note: "최신 라벨(2026-05, doc 168)에는 'interchangeable' 문구가 없고 2023 초안 가이던스대로 'biosimilar*' 문구와 각주만 있음"
+        any:
+          - {doc: 168, page: 1, quote: "WEZLANA ® (ustekinumab-auub) is biosimilar* to STELARA ® (ustekinumab)."}
+          - {doc: 168, page: 2, quote: "Biosimilarity of WEZLANA has been demonstrated for the condition(s) of use"}
     status: located
 
   # ---------------- D4. PK 시험 설계 비교 ----------------
@@ -340,8 +349,11 @@ questions:
     products: [stelara]
     evidence:
       - group: fda_2009
-        pending: "Stelara 원 허가·보충 심사 문서(스캔본)는 현재 실행 범위(바이오시밀러 4개) 밖. gold 쪽 g23(Clinical review sBLA 125261-103 Table 24)와 같은 표"
-    status: to_locate
+        note: "sBLA 125261-103 임상 심사(2009 스캔본, 내장 OCR층). gold 쪽 g23과 같은 표. 24주 ACR20: 위약 31.6%, 45 mg 46.8%, 90 mg 51.0%(PSA3001, 민감도 분석 4)"
+        any:
+          - {doc: 90, page: 145, quote: "Table 24. Summary of ACR 20 Response at Week 24 (Sensitivity Analysis 4)"}
+          - {doc: 90, page: 144, quote: "For both studies, ACR 20 response in ustekinumab was statistically significant when compared to placebo."}
+    status: located
 
   - id: Q20
     scenario: scope
@@ -354,4 +366,73 @@ questions:
       - group: representative_doc
         any:
           - {doc: 48, page: 64, quote: "The PK bioequivalence has been demonstrated between Pyzchiva and EU Stelara in Study SB17-1001"}
+    status: located
+
+  # ---------------- 원 제품(Stelara) 문서의 목적별 문항 (2026-10-11 추가) ----------------
+  - id: Q21
+    scenario: reference
+    purpose: baseline_trials
+    type: reasoning
+    question: "Pyzchiva(SB17)와 Yesintek(BMAB1200) 비교임상의 동등성 한계는 원 제품 Stelara의 어떤 시험 결과에서 도출됐나?"
+    question_en: "From which results of the originator Stelara's trials were the equivalence margins of the Pyzchiva (SB17) and Yesintek (BMAB1200) comparative studies derived?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [SB17, BMAB1200, stelara]
+    evidence:
+      - group: SB17
+        any:
+          - {doc: 48, page: 119, quote: "The equivalence margin of 15% was derived from the meta-analysis of the reference product pivotal studies (PHOENIX 1 and 2)"}
+      - group: BMAB1200
+        any:
+          - {doc: 41, page: 56, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
+          - {doc: 272, page: 66, quote: "The equivalence margin was derived from the meta-analysis of the originator registration studies (PHOENIX 1 and 2)"}
+      - group: originator_trials
+        note: "Stelara EMA 최초 평가보고서(2008). PHOENIX 1·2의 1차 평가변수(12주 PASI 75)와 효능 판단"
+        any:
+          - {doc: 20, page: 38, quote: "The primary endpoint of both PHOENIX 1 and PHOENIX 2 examined the proportions of subjects achieving PASI 75 response at Week 12"}
+          - {doc: 20, page: 41, quote: "was statistically significantly superior to placebo and etanercept in plaque psoriasis after 12 weeks of treatment"}
+          - {doc: 20, page: 28, quote: "The difference in responder proportions between each level of ustekinumab and placebo was calculated and 95% confidence intervals presented"}
+    status: located
+
+  - id: Q22
+    scenario: reference
+    purpose: indication_history
+    type: reasoning
+    question: "Stelara의 크론병 적응증은 EU에서 어떤 절차로 추가됐고, Pyzchiva(SB17)와 Yesintek(BMAB1200)은 크론병 적응증을 어떤 근거로 외삽받았나?"
+    question_en: "Through which EU procedure was the Crohn's disease indication added to Stelara, and on what basis did Pyzchiva (SB17) and Yesintek (BMAB1200) receive the Crohn's disease indication by extrapolation?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [SB17, BMAB1200, stelara]
+    evidence:
+      - group: originator_history
+        note: "X/0049/G: 새 함량·제형·투여 경로(정맥) + 적응증 추가 묶음 변경, CHMP 의견 2016-09-15"
+        any:
+          - {doc: 33, page: 18, quote: "Annex I_2.(e) Change or addition of a new route of administration C.I.6.a - Change(s) to therapeutic indication(s)"}
+      - group: SB17
+        any:
+          - {doc: 48, page: 166, quote: "the extrapolation to full indications also implies extrapolation of data generated with subcutaneous administration to intravenous administration"}
+      - group: BMAB1200
+        any:
+          - {doc: 41, page: 123, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
+          - {doc: 272, page: 139, quote: "As the mechanism of action for ustekinumab is similar in each of the originator indications"}
+      - group: originator_review
+        note: "Stelara X/0049/G 평가보고서: 정맥 유도(CRD3001·CRD3002)와 피하 유지(CRD3003) 시험"
+        any:
+          - {doc: 22, page: 52, quote: "Table E2. Summary of efficacy for trial CRD3002"}
+          - {doc: 22, page: 87, quote: "Table E3. Summary of efficacy for trial CRD3003"}
+    status: located
+
+  - id: Q23
+    scenario: reference
+    purpose: reference_label
+    type: compare
+    question: "Wezlana 미국 라벨의 적응증은 원 제품 Stelara 미국 라벨의 적응증과 같은가?"
+    question_en: "Are the indications in the US Wezlana label the same as those in the US label of the originator Stelara?"  # 비교용 사람 번역(검색 시스템 입력 아님)
+    products: [ABP654, stelara]
+    evidence:
+      - group: wezlana_label
+        any:
+          - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adult patients with moderately to severely active Crohn's disease."}
+          - {doc: 168, page: 4, quote: "WEZLANA is indicated for the treatment of adults and pediatric patients 6 years of age and older with active psoriatic arthritis."}
+      - group: stelara_label
+        note: "Stelara는 크론병·궤양성 대장염이 2세 이상 소아까지, Wezlana는 성인만 — 적응증이 다름"
+        any:
+          - {doc: 120, page: 3, quote: "STELARA is indicated for the treatment of adults and pediatric patients 2 years of age and older with moderately to severely active Crohn's disease."}
+          - {doc: 133, page: 3, quote: "STELARA is indicated for the treatment of adults and pediatric patients 2 years of age and older with moderately to severely active Crohn's disease."}
     status: located
