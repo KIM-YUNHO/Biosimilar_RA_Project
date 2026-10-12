@@ -17,7 +17,7 @@ MODEL = "BAAI/bge-m3"
 
 class BgeM3:
     def __init__(self, model: str = MODEL, device: str = "cpu", max_length: int = 1024,
-                 cache: str | Path | None = None, threads: int | None = None):
+                 cache: str | Path | None = None, threads: int | None = None, name: str | None = None):
         import torch
         from huggingface_hub import snapshot_download
         from transformers import AutoModel, AutoTokenizer
@@ -35,6 +35,9 @@ class BgeM3:
         self.sparse.to(device).eval()
         self.device = device
         self.max_length = max_length
+        # recorded with every indexed chunk; vectors of different models are never mixed.
+        # Loading from a local directory: pass name="BAAI/bge-m3" to share the index.
+        self.name = name or model
         self.special = {self.tok.cls_token_id, self.tok.eos_token_id, self.tok.pad_token_id,
                         self.tok.unk_token_id}
         self.cache_path = Path(cache) if cache else None
@@ -99,7 +102,4 @@ class BgeM3:
         return [self.cache[self.key(t)] for t in texts]
 
 
-def sparse_score(q: dict[int, float], d: dict[int, float]) -> float:
-    if len(q) > len(d):
-        q, d = d, q
-    return sum(w * d[t] for t, w in q.items() if t in d)
+from .search import sparse_score  # noqa: E402,F401  (kept importable from here)

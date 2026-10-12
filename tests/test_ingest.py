@@ -134,7 +134,8 @@ def test_end_to_end(mocked, fetcher, tmp_path, db_url):
         ar = urls["https://www.ema.europa.eu/en/documents/assessment-report/pyzchiva-epar-public-assessment-report_en.pdf"]
         meta = build_document_metadata(s, ar)
         assert meta["jurisdiction"] == "EU" and meta["program_id"] == "SB17" and meta["brand_name"] == "Pyzchiva"
-        assert meta["doc_version_sha256"] and os.path.exists(meta["storage_path"])
+        assert meta["doc_version_sha256"] and meta["storage_path"].startswith("raw/ema/")
+        assert (tmp_path / meta["storage_path"]).exists()  # a store key, not a file path
         assert "SB-17" in meta["name_variants"] and meta["default_speaker"] == "mixed"
         hdr = context_header(meta, {"section_path": ["2.6 Clinical", "2.6.2 PK", "Discussion"], "speaker": "regulator"})
         assert hdr.startswith("[EU | EMA | assessment_report | Pyzchiva (SB17, ustekinumab)") and "regulator" in hdr

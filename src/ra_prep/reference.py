@@ -100,5 +100,8 @@ def reference_plan(s: Session, program_id: str, procedural_blocks: list[list[dic
     return sorted(plan, key=lambda x: (x["agency"], x["doc_type"], x["doc_id"]))
 
 
-def load_blocks(path: str | Path) -> list[dict]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))["blocks"]
+def load_blocks(path: str | Path, store=None) -> list[dict]:
+    """Blocks of a parse output: an object-store key (prep_documents.output_path) or a file path."""
+    from ra_ingest.objstore import open_store
+
+    return json.loads((store or open_store()).read_text(str(path)))["blocks"]

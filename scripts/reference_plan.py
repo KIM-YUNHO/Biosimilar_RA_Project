@@ -16,6 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from ra_ingest.objstore import open_store  # noqa: E402
 from ra_prep.cli import DEFAULT_DB, _store  # noqa: E402
 from ra_prep.reference import load_blocks, reference_plan  # noqa: E402
 from ra_prep.store import PrepDocumentRow  # noqa: E402
@@ -25,6 +26,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--program", default="stelara")
     ap.add_argument("--db", default=DEFAULT_DB)
+    ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     ap.add_argument("--out", default=str(ROOT / "config" / "reference_docs.yaml"))
     a = ap.parse_args()
     from ra_ingest.db import DocumentRow
@@ -39,7 +41,8 @@ def main() -> int:
         missing = [i for i, p in zip(steps, paths) if not p]
         if missing:
             raise SystemExit(f"preprocess the procedural-steps documents first: {missing}")
-        plan = reference_plan(s, a.program, [load_blocks(p) for p in paths])
+        store = open_store(a.store)
+        plan = reference_plan(s, a.program, [load_blocks(p, store) for p in paths])
 
     doc = {
         "program": a.program,

@@ -20,6 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ra_ingest.db import DocumentRow, DocumentVersionRow
+from ra_ingest.objstore import ObjectStore, open_store
 
 LABEL_TYPES = {"label", "product_information", "product_monograph"}
 DEDUP_TYPES = {"assessment_report", "product_information", "risk_management", "epar_overview",
@@ -31,7 +32,7 @@ SKIP_TYPES = {"review_index"}
 class Selection:
     document_id: int
     sha256: str
-    path: str
+    path: str                   # local file (resolved from the stored key)
     agency: str
     doc_type: str
     program_id: str | None
@@ -86,7 +87,8 @@ def _date(d: DocumentRow) -> str:
 def select_documents(s: Session, program_ids: list[str] | None = None,
                      agencies: list[str] | None = None, dup_threshold: float = 0.6,
                      include_superseded_labels: bool = False,
-                     doc_kind: str | None = None) -> list[Selection]:
+                     doc_kind: str | None = None, store: ObjectStore | None = None) -> list[Selection]:
+    store = store or open_store()
     q = select(DocumentRow).where(DocumentRow.fetch_status == "fetched")
     if doc_kind:
         q = q.where(DocumentRow.doc_kind == doc_kind)
@@ -105,8 +107,10 @@ def select_documents(s: Session, program_ids: list[str] | None = None,
             sel.action, sel.reason = "skip", "index_page"
         elif not v.storage_path.lower().endswith((".pdf", ".html", ".htm")):
             sel.action, sel.reason = "skip", "not_pdf_or_html"
-        elif v.storage_path.lower().endswith(".pdf") and not _readable(v.storage_path):
-            sel.action, sel.reason = "skip", "unreadable_pdf"
+        else:
+            sel.path = store.resolve(v.storage_path)
+            if sel.path.lower().endswith(".pdf") and not _readable(sel.path):
+                sel.action, sel.reason = "skip", "unreadable_pdf"
         out[d.id] = sel
 
     # labels: latest per registration

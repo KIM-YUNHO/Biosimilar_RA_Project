@@ -14,6 +14,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+from ra_ingest.objstore import open_store  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -32,7 +35,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default=str(ROOT / "data" / "ra.db"))
     ap.add_argument("--gold", default=str(ROOT / "eval" / "retrieval" / "questions.yaml"))
+    ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     a = ap.parse_args()
+    store = open_store(a.store)
     c = sqlite3.connect(a.db)
     gold = yaml.safe_load(Path(a.gold).read_text(encoding="utf-8"))
     cache: dict[int, list[dict]] = {}
@@ -41,7 +46,7 @@ def main() -> int:
         if doc not in cache:
             row = c.execute("select output_path from prep_documents where document_id = ? and status = 'ok'",
                             (doc,)).fetchone()
-            cache[doc] = json.loads(Path(row[0]).read_text(encoding="utf-8"))["blocks"] if row else []
+            cache[doc] = json.loads(store.read_text(row[0]))["blocks"] if row else []
         out: dict[int, str] = {}
         for b in cache[doc]:
             out[b["page"]] = out.get(b["page"], "") + " " + norm(block_text(b))

@@ -4,6 +4,8 @@
   ra-ingest ingest --product SB17 --product Wezenla --agencies ema
   ra-ingest status
   ra-ingest manifest --out data/manifest.jsonl
+  ra-ingest migrate-paths [--dry-run]          absolute file paths in old rows -> store keys
+  ra-ingest copy-db --to postgresql+psycopg://ra:ra@localhost:5432/ra    SQLite -> PostgreSQL
 """
 from __future__ import annotations
 
@@ -19,8 +21,9 @@ from .db import DocumentRow, IngestEventRow, IngestRunRow, ProgramRow, Registrat
 from .metadata import build_document_metadata
 from .models import AGENCIES
 from .pipeline import ROOT, IngestConfig, run_ingest
+from .settings import default_db, default_store
 
-DEFAULT_DB = f"sqlite:///{ROOT / 'data' / 'ra.db'}"
+DEFAULT_DB = default_db()  # kept for scripts that import it
 
 
 def _ingest(a: argparse.Namespace) -> int:
@@ -29,7 +32,7 @@ def _ingest(a: argparse.Namespace) -> int:
         agencies=[x.strip() for x in a.agencies.split(",") if x.strip()],
         include_holdout=a.include_holdout, download=not a.no_download,
         doc_types=a.doc_types.split(",") if a.doc_types else None,
-        db_url=a.db, data_dir=Path(a.data_dir),
+        db_url=a.db, store_url=a.data_dir or a.store,
     )
     try:
         result = run_ingest(cfg)
@@ -141,9 +144,31 @@ def _check(a: argparse.Namespace) -> int:
     return 0 if ok_all else 1
 
 
+def _migrate_paths(a: argparse.Namespace) -> int:
+    from .migrate import migrate_paths
+    from .objstore import open_store
+
+    stats = migrate_paths(a.db, open_store(a.store), dry_run=a.dry_run)
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _copy_db(a: argparse.Namespace) -> int:
+    from .migrate import copy_database
+    from .objstore import open_store
+
+    print(f"copy {a.db} -> {a.to}")
+    counts = copy_database(a.db, a.to, open_store(a.store))
+    print(f"done: {sum(counts.values())} rows in {len(counts)} tables")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="ra-ingest", description="바이오시밀러 RA 문서 적재")
-    ap.add_argument("--db", default=DEFAULT_DB, help="SQLAlchemy URL (기본: SQLite data/ra.db)")
+    ap.add_argument("--db", default=default_db(),
+                    help="SQLAlchemy URL (기본: 환경변수 RA_DB, 없으면 SQLite data/ra.db)")
+    ap.add_argument("--store", default=default_store(),
+                    help="원문 저장소: 디렉터리 또는 s3://bucket/prefix (기본: RA_STORE, 없으면 data/)")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     i = sub.add_parser("ingest", help="성분 또는 제품을 지정해 기관별로 적재")
@@ -154,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
     i.add_argument("--include-holdout", action="store_true", help="holdout 제품(BAT2206)도 포함")
     i.add_argument("--no-download", action="store_true", help="메타데이터만 수집")
     i.add_argument("--doc-types", help="다운로드할 문서 유형 제한(쉼표 구분)")
-    i.add_argument("--data-dir", default=str(ROOT / "data"))
+    i.add_argument("--data-dir", help="(이전 옵션) --store와 같음")
     i.set_defaults(func=_ingest)
 
     c = sub.add_parser("check", help="기관 사이트 접속 점검")
@@ -167,6 +192,14 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--out", default=str(ROOT / "data" / "manifest.jsonl"))
     m.add_argument("--all", action="store_true", help="수집 실패/대기 문서도 포함")
     m.set_defaults(func=_manifest)
+
+    mp = sub.add_parser("migrate-paths", help="이전 행의 절대 경로를 저장소 키로 변환")
+    mp.add_argument("--dry-run", action="store_true")
+    mp.set_defaults(func=_migrate_paths)
+
+    cp = sub.add_parser("copy-db", help="--db의 모든 표를 빈 DB(--to)로 복사 (예: SQLite -> PostgreSQL)")
+    cp.add_argument("--to", required=True, help="대상 SQLAlchemy URL")
+    cp.set_defaults(func=_copy_db)
 
     a = ap.parse_args(argv)
     return a.func(a)

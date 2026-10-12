@@ -8,13 +8,29 @@
 - 가이던스 축
 - ClinicalTrials.gov 시험 등록 정보
 
-전처리(파싱·청킹·임베딩)는 다음 단계에서 다루며, `data/manifest.jsonl`을 입력으로 받습니다.
+적재 다음 단계는 전처리(`ra-prep`: 파싱·OCR)와 색인(`ra-index`: 청킹·임베딩·검색)입니다. 세 단계는 같은 DB와 같은 원문 저장소를 씁니다.
 
 ## 설치
 
 ```bash
 uv venv .venv && uv pip install -p .venv -e ".[dev,postgres]"
 ```
+
+## DB와 원문 저장소
+
+세 CLI(`ra-ingest`, `ra-prep`, `ra-index`)는 같은 설정을 읽습니다.
+
+| 환경변수 / 옵션 | 기본값 | 다른 값 |
+|---|---|---|
+| `RA_DB` / `--db` | SQLite `data/ra.db` | PostgreSQL + pgvector: `postgresql+psycopg://ra:ra@localhost:5432/ra` |
+| `RA_STORE` / `--store` | `data/` 폴더 | 공유 볼륨 경로, 또는 S3 호환 버킷 `s3://bucket/prefix`(`.[s3]` 설치) |
+
+- DB에는 파일 경로 대신 저장소 키(`raw/fda/ab/<sha256>.pdf`, `parsed/<sha256>.json`)가 저장됩니다. 저장소 위치를 바꿔도 DB는 그대로 씁니다.
+- PostgreSQL은 `docker compose up -d`(PostgreSQL 16 + pgvector 0.8)로 띄웁니다.
+- 기존 SQLite 데이터 옮기기:
+  1. `ra-ingest migrate-paths`: 예전 행의 절대 경로를 키로 바꿉니다.
+  2. `ra-ingest copy-db --to $RA_DB`: 빈 PostgreSQL로 모든 표를 복사합니다.
+  - 자세한 순서는 [로컬 실행 안내](docs/local-run.md) 8장에 있습니다.
 
 ## 사용
 
@@ -60,8 +76,11 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 | `src/ra_ingest/pipeline.py` | 대상 해석 → 허가 정보 → 문서 → 원문 버전 저장, 실행 로그 |
 | `src/ra_ingest/db.py` | `programs`, `registrations`, `documents`, `document_versions`, `trials`, `ingest_runs`, `ingest_events` |
 | `src/ra_ingest/metadata.py` | 문서 메타데이터 계약, 청크 메타데이터 스키마, 컨텍스트 헤더 |
+| `src/ra_ingest/objstore.py` | 원문·파싱 결과 저장소(로컬 폴더 / S3). DB에는 키만 저장 |
 | `data/raw/<agency>/` | 해시 기반 원문 저장소(git 제외) |
 | `src/ra_prep/` | 전처리: `select`(대상 선별), `signals`·`route`(쪽 판정), `sanitize`(워터마크), `extract`(Docling), `textfix`(텍스트층 교정), `reocr`·`grid`(두 번째 판독), `html`(HC 웹 문서), `structure`(RA 후처리), `qa`, `pipeline`, `cli` |
+| `src/ra_chunk/` | 색인: `chunker`(절 단위 청크), `embed`(bge-m3), `index`(색인 단계), `store`(색인 표, pgvector), `search`(하이브리드 검색), `query`(규칙 라우팅·용어집), `rerank`, `retrieve`, `cli` |
+| `docker-compose.yml` | PostgreSQL 16 + pgvector |
 | `eval/` | 전처리 정답 세트(`gold/`: 쪽 PDF 30개 + 정답 JSON)와 후보 실행·채점 스크립트 |
 
 **새 기관을 추가하는 방법**
@@ -84,7 +103,7 @@ uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 .venv-prep/bin/ra-prep run --product SB17 --workers 2 # 문서 단위 병렬 처리
 .venv-prep/bin/ra-prep refix                          # 엔진 갱신 시 저장된 결과에 텍스트 교정·후처리만 다시 적용
 
-# 로컬에서 적재부터 전처리까지 한 번에 (docs/local-run.md)
+# 로컬에서 적재부터 색인까지 한 번에 (docs/local-run.md)
 .venv-prep/bin/python scripts/run_local.py --workers 2
 ```
 
@@ -98,12 +117,44 @@ uv venv .venv-prep && uv pip install -p .venv-prep -e ".[prep,dev,eval]"
 .venv-prep/bin/python eval/evaluate.py A1 C          # 정답 세트 대비 채점
 ```
 
+## 색인 (`ra-index`)
+
+파싱 결과를 청크로 나누고 bge-m3(dense + sparse)로 임베딩해 색인 표(`index_documents`, `index_chunks`, `index_parents`)에 넣습니다. 청크 방식과 검색 흐름은 비교 시험으로 정한 것을 그대로 씁니다([청킹·임베딩 전략](docs/chunking-strategy.md) 7·8장).
+- 청크: V2m(절 단위 약 400토큰, 120토큰 미만 소절은 상위 절에 합침, 표 전체, 부모, 컨텍스트 헤더)
+- 검색: 규칙 라우팅 → 용어집 → 혼합 점수(dense + 0.3 × sparse) → 선택적 재순위
+- 라우팅으로 정해지는 검색 묶음은 `ra_chunk.search.search_plan` 한 곳에 있습니다(제품별 검색, 규칙 질문의 가이던스 검색, 원 제품 문서 제외, 문서 유형 검색, 라벨 절 규칙). 평가 스크립트와 `ra-index search`가 같은 함수를 씁니다.
+
+```bash
+uv pip install -p .venv-prep -e ".[prep,rag,postgres]"
+
+.venv-prep/bin/ra-index run                          # 파싱된 문서 전부 (바뀐 것만 다시 색인)
+.venv-prep/bin/ra-index run --product SB17 --device cuda
+.venv-prep/bin/ra-index status                       # 모델·청커별 색인 문서·청크 수
+.venv-prep/bin/ra-index search "SB17의 PK 시험 동등성 한계는?" --k 10 --rerank
+.venv-prep/bin/python eval/retrieval/check_index_parity.py   # 색인 검색 = 평가 때 검색인지 확인
+```
+
+**다시 색인하는 경우와 건너뛰는 경우**
+- 다음 조합이 그대로면 건너뜁니다: 문서 버전, 전처리 엔진, 청커(설정과 `chunker.py` 코드), 임베딩 모델, 문서 메타데이터(가이던스 상태 등 헤더에 들어가는 값 포함).
+- 하나라도 바뀌면 다시 색인하고, 그 문서의 이전 색인은 은퇴(`retired_at`) 처리해 검색에서 뺍니다.
+- 전에 임베딩한 적이 있는 텍스트는 벡터를 다시 계산하지 않고 색인에서 복사합니다.
+- 전처리가 건너뛴 최신 판(지난 라벨, 중복 허가 문서)의 이전 색인도 은퇴시킵니다.
+
+벡터 저장은 DB에 따라 다릅니다.
+- **PostgreSQL:** pgvector `halfvec`(dense)와 `sparsevec`(sparse). 검색은 SQL로 합니다.
+- **SQLite:** 바이트와 JSON. 검색은 numpy로 합니다.
+
 ## 테스트
 
 ```bash
 .venv/bin/pytest -q                                                            # SQLite
-RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q  # PostgreSQL
+RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q  # PostgreSQL (pgvector 필요)
 ```
+
+색인 시험은 가짜 임베더를 써서 모델 없이 돕니다. 확인하는 것:
+- 다시 색인하는 조건과 건너뛰는 조건
+- 은퇴 처리
+- 색인 검색 결과가 평가 스크립트의 메모리 검색과 순서까지 같은지
 
 테스트 목업은 2026-10-08에 실제 응답으로 확인한 형식(EMA JSON, Purple Book CSV, Drugs@FDA ZIP, FDA 승인 패키지 목차, DPD API, DHPP 검색, FDA 가이던스 목록)을 따릅니다.
 
@@ -118,6 +169,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 - [전처리 비교 시험 (정답 세트 30쪽)](docs/preprocessing-benchmark.md)
 - [청킹·임베딩 전략 (비교·재순위 시험 결과 포함)](docs/chunking-strategy.md)
 - [시험 세트 정리 (전처리 30쪽, 검색 20문항)](docs/test-sets.md)
+- [파이프라인 운영·오케스트레이션 설계 (요청형·감시형, Airflow 검토)](docs/pipeline-operations.md)
 
 - [RA 문서 소스 카탈로그](docs/ra-document-sources.md)
 - [진행 계획](docs/project-plan.md)

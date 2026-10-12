@@ -1,0 +1,25 @@
+# PostgreSQL 16 + pgvector for the metadata DB and the chunk index.
+#   docker compose up -d
+#   export RA_DB=postgresql+psycopg://ra:ra@localhost:5432/ra
+#   ra-ingest copy-db --db sqlite:///data/ra.db --to "$RA_DB"     # move an existing SQLite DB
+# Tables and the vector extension are created by the code on first use.
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg16
+    environment:
+      POSTGRES_USER: ra
+      POSTGRES_PASSWORD: ra
+      POSTGRES_DB: ra
+    ports:
+      - "5432:5432"
+    volumes:
+      - ra-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ra -d ra"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  ra-pg:

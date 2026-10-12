@@ -44,9 +44,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from ra_chunk.chunker import ChunkConfig, chunk_document  # noqa: E402
-from ra_chunk.embed import BgeM3, sparse_score  # noqa: E402
-from ra_chunk.query import Glossary, Router, in_label_section, product_subquery  # noqa: E402
+from ra_chunk.chunker import ChunkConfig  # noqa: E402
+from ra_chunk.embed import BgeM3  # noqa: E402
+from ra_chunk.index import build_chunks, embed_text  # noqa: E402
+from ra_chunk.query import Glossary, Router, product_subquery  # noqa: E402
+from ra_chunk.search import W_SPARSE, hybrid_search, search_plan  # noqa: E402
 
 VARIANTS = {
     "V1": dict(narrative="block", rows=False),
@@ -56,22 +58,23 @@ VARIANTS = {
     "V2n": dict(rows=False, header=False),   # V2 without the context header in the embedded text
     "V2m": dict(rows=False, min_section=120),  # V2 + short sibling sections merged under the parent
 }
-W_SPARSE = 0.3
 
 
 def norm(text: str) -> str:
     return "".join(unicodedata.normalize("NFKC", text).lower().split())
 
 
-def load_docs(db: str, only: set[int] | None = None):
+def load_docs(db: str, only: set[int] | None = None, store_url: str | None = None):
     """Parsed documents (latest ok parse per document) with their metadata."""
     from ra_ingest.db import DocumentRow
     from ra_ingest.metadata import build_document_metadata
+    from ra_ingest.objstore import open_store
     from ra_prep.cli import _store
     from ra_prep.store import PrepDocumentRow
     from sqlalchemy import select
 
     out = []
+    objects = open_store(store_url)
     st = _store(db)
     with st.session() as s:
         rows = s.scalars(select(PrepDocumentRow).where(PrepDocumentRow.status == "ok"))
@@ -81,43 +84,43 @@ def load_docs(db: str, only: set[int] | None = None):
                 continue
             seen.add(r.document_id)
             meta = build_document_metadata(s, s.get(DocumentRow, r.document_id))
-            out.append((json.loads(Path(r.output_path).read_text(encoding="utf-8")), meta))
+            out.append((json.loads(objects.read_text(r.output_path)), meta))
     return out
 
 
 def build(variant: str, docs, count) -> tuple[list[dict], dict]:
-    from ra_ingest.metadata import context_header
-
+    """Chunks of one variant (same chunking and embedded text as ra_chunk.index for V2)."""
     opts = dict(VARIANTS[variant])
     header = opts.pop("header", True)
     cfg = ChunkConfig(count=count, **opts)
     chunks, parents = [], {}
     for doc, meta in docs:
-        ch, par = chunk_document(json.loads(json.dumps(doc)), cfg)
+        ch, par = build_chunks(doc, cfg)
         parents.update({k: v.text for k, v in par.items()})
         for c in ch:
-            m = c.meta()
-            if c.kind == "row":  # the line already carries caption and column names
-                m = {"study_ids": c.study_ids, "speaker": c.speaker}
             chunks.append({
                 "id": c.id, "kind": c.kind, "doc_id": c.doc_id, "text": c.text, "parent": c.parent_id,
                 "pages": c.pages, "program": meta.get("program_id"), "agency": meta.get("agency"),
                 "doc_type": meta.get("doc_type"), "section_path": c.section_path,
                 "guidance": meta.get("doc_kind") == "guidance",
-                "embed": (context_header(meta, m) + "\n" + c.text) if header else c.text,
+                "embed": embed_text(c, meta, header),
             })
     return chunks, parents
 
 
 def search(q, chunks, vecs, mask, k, w_sparse=W_SPARSE):
-    dense = vecs["dense"] @ q[0].astype(np.float32)
-    idx = np.flatnonzero(mask)
-    if not len(idx):
-        return []
-    top = idx[np.argsort(-dense[idx])[: max(200, k * 20)]]  # dense shortlist, then hybrid rerank
-    scored = sorted(((float(dense[i]) + w_sparse * sparse_score(q[1], vecs["sparse"][i]), int(i))
-                     for i in top), reverse=True)
-    return [i for _, i in scored[:k]]
+    """Dense shortlist, then dense + w * sparse (ra_chunk.search.hybrid_search)."""
+    return hybrid_search(q, vecs["dense"], vecs["sparse"], mask, k, w_sparse)
+
+
+def chunk_columns(chunks: list[dict]) -> dict:
+    """Filter columns of in-memory chunks (ra_chunk.search.Filters.mask)."""
+    return {"program": np.array([c["program"] or "" for c in chunks], dtype=object),
+            "agency": np.array([c["agency"] for c in chunks], dtype=object),
+            "guidance": np.array([c["guidance"] for c in chunks], dtype=bool),
+            "doc_type": np.array([c.get("doc_type") or "" for c in chunks], dtype=object),
+            "doc": np.array([c["doc_id"] for c in chunks]),
+            "section_path": [c.get("section_path") or [] for c in chunks]}
 
 
 def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE, searcher=None,
@@ -129,44 +132,20 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
             return searcher(key, qv, mask, k, w_sparse)
         return search(qv, chunks, vecs, mask, k, w_sparse)
 
-    prog = np.array([c["program"] or "" for c in chunks])
-    agency = np.array([c["agency"] for c in chunks])
-    guid = np.array([c["guidance"] for c in chunks])
-    dtype = np.array([c.get("doc_type") or "" for c in chunks])
-    allm = np.ones(len(chunks), bool)
+    cols = chunk_columns(chunks)
     res = {"groups": 0, "hit": 0, "ctx": 0, "full": 0, "questions": 0, "tokens": [], "other": [0, 0],
            "per_q": {}}
     for q in gold["questions"]:
         groups = [g for g in q.get("evidence", []) if "any" in g]
         r = router.route(q["question"])
-        use_types = bool(r.doc_types and doc_type_search)
-        if mode == "open" or not (r.products or r.agency or r.guidance or use_types):
-            hits = run(q["id"], qvecs[q["id"]], allm)
-        else:
-            scope = allm.copy()
-            if not r.reference:  # originator documents only for questions that ask for them
-                scope &= ~np.isin(prog, router.references)
-            if r.agency:
-                scope &= agency == r.agency
-            if r.products:  # one search per product, plus guidance when the question asks for rules
-                searches = [(p, scope & (prog == p), scope & (prog == p)) for p in r.products]
-                if r.guidance:
-                    searches.append((None, scope & guid, None))
-            else:
-                searches = [(None, scope & guid if r.guidance else scope, scope)]
-            hits = []
-            for p, mask, type_scope in searches:
-                key = (q["id"], p) if p and mode == "routed_sub" and len(r.products) > 1 else q["id"]
-                found = run(key, qvecs[key], mask)
-                if use_types and type_scope is not None:  # also search the document types it names
-                    tmask = type_scope & np.isin(dtype, r.doc_types)
-                    if r.label_sections and label_sections:  # within labels, the sections it asks about
-                        sec = np.array([in_label_section(c["doc_type"], c["section_path"], r.label_sections)
-                                        for c in chunks])
-                        if (tmask & sec).any():
-                            tmask &= sec
-                    found += [i for i in run(key, qvecs[key], tmask) if i not in found]
-                hits += [i for i in found if i not in hits]
+        hits = []
+        for ps in search_plan(r, router.references, mode, doc_type_search, label_sections):  # = ra_chunk.retrieve
+            p = ps.product
+            key = (q["id"], p) if p and mode == "routed_sub" and len(r.products) > 1 else q["id"]
+            found = run(key, qvecs[key], ps.filters.mask(cols))
+            if ps.types is not None:  # also search the document types the question names
+                found += [i for i in run(key, qvecs[key], ps.types.mask(cols)) if i not in found]
+            hits += [i for i in found if i not in hits]
         named = set(r.products) | set(q.get("products") or [])
         for i in hits:
             if chunks[i]["program"] and named:
@@ -209,6 +188,7 @@ def main() -> int:
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
     ap.add_argument("--no-doc-types", action="store_true", help="routing without the document-type search")
     ap.add_argument("--no-label-sections", action="store_true", help="document-type search without label sections")
+    ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--out", default=str(ROOT / "eval" / "retrieval" / "results"))
@@ -219,7 +199,7 @@ def main() -> int:
     only = None
     if a.corpus != "all":
         only = {int(x) for x in Path(a.corpus).read_text().split() if x.isdigit()}
-    docs = load_docs(a.db, only)
+    docs = load_docs(a.db, only, a.store)
     print(f"{len(docs)} parsed documents", flush=True)
     model = BgeM3(cache=a.cache, threads=a.threads)
 
