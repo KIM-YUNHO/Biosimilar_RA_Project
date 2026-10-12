@@ -1,20 +1,20 @@
 | query | mode | k | ranking | recall | ctx_recall | full (ctx) | ctx_tokens (median) |
 |---|---|---|---|---|---|---|---|
-| ko | routed | 5 | hybrid | 29.6% | 37.0% | 3/22 | 5268 |
-| ko | routed | 5 | hybrid@30+rerank | 40.7% | 50.0% | 4/22 | 5777 |
-| ko | routed | 10 | hybrid | 38.9% | 48.1% | 5/22 | 7161 |
-| ko | routed | 10 | hybrid@30+rerank | 51.9% | 59.3% | 9/22 | 8438 |
-| ko | routed_sub | 5 | hybrid | 27.8% | 37.0% | 3/22 | 5268 |
-| ko | routed_sub | 5 | hybrid@30+rerank | 38.9% | 48.1% | 4/22 | 5723 |
-| ko | routed_sub | 10 | hybrid | 37.0% | 50.0% | 6/22 | 7324 |
-| ko | routed_sub | 10 | hybrid@30+rerank | 51.9% | 61.1% | 9/22 | 8438 |
-| ko+gl | routed | 5 | hybrid | 37.0% | 44.4% | 4/22 | 4845 |
-| ko+gl | routed | 5 | hybrid@30+rerank | 42.6% | 55.6% | 7/22 | 5689 |
-| ko+gl | routed | 10 | hybrid | 44.4% | 55.6% | 8/22 | 7488 |
-| ko+gl | routed | 10 | hybrid@30+rerank | 51.9% | 59.3% | 9/22 | 8779 |
-| ko+gl | routed_sub | 5 | hybrid | 37.0% | 46.3% | 4/22 | 3971 |
-| ko+gl | routed_sub | 5 | hybrid@30+rerank | 35.2% | 50.0% | 8/22 | 5544 |
-| ko+gl | routed_sub | 10 | hybrid | 46.3% | 57.4% | 8/22 | 7488 |
-| ko+gl | routed_sub | 10 | hybrid@30+rerank | 53.7% | 61.1% | 10/22 | 8779 |
+| ko | routed | 5 | hybrid | 31.5% | 40.7% | 3/22 | 6331 |
+| ko | routed | 5 | hybrid@30+rerank | 40.7% | 51.9% | 6/22 | 5974 |
+| ko | routed | 10 | hybrid | 44.4% | 51.9% | 6/22 | 8099 |
+| ko | routed | 10 | hybrid@30+rerank | 53.7% | 61.1% | 11/22 | 9684 |
+| ko | routed_sub | 5 | hybrid | 29.6% | 40.7% | 4/22 | 5779 |
+| ko | routed_sub | 5 | hybrid@30+rerank | 38.9% | 50.0% | 6/22 | 5974 |
+| ko | routed_sub | 10 | hybrid | 42.6% | 53.7% | 8/22 | 8099 |
+| ko | routed_sub | 10 | hybrid@30+rerank | 55.6% | 64.8% | 11/22 | 9684 |
+| ko+gl | routed | 5 | hybrid | 40.7% | 48.1% | 6/22 | 6219 |
+| ko+gl | routed | 5 | hybrid@30+rerank | 46.3% | 57.4% | 8/22 | 5723 |
+| ko+gl | routed | 10 | hybrid | 46.3% | 61.1% | 10/22 | 8509 |
+| ko+gl | routed | 10 | hybrid@30+rerank | 55.6% | 64.8% | 11/22 | 9273 |
+| ko+gl | routed_sub | 5 | hybrid | 40.7% | 50.0% | 6/22 | 6219 |
+| ko+gl | routed_sub | 5 | hybrid@30+rerank | 38.9% | 51.9% | 8/22 | 5723 |
+| ko+gl | routed_sub | 10 | hybrid | 48.1% | 63.0% | 10/22 | 8509 |
+| ko+gl | routed_sub | 10 | hybrid@30+rerank | 57.4% | 66.7% | 12/22 | 9273 |
 
-re-ranker: 1325 pairs scored in 1200 s (0.91 s/pair on this CPU; cache holds 3857 pairs)
+re-ranker: 94 pairs scored in 43 s (0.45 s/pair on this CPU; cache holds 5223 pairs)

@@ -121,3 +121,29 @@ def test_short_sibling_sections_merge_under_parent():
     assert "Crohn" in parents[chunks[0].parent_id].text
     # without merging: one chunk per indication
     assert len(chunk_document(doc, ChunkConfig())[0]) == 3
+
+
+def test_label_section_rule():
+    from ra_chunk.query import in_label_section
+    r = Router(ROOT / "config" / "products.yaml")
+    x = r.route("Wezlana 미국 라벨의 적응증은 원 제품 Stelara 미국 라벨의 적응증과 같은가?")
+    assert "label" in x.doc_types and x.label_sections
+    assert in_label_section("label", ["1 INDICATIONS AND USAGE"], x.label_sections)
+    assert in_label_section("product_information", ["4. CLINICAL PARTICULARS", "4.1 Therapeutic indications"],
+                            x.label_sections)
+    assert not in_label_section("label", ["4 CONTRAINDICATIONS"], x.label_sections)
+    assert not in_label_section("label", ["17 PATIENT COUNSELING INFORMATION"], x.label_sections)
+    assert in_label_section("review", ["anything"], x.label_sections)  # other types are not narrowed
+    assert r.route("Wezlana 허가 서한에는 어떻게 적혀 있나?").label_sections == []
+
+
+def test_label_boilerplate_dropped():
+    doc = {"document_id": 5, "doc_type": "label", "blocks": [
+        _t("*Sections or subsections omitted from the full prescribing information are not listed.",
+           ["17 PATIENT COUNSELING INFORMATION"], speaker="label"),
+        _t("Advise the patient to read the FDA-approved patient labeling (Medication Guide).",
+           ["17 PATIENT COUNSELING INFORMATION"], speaker="label"),
+        _t("Indications and Usage, Crohn's Disease (1.3) 10/2025", ["RECENT MAJOR CHANGES"], speaker="label"),
+    ]}
+    chunks, _ = chunk_document(doc, ChunkConfig())
+    assert [c.text for c in chunks] == ["Advise the patient to read the FDA-approved patient labeling (Medication Guide)."]

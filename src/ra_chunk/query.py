@@ -32,6 +32,17 @@ _DOC_TYPE_ASK = [
     (re.compile(r"절차|변경 이력|procedural steps", re.I), ["procedural_steps"]),
     (re.compile(r"심사|평가보고서|assessment report|\breview", re.I), ["review", "assessment_report", "sbd", "rds"]),
 ]
+# label topics: a label question about indications, dosing, adverse reactions ... searches the
+# matching label section (US PI "1 INDICATIONS AND USAGE", EU SmPC "4.1 Therapeutic indications",
+# HC monograph "1 INDICATIONS"); "CONTRAINDICATIONS" must not match "INDICATIONS"
+_LABEL_SECTION_ASK = [
+    (re.compile(r"적응증|indication", re.I), r"(?<!contra)indications|therapeutic indications|is used for"),
+    (re.compile(r"용법|용량|투여|dosing|dosage", re.I), r"dosage|posology|method of administration"),
+    (re.compile(r"이상반응|부작용|adverse", re.I), r"adverse reactions|undesirable effects|side effects"),
+    (re.compile(r"금기|contraindication", re.I), r"contraindications"),
+    (re.compile(r"경고|주의사항|warning", re.I), r"warnings|precautions"),
+    (re.compile(r"면역원성|immunogenicity", re.I), r"immunogenicity"),
+]
 # rules and requirements live in guidance: filter to guidance when no product is named, and add a
 # guidance search next to the product searches when one is ("FDA 심사에 쓰려면 무엇이 필요하고, 각 제품은")
 _GUIDANCE = re.compile(r"가이던스|가이드라인|guidance|guideline|기준|필요한가|무엇이 필요|요구|권고|어떻게 표시", re.I)
@@ -44,6 +55,7 @@ class Route:
     guidance: bool = False
     reference: bool = False   # include reference-product documents
     doc_types: list[str] = field(default_factory=list)  # extra search within these document types
+    label_sections: list[str] = field(default_factory=list)  # label section patterns for that search
 
 
 class Router:
@@ -84,8 +96,23 @@ class Router:
         if reference and prods and not any(p in self.references for p in prods):
             prods += self.references  # "원 시험" in a product question: search the originator too
         doc_types = [t for pat, types in _DOC_TYPE_ASK if pat.search(question) for t in types]
+        label_sections = ([sec for pat, sec in _LABEL_SECTION_ASK if pat.search(question)]
+                          if "label" in doc_types else [])
         return Route(products=prods, agency=agencies[0] if len(agencies) == 1 else None,
-                     guidance=bool(_GUIDANCE.search(question)), reference=reference, doc_types=doc_types)
+                     guidance=bool(_GUIDANCE.search(question)), reference=reference, doc_types=doc_types,
+                     label_sections=label_sections)
+
+
+_LABEL_TYPES = {"label", "product_information", "product_monograph"}
+
+
+def in_label_section(doc_type: str | None, section_path: list[str], patterns: list[str]) -> bool:
+    """A label chunk in one of the sections the question asks about (any chunk of another
+    document type passes: the section rule narrows labels only)."""
+    if doc_type not in _LABEL_TYPES or not patterns:
+        return True
+    path = " > ".join(section_path)
+    return any(re.search(p, path, re.I) for p in patterns)
 
 
 class Glossary:

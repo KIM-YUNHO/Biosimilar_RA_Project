@@ -1,6 +1,7 @@
 """Check that the index (ra-index, SQLite or PostgreSQL + pgvector) returns what the retrieval
 evaluation measured: for every gold question and every search of its plan
-(ra_chunk.search.search_plan), the in-memory search of compare_chunking.py (V2, Korean +
+(ra_chunk.search.search_plan), the in-memory search of compare_chunking.py (the indexed
+chunk variant, Korean +
 glossary) and ChunkIndex.search must give the same chunks in the same order.
 
 Run after indexing the fixed corpus:
@@ -25,6 +26,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import compare_chunking as C  # noqa: E402
+from ra_chunk.index import INDEX_VARIANT  # noqa: E402
 from ra_chunk.query import Glossary, Router  # noqa: E402
 from ra_chunk.search import ChunkIndex, search_plan, sparse_score  # noqa: E402
 
@@ -34,7 +36,7 @@ def compare(s, gold, router, glossary, emb, docs, k: int, log=print) -> dict:
 
     from ra_chunk.store import IndexChunkRow
 
-    chunks, _ = C.build("V2", docs, emb.count_tokens)
+    chunks, _ = C.build(INDEX_VARIANT, docs, emb.count_tokens)
     enc = emb.encode([c["embed"] for c in chunks])
     vecs = {"dense": np.stack([e[0] for e in enc]).astype(np.float32), "sparse": [e[1] for e in enc]}
     corpus = sorted({c["doc_id"] for c in chunks})

@@ -22,8 +22,11 @@ from typing import Callable, Iterable
 _SKIP_SECTION = re.compile(
     r"table of contents|^contents$|list of (abbreviations|tables|figures)|^abbreviations$|"
     r"signature|financial disclosure|reviewers? (list|team)|^review team|^glossary$|"
+    r"recent major changes|full prescribing information: contents|"
     r"application (information|data sheet)", re.I)
 _TOC_LEADER = re.compile(r"\.{6,}|…{3,}")
+# US label boilerplate: the table-of-contents footnote (it lands in whatever section precedes it)
+_LABEL_BOILERPLATE = re.compile(r"^\*?\s*Sections or subsections omitted from the full prescribing information", re.I)
 _NUM = re.compile(r"\d")
 _SENT = re.compile(r"(?<=[.;:])\s+(?=[A-Z(\[])")
 _GUIDANCE_ID = re.compile(r"^((?:[A-Z]{1,2}\.)?(?:[IVXL]+\.)?(?:[A-Z]\.)?(?:\d+\.)*\d*[a-z]?\.?)\s")
@@ -285,6 +288,8 @@ def chunk_document(doc: dict, cfg: ChunkConfig) -> tuple[list[Chunk], dict[str, 
         if not text or b.get("label") == "section_header" or _skip_section(b.get("section_path", [])):
             continue
         if b.get("label") == "caption" and text in captions:
+            continue
+        if _LABEL_BOILERPLATE.match(text):
             continue
         if cfg.narrative == "block":
             flush([b])

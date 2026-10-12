@@ -21,6 +21,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Protocol
 
 import numpy as np
@@ -35,11 +36,23 @@ from . import CHUNKER_VERSION
 from .chunker import Chunk, ChunkConfig, Parent, chunk_document
 from .store import IndexChunkRow, IndexDocumentRow, IndexParentRow
 
-# The chunk setup chosen in docs/chunking-strategy.md 7.3 (V2): section chunks of ~400
-# tokens (max 600), whole tables, no row chunks, parents, context header.
-INDEX_VARIANT = "V2"
-INDEX_CHUNKING = dict(rows=False)
-CHUNKER_ID = f"{CHUNKER_VERSION}:{INDEX_VARIANT}"
+# The confirmed chunk setup (docs/chunking-strategy.md, "현재 확정 검색 구성"): V2m = section
+# chunks of ~400 tokens (max 600), leaf sections under 120 tokens joined to their parent
+# section, whole tables, no row chunks, parents, context header. Must equal
+# eval/retrieval/compare_chunking.VARIANTS[INDEX_VARIANT] (tests/test_index.py checks it).
+INDEX_VARIANT = "V2m"
+INDEX_CHUNKING = dict(rows=False, min_section=120)
+
+
+def _chunker_fingerprint() -> str:
+    """Hash of the chunker source: a change to the chunking rules re-indexes the documents
+    (vectors of unchanged chunk texts are copied, so this costs little)."""
+    from . import chunker
+
+    return hashlib.sha1(Path(chunker.__file__).read_bytes()).hexdigest()[:8]
+
+
+CHUNKER_ID = f"{CHUNKER_VERSION}:{INDEX_VARIANT}:{_chunker_fingerprint()}"
 
 # metadata fields that do not change what is indexed
 _META_VOLATILE = {"retrieved_at", "storage_path", "content_type"}

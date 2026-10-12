@@ -101,7 +101,7 @@ def build(variant: str, docs, count) -> tuple[list[dict], dict]:
             chunks.append({
                 "id": c.id, "kind": c.kind, "doc_id": c.doc_id, "text": c.text, "parent": c.parent_id,
                 "pages": c.pages, "program": meta.get("program_id"), "agency": meta.get("agency"),
-                "doc_type": meta.get("doc_type"),
+                "doc_type": meta.get("doc_type"), "section_path": c.section_path,
                 "guidance": meta.get("doc_kind") == "guidance",
                 "embed": embed_text(c, meta, header),
             })
@@ -119,11 +119,12 @@ def chunk_columns(chunks: list[dict]) -> dict:
             "agency": np.array([c["agency"] for c in chunks], dtype=object),
             "guidance": np.array([c["guidance"] for c in chunks], dtype=bool),
             "doc_type": np.array([c.get("doc_type") or "" for c in chunks], dtype=object),
-            "doc": np.array([c["doc_id"] for c in chunks])}
+            "doc": np.array([c["doc_id"] for c in chunks]),
+            "section_path": [c.get("section_path") or [] for c in chunks]}
 
 
 def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPARSE, searcher=None,
-             doc_type_search=True):
+             doc_type_search=True, label_sections=True):
     """qvecs: question id (or (id, product) for sub-queries) -> query vectors (one query form).
     searcher(key, qv, mask, k, w_sparse) replaces the first-stage search (e.g. with re-ranking)."""
     def run(key, qv, mask):
@@ -138,7 +139,7 @@ def evaluate(gold, chunks, parents, vecs, qvecs, router, mode, k, w_sparse=W_SPA
         groups = [g for g in q.get("evidence", []) if "any" in g]
         r = router.route(q["question"])
         hits = []
-        for ps in search_plan(r, router.references, mode, doc_type_search):  # same plan as ra_chunk.retrieve
+        for ps in search_plan(r, router.references, mode, doc_type_search, label_sections):  # = ra_chunk.retrieve
             p = ps.product
             key = (q["id"], p) if p and mode == "routed_sub" and len(r.products) > 1 else q["id"]
             found = run(key, qvecs[key], ps.filters.mask(cols))
@@ -186,6 +187,7 @@ def main() -> int:
                     help="document ids to search (fixed corpus); 'all' for every parsed document")
     ap.add_argument("--queries", nargs="+", default=["ko", "ko+gl", "en"])
     ap.add_argument("--no-doc-types", action="store_true", help="routing without the document-type search")
+    ap.add_argument("--no-label-sections", action="store_true", help="document-type search without label sections")
     ap.add_argument("--store", help="object store (default: RA_STORE or data/)")
     ap.add_argument("--cache", default=str(ROOT / "data" / "emb_cache" / "bge-m3.pkl"))
     ap.add_argument("--threads", type=int, default=None)
@@ -238,7 +240,8 @@ def main() -> int:
                 for k in a.k:
                     for score, w in (("hybrid", W_SPARSE), ("dense", 0.0)):
                         r = evaluate(gold, chunks, parents, vecs, qvecs[f], router, mode, k, w,
-                                     doc_type_search=not a.no_doc_types)
+                                     doc_type_search=not a.no_doc_types,
+                                     label_sections=not a.no_label_sections)
                         rows.append((v, f, mode, k, score, r))
                         detail[f"{v} {f} {mode} @{k} {score}"] = r["per_q"]
 
@@ -253,7 +256,7 @@ def main() -> int:
                      f"{int(np.median(r['tokens']))} | {oth} |")
     table = "\n".join(lines)
     print(table)
-    tag = (Path(a.corpus).stem if a.corpus != "all" else "all") + ("_nodt" if a.no_doc_types else "")
+    tag = (Path(a.corpus).stem if a.corpus != "all" else "all") + ("_nodt" if a.no_doc_types else "") + ("_nols" if a.no_label_sections else "")
     name = f"summary_{'_'.join(a.variants)}_{tag}"
     (out / f"{name}.md").write_text(table + "\n", encoding="utf-8")
     (out / f"per_question_{'_'.join(a.variants)}_{tag}.json").write_text(json.dumps(detail, ensure_ascii=False, indent=1), encoding="utf-8")

@@ -15,6 +15,7 @@ import numpy as np
 from sqlalchemy import Float, and_, bindparam, or_, select
 from sqlalchemy.orm import Session
 
+from .query import in_label_section
 from .store import Dense, IndexChunkRow, IndexParentRow, Sparse
 
 W_SPARSE = 0.3
@@ -52,10 +53,22 @@ class Filters:
     document_ids: list[int] | None = None
     exclude_programs: list[str] | None = None   # e.g. reference products unless asked for
     doc_types: list[str] | None = None
+    # label chunks only from these label sections (ra_chunk.query label section patterns); other
+    # chunks pass. Applied only when something is left, as in the evaluation
+    label_sections: list[str] | None = None
 
     def mask(self, cols: dict) -> np.ndarray:
         """Boolean mask over in-memory chunks; cols holds equal-length arrays "program" ("" when
-        none), "agency", "guidance", "doc_type" and "doc"."""
+        none), "agency", "guidance", "doc_type", "doc" and the list "section_path"."""
+        m = self._mask(cols)
+        if self.label_sections:
+            sec = np.array([in_label_section(t, p, self.label_sections)
+                            for t, p in zip(cols["doc_type"], cols["section_path"])], dtype=bool)
+            if (m & sec).any():
+                m &= sec
+        return m
+
+    def _mask(self, cols: dict) -> np.ndarray:
         m = np.ones(len(cols["program"]), bool)
         if self.program_id:
             m &= cols["program"] == self.program_id
@@ -80,7 +93,7 @@ class PlannedSearch:
 
 
 def search_plan(route, references: list[str], mode: str = "routed",
-                doc_type_search: bool = True) -> list[PlannedSearch]:
+                doc_type_search: bool = True, label_sections: bool = True) -> list[PlannedSearch]:
     """The searches one question runs (docs/chunking-strategy.md 7.3, 9, 10.4). Shared by the
     evaluation (eval/retrieval/compare_chunking.py) and the retriever, so what is measured is
     what runs.
@@ -91,14 +104,19 @@ def search_plan(route, references: list[str], mode: str = "routed",
         products named                     one search per product, plus a guidance search when
                                            the question asks for rules
         no product                         one search (guidance only when it asks for rules)
-      each search may add a search within the document types the question names
+      each search may add a search within the document types the question names, narrowed to
+      the label sections it asks about (indications, dosing, ...)
     """
     use_types = bool(route.doc_types and doc_type_search)
     if mode == "open" or not (route.products or route.agency or route.guidance or use_types):
         return [PlannedSearch(None, Filters())]
     scope = Filters(agency=route.agency,
                     exclude_programs=None if route.reference else list(references) or None)
-    typed = (lambda f: replace(f, doc_types=list(route.doc_types))) if use_types else (lambda f: None)
+    secs = list(route.label_sections) if label_sections and getattr(route, "label_sections", None) else None
+
+    def typed(f: Filters) -> Filters | None:
+        return replace(f, doc_types=list(route.doc_types), label_sections=secs) if use_types else None
+
     if route.products:
         plan = [PlannedSearch(p, replace(scope, program_id=p), typed(replace(scope, program_id=p)))
                 for p in route.products]
@@ -141,13 +159,28 @@ class ChunkIndex:
             cond.append(c.doc_type.in_(f.doc_types))
         return and_(*cond)
 
+    def _label_section_ids(self, f: Filters) -> list[int] | None:
+        """Ids of label chunks outside the asked label sections, to leave out (None: nothing to
+        narrow, or narrowing would leave nothing). Section patterns are Python regexes, so the
+        check runs here rather than in SQL."""
+        c = IndexChunkRow
+        rows = self.s.execute(select(c.id, c.doc_type, c.section_path)
+                              .where(self._where(replace(f, label_sections=None)))).all()
+        out = [i for i, t, p in rows if not in_label_section(t, p or [], f.label_sections)]
+        return out if out and len(out) < len(rows) else None
+
     def _search_pg(self, q, f: Filters, k: int, w: float) -> list[Hit]:
         c = IndexChunkRow
         qd = bindparam("qd", q[0], type_=Dense())
         qs = bindparam("qs", q[1], type_=Sparse())
         neg_ip = c.dense.op("<#>", return_type=Float)(qd)  # pgvector: negative inner product
+        where = self._where(f)
+        if f.label_sections:
+            drop = self._label_section_ids(f)
+            if drop:
+                where = and_(where, c.id.notin_(drop))
         short = (select(c.id.label("id"), (-neg_ip).label("d"), c.sparse.label("sp"))
-                 .where(self._where(f)).order_by(neg_ip).limit(shortlist_size(k)).subquery())
+                 .where(where).order_by(neg_ip).limit(shortlist_size(k)).subquery())
         sp_ip = -short.c.sp.op("<#>", return_type=Float)(qs)
         rows = self.s.execute(select(short.c.id, short.c.d, sp_ip)).all()
         scored = sorted(((d + w * (sp or 0.0), i) for i, d, sp in rows), reverse=True)
@@ -158,7 +191,7 @@ class ChunkIndex:
         if self._mem is None:
             c = IndexChunkRow
             rows = self.s.execute(select(c.id, c.dense, c.sparse, c.program_id, c.agency, c.doc_kind,
-                                         c.document_id, c.doc_type)
+                                         c.document_id, c.doc_type, c.section_path)
                                   .where(c.active.is_(True), c.embed_model == self.model)
                                   .order_by(c.id)).all()
             self._mem = {
@@ -171,6 +204,7 @@ class ChunkIndex:
                 "guidance": np.array([r[5] == "guidance" for r in rows], dtype=bool),
                 "doc": np.array([r[6] for r in rows], dtype=np.int64),
                 "doc_type": np.array([r[7] or "" for r in rows], dtype=object),
+                "section_path": [r[8] or [] for r in rows],
             }
         return self._mem
 

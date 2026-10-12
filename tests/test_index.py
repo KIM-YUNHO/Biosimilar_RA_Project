@@ -16,7 +16,7 @@ from sqlalchemy import func, select
 
 from conftest import ROOT
 from ra_chunk.chunker import ChunkConfig
-from ra_chunk.index import INDEX_CHUNKING, build_chunks, candidates, embed_text, run
+from ra_chunk.index import INDEX_CHUNKING, INDEX_VARIANT, build_chunks, candidates, embed_text, run
 from ra_chunk.query import Router
 from ra_chunk.retrieve import Retriever
 from ra_chunk.search import ChunkIndex, Filters, hybrid_search
@@ -67,11 +67,29 @@ def _t(text, path, speaker="regulator", page=1):
             "speaker": speaker, "furniture": False, "ref": f"#/texts/{abs(hash(text)) % 10**6}"}
 
 
+def _long(text):
+    return " ".join(f"{text} ({n})" for n in range(5))
+
+
 def _parsed(doc_id, sha, topic):
+    if "label" in topic:  # SmPC-like sections, for the label-section rule
+        return {"document_id": doc_id, "sha256": sha, "doc_type": "product_information", "blocks": [
+            _t(_long(f"{topic}: treatment of adult patients with moderate to severe plaque psoriasis."),
+               ["4. Clinical particulars", "4.1 Therapeutic indications"]),
+            _t(_long(f"{topic}: the recommended dose is 45 mg at week 0 and 4, then every 12 weeks."),
+               ["4. Clinical particulars", "4.2 Posology and method of administration"]),
+            _t(_long(f"{topic}: the most common undesirable effects were nasopharyngitis and headache "
+                     "in the pivotal psoriasis trials."), ["4. Clinical particulars", "4.8 Undesirable effects"],
+               page=2),
+            _t(_long(f"{topic}: in the psoriasis trials the pharmacokinetics were dose proportional and "
+                     "the immunogenicity was low across the studies."),
+               ["5. Pharmacological properties", "5.2 Pharmacokinetic properties"], page=3),
+            _t(f"{topic}: no data in pregnancy.", ["4. Clinical particulars", "4.6 Pregnancy"])]}
     blocks = []
     for i in range(6):
-        blocks.append(_t(f"The {topic} study {i} compared pharmacokinetics in healthy subjects and "
-                         f"the equivalence margin was met for AUC and Cmax in part {i}.",
+        blocks.append(_t(" ".join(f"The {topic} study {i} compared pharmacokinetics in healthy subjects "
+                                  f"and the equivalence margin was met for AUC and Cmax in part {i}{x}."
+                                  for x in "abc"),  # sections above V2m's 120-token merge size
                          ["2.6 Clinical aspects", f"2.6.{i % 3} Section {i % 3}"], page=1 + i // 2))
     blocks.append(_t(f"The committee considered the {topic} immunogenicity data acceptable.",
                      ["2.6 Clinical aspects", "Discussion"], page=4))
@@ -195,7 +213,7 @@ def test_index_search_matches_in_memory_evaluation(env):
             v = s.scalars(select(DocumentVersionRow).where(DocumentVersionRow.document_id == i)
                           .order_by(DocumentVersionRow.id.desc())).first()
             docs.append((json.loads(store.read_text(f"parsed/{v.sha256}.json")), build_document_metadata(s, d)))
-        chunks, _ = C.build("V2", docs, emb.count_tokens)
+        chunks, _ = C.build(INDEX_VARIANT, docs, emb.count_tokens)
         enc = emb.encode([c["embed"] for c in chunks])
         dense = np.stack([e[0] for e in enc]).astype(np.float32)
         sparse = [e[1] for e in enc]
@@ -239,12 +257,12 @@ def test_retriever_routes_by_product(env):
         assert {h.chunk.doc_type for h in lab} == {"product_information"}
 
 
-def test_v2_config_is_the_evaluated_one():
+def test_index_config_is_the_evaluated_one():
     from ra_chunk.chunker import ChunkConfig as CC
     sys.path.insert(0, str(ROOT / "eval" / "retrieval"))
     import compare_chunking as C
 
-    assert CC(**INDEX_CHUNKING) == CC(**C.VARIANTS["V2"])
+    assert CC(**INDEX_CHUNKING) == CC(**C.VARIANTS[INDEX_VARIANT])
     doc = _parsed(1, "x", "a")
     ch, _ = build_chunks(doc, ChunkConfig(**INDEX_CHUNKING))
     assert doc["blocks"][0].get("_attached") is None  # input left untouched
@@ -264,7 +282,9 @@ def test_parity_script_on_synthetic_corpus(env):
                           {"id": "Q4", "question": "healthy subjects pharmacokinetics"},
                           {"id": "Q5", "question": "EMA 위원회 판단"},
                           {"id": "Q6", "question": "SB17 원 시험과 라벨"},
-                          {"id": "Q7", "question": "각 제품은 무엇이 필요한가"}]}
+                          {"id": "Q7", "question": "각 제품은 무엇이 필요한가"},
+                          {"id": "Q8", "question": "Stelara 라벨의 이상반응과 용법"},
+                          {"id": "Q9", "question": "Stelara 제품 정보의 적응증"}]}
     with st.session() as s:
         run(s, candidates(s), emb, store, log=lambda *_: None)
         docs = [(json.loads(store.read_text(r.output_path)), build_document_metadata(s, s.get(DocumentRow, r.document_id)))
@@ -306,3 +326,26 @@ def test_retriever_rerank_reorders_candidates(env):
         lens = sorted(len(c.embed_text) for c in s.scalars(select(IndexChunkRow).where(
             IndexChunkRow.program_id == "SB17", IndexChunkRow.active.is_(True))))
         assert [len(h.chunk.embed_text) for h in hits] == lens[:2]
+
+
+def test_label_section_rule_narrows_label_search(env):
+    st, store, ids = env
+    emb = FakeEmbedder()
+    from ra_chunk.query import Router as R
+    from ra_chunk.search import search_plan
+
+    router = R(ROOT / "config" / "products.yaml")
+    with st.session() as s:
+        run(s, candidates(s), emb, store, log=lambda *_: None)
+        idx = ChunkIndex(s, emb.name)
+        route = router.route("Stelara 라벨의 이상반응")
+        plan = search_plan(route, router.references)
+        typed = [ps.types for ps in plan if ps.types is not None]
+        assert typed and typed[0].label_sections
+        q = emb.encode(["psoriasis trials"])[0]
+        hits = idx.chunks([h.chunk_id for h in idx.search(q, typed[0], 10)])
+        assert hits and all("Undesirable effects" in " ".join(c.section_path) for c in hits.values())
+        # without the rule the same search also returns the other label sections
+        wide = idx.chunks([h.chunk_id for h in idx.search(q, Filters(**{**typed[0].__dict__,
+                                                                         "label_sections": None}), 10)])
+        assert len(wide) > len(hits)
