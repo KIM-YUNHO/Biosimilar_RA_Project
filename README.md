@@ -80,6 +80,7 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 | `data/raw/<agency>/` | 해시 기반 원문 저장소(git 제외) |
 | `src/ra_prep/` | 전처리: `select`(대상 선별), `signals`·`route`(쪽 판정), `sanitize`(워터마크), `extract`(Docling), `textfix`(텍스트층 교정), `reocr`·`grid`(두 번째 판독), `html`(HC 웹 문서), `structure`(RA 후처리), `qa`, `pipeline`, `cli` |
 | `src/ra_chunk/` | 색인: `chunker`(절 단위 청크), `embed`(bge-m3), `index`(색인 단계), `store`(색인 표, pgvector), `search`(하이브리드 검색), `query`(규칙 라우팅·용어집), `rerank`, `retrieve`, `cli` |
+| `src/ra_answer/` | 답변 생성(`ra-answer`): `evidence`(근거 블록·인용 구간), `generate`(LLM 1회 + 코드 검증), `llm`(OpenAI), `cli` |
 | `docker-compose.yml` | PostgreSQL 16 + pgvector |
 | `eval/` | 전처리 정답 세트(`gold/`: 쪽 PDF 30개 + 정답 JSON)와 후보 실행·채점 스크립트 |
 
@@ -169,6 +170,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 - [로컬 실행 안내 (설치 → 적재 → 전처리 한 번에)](docs/local-run.md)
 - [전처리 비교 시험 (정답 세트 30쪽)](docs/preprocessing-benchmark.md)
 - [청킹·임베딩 전략 (비교·재순위 시험 결과 포함)](docs/chunking-strategy.md)
+- [답변 생성 1차 구현 (수정사항·미반영 부분)](docs/answer-generation.md)
 - [시험 세트 정리 (전처리 30쪽, 검색 20문항)](docs/test-sets.md)
 - [파이프라인 운영·오케스트레이션 설계 (요청형·감시형, Airflow 검토)](docs/pipeline-operations.md)
 

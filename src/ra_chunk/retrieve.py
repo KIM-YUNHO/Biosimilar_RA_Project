@@ -10,7 +10,7 @@ measured recall applies to what the answer step receives.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from sqlalchemy.orm import Session
 
@@ -25,6 +25,7 @@ class Retrieved:
     score: float
     parent_text: str        # what the answer step reads (whole section / table, or the chunk)
     product: str | None     # the routed product this hit was searched for
+    parent_pages: list[int] = field(default_factory=list)  # pages of parent_text
 
 
 class Retriever:
@@ -79,5 +80,6 @@ class Retriever:
         for h, p in found:
             c = rows[h.chunk_id]
             par = parents.get((c.index_document_id, c.parent_key))
-            out.append(Retrieved(c, h.score, par.text if par else c.text, p))
+            out.append(Retrieved(c, h.score, par.text if par else c.text, p,
+                                 list(par.pages if par else c.pages)))
         return out
