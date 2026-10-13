@@ -2,9 +2,12 @@
 
   ra-ingest ingest --ingredient ustekinumab --agencies ema,fda,hc,guidance,ctgov
   ra-ingest ingest --product SB17 --product Wezenla --agencies ema
+  ra-ingest ingest --ingredient adalimumab          any ingredient: programs come from the catalogs
+  ra-ingest ingest --product Hadlima                any brand or FDA suffix name, no registry entry needed
   ra-ingest status
   ra-ingest manifest --out data/manifest.jsonl
   ra-ingest migrate-paths [--dry-run]          absolute file paths in old rows -> store keys
+  ra-ingest rekey-html [--dry-run]             HTML versions: old fingerprint -> current
   ra-ingest copy-db --to postgresql+psycopg://ra:ra@localhost:5432/ra    SQLite -> PostgreSQL
 """
 from __future__ import annotations
@@ -17,6 +20,7 @@ from pathlib import Path
 
 from sqlalchemy import select
 
+from .http import USER_AGENT, is_block_url
 from .db import DocumentRow, IngestEventRow, IngestRunRow, ProgramRow, RegistrationRow, Store
 from .metadata import build_document_metadata
 from .models import AGENCIES
@@ -31,6 +35,7 @@ def _ingest(a: argparse.Namespace) -> int:
         ingredient=a.ingredient, products=a.product or [],
         agencies=[x.strip() for x in a.agencies.split(",") if x.strip()],
         include_holdout=a.include_holdout, download=not a.no_download,
+        auto_programs=not a.no_auto_programs, refill=not a.no_refill,
         doc_types=a.doc_types.split(",") if a.doc_types else None,
         db_url=a.db, store_url=a.data_dir or a.store,
     )
@@ -134,9 +139,12 @@ def _check(a: argparse.Namespace) -> int:
     for agency, urls in CHECK_HOSTS.items():
         for url in urls:
             try:
-                code = requests.get(url, timeout=15).status_code
+                r = requests.get(url, timeout=15, headers={"User-Agent": USER_AGENT})
+                code = r.status_code
                 msg = f"HTTP {code}"
                 ok = code < 500 and code != 403
+                if is_block_url(r.url):
+                    msg, ok = f"HTTP {code} 봇 차단 페이지로 이동(이 호스트 문서는 받을 수 없음)", False
             except requests.RequestException as e:
                 msg, ok = type(e).__name__ + (": 403 (네트워크 정책 차단)" if "403" in str(e) else ""), False
             ok_all &= ok
@@ -149,6 +157,15 @@ def _migrate_paths(a: argparse.Namespace) -> int:
     from .objstore import open_store
 
     stats = migrate_paths(a.db, open_store(a.store), dry_run=a.dry_run)
+    print(json.dumps(stats, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _rekey_html(a: argparse.Namespace) -> int:
+    from .migrate import rekey_html_versions
+    from .objstore import open_store
+
+    stats = rekey_html_versions(a.db, open_store(a.store), dry_run=a.dry_run)
     print(json.dumps(stats, ensure_ascii=False, indent=2))
     return 0
 
@@ -179,6 +196,10 @@ def main(argv: list[str] | None = None) -> int:
     i.add_argument("--include-holdout", action="store_true", help="holdout 제품(BAT2206)도 포함")
     i.add_argument("--no-download", action="store_true", help="메타데이터만 수집")
     i.add_argument("--doc-types", help="다운로드할 문서 유형 제한(쉼표 구분)")
+    i.add_argument("--no-auto-programs", action="store_true",
+                   help="레지스트리(config/products.yaml)에 없는 제품은 문서를 받지 않음(이전 동작)")
+    i.add_argument("--no-refill", action="store_true",
+                   help="카탈로그에 없던 기존 문서를 저장된 URL로 다시 받지 않음")
     i.add_argument("--data-dir", help="(이전 옵션) --store와 같음")
     i.set_defaults(func=_ingest)
 
@@ -196,6 +217,10 @@ def main(argv: list[str] | None = None) -> int:
     mp = sub.add_parser("migrate-paths", help="이전 행의 절대 경로를 저장소 키로 변환")
     mp.add_argument("--dry-run", action="store_true")
     mp.set_defaults(func=_migrate_paths)
+
+    rk = sub.add_parser("rekey-html", help="HTML 문서 버전의 sha256을 현재 지문 방식으로 옮김(조회일 때문에 매일 새 버전이 생기던 문제)")
+    rk.add_argument("--dry-run", action="store_true")
+    rk.set_defaults(func=_rekey_html)
 
     cp = sub.add_parser("copy-db", help="--db의 모든 표를 빈 DB(--to)로 복사 (예: SQLite -> PostgreSQL)")
     cp.add_argument("--to", required=True, help="대상 SQLAlchemy URL")

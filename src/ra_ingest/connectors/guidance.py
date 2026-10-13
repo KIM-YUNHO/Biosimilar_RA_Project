@@ -103,9 +103,12 @@ def guidance_documents(entries: list[dict[str, Any]], agencies: list[str], repor
 
     if "fda" in agencies and fetcher is not None:
         try:
-            catalog = parse_fda_catalog(fetcher.get(FDA_GUIDANCE_JSON).json())
+            catalog = parse_fda_catalog(fetcher.get(FDA_GUIDANCE_JSON, cache=True).json())
         except (FetchError, ValueError) as e:
-            report("error", "source_failed", f"FDA 가이던스 목록 수집 실패: {e}", agency="fda")
+            blocked = isinstance(e, FetchError) and e.blocked
+            # the curated list below still yields every known FDA guidance
+            report("warning" if blocked else "error", "source_blocked" if blocked else "source_failed",
+                   f"FDA 가이던스 목록 수집 실패({'봇 차단' if blocked else e}): 큐레이션 목록으로 대체", agency="fda")
             catalog = []
         for c in catalog:
             if not c["pdf_url"]:

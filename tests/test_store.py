@@ -57,6 +57,18 @@ def test_s3_store_roundtrip(tmp_path, monkeypatch):
         assert json.loads(st.read_text("parsed/x.json")) == {"a": 1}
 
 
+def test_paths_from_another_machine_become_keys(tmp_path):
+    from ra_ingest.migrate import _to_key
+
+    st = LocalStore(tmp_path)
+    sha = "ab" + "0" * 62
+    assert _to_key(f"/home/user/Biosimilar_RA_Project/data/raw/fda/ab/{sha}.pdf", st) == f"raw/fda/ab/{sha}.pdf"
+    assert _to_key(f"C:\\work\\data\\parsed\\{sha}.json", st) == f"parsed/{sha}.json"
+    assert _to_key(f"raw/fda/ab/{sha}.pdf", st) == f"raw/fda/ab/{sha}.pdf"        # already a key
+    assert _to_key("/somewhere/else/old.pdf", st) == "/somewhere/else/old.pdf"    # unknown layout kept
+    assert _to_key(None, st) is None
+
+
 def _ingest(mocked, fetcher, tmp_path, db_url):
     cfg = IngestConfig(ingredient="ustekinumab", agencies=["ema", "fda"], db_url=db_url,
                        data_dir=tmp_path / "store")

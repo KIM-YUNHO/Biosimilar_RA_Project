@@ -38,9 +38,13 @@ def test_resolve_product_aliases(name, expected):
     assert t.product_scoped and t.ingredient == "ustekinumab"
 
 
-def test_unknown_product_raises():
-    with pytest.raises(ValueError, match="레지스트리에 없는 제품"):
-        REGISTRY.resolve(products=["NOPE-1"])
+def test_unknown_product_becomes_an_auto_target():
+    t = REGISTRY.resolve(products=["NOPE-1"])
+    assert t.auto and t.requested == ["NOPE-1"] and t.programs == [] and t.product_scoped
+    assert t.search_names("fda") == ["NOPE-1"]
+    t = REGISTRY.resolve(ingredient="adalimumab")
+    assert t.auto and t.programs == [] and t.ingredient_synonyms == ["adalimumab", "adalimumab-"]
+    assert not REGISTRY.resolve(ingredient="ustekinumab").auto
 
 
 # --- parsers -------------------------------------------------------------------------
@@ -67,7 +71,7 @@ def _cfg(tmp_path, db_url, **kw):
 
 
 def test_end_to_end(mocked, fetcher, tmp_path, db_url):
-    cfg = _cfg(tmp_path, db_url, include_holdout=True)
+    cfg = _cfg(tmp_path, db_url, include_holdout=True, auto_programs=False)   # registry-only mode
     res = run_ingest(cfg, fetcher=fetcher, connectors=None)
     store = Store(cfg.db_url)
     with store.session() as s:
@@ -170,6 +174,38 @@ def test_network_down_is_recorded_not_raised(fetcher, tmp_path, db_url):
     with Store(cfg.db_url).session() as s:
         kinds = {e.kind for e in s.scalars(select(IngestEventRow))}
     assert "source_failed" in kinds and "missing_registration" in kinds
+
+
+class _DropsMidBody:
+    """A 200 response whose body fails `drops` times before it is delivered."""
+    status_code, url, headers = 200, "https://x.test/a.pdf", {}
+
+    def __init__(self, drops: int):
+        self.drops = drops
+
+    def iter_content(self, size):
+        import requests
+
+        yield b"%PDF-1.7 "
+        if self.drops > 0:
+            self.drops -= 1
+            raise requests.exceptions.ChunkedEncodingError("Response ended prematurely")
+        yield b"body"
+
+
+@pytest.mark.parametrize("drops, ok", [(1, True), (5, False)])
+def test_body_dropped_mid_download_is_retried_then_recorded(monkeypatch, drops, ok):
+    from ra_ingest.http import FetchError, Fetcher
+
+    fetcher = Fetcher(retries=3, host_delay=0)
+    resp = _DropsMidBody(drops)
+    monkeypatch.setattr(fetcher.session, "get", lambda *a, **k: resp)
+    monkeypatch.setattr("ra_ingest.http.time.sleep", lambda *_: None)
+    if ok:
+        assert fetcher.get("https://x.test/a.pdf").content.endswith(b"body")
+    else:
+        with pytest.raises(FetchError, match="ChunkedEncodingError"):
+            fetcher.get("https://x.test/a.pdf")
 
 
 def test_cli_status_and_manifest(mocked, fetcher, tmp_path, db_url, capsys, monkeypatch):

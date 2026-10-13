@@ -84,7 +84,7 @@ class EmaConnector(Connector):
 
     # -- registrations ---------------------------------------------------------
     def discover_registrations(self, target: Target) -> Iterable[RegistrationRecord]:
-        res = self.fetcher.get(self.medicines_url)
+        res = self.fetcher.get(self.medicines_url, cache=True)
         rows = _rows(res.json())
         snapshot = res.last_modified
         if not rows:
@@ -129,7 +129,7 @@ class EmaConnector(Connector):
     def _load_documents(self) -> None:
         if self._docs_by_product is not None:
             return
-        res = self.fetcher.get(self.documents_url)
+        res = self.fetcher.get(self.documents_url, cache=True)
         self._docs_by_product = {}
         for row in _rows(res.json()):
             pn = pick(row, "ema_product_number", "product_number")

@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ra
       POSTGRES_DB: ra
     ports:
-      - "5432:5432"
+      - "${RA_PG_PORT:-5432}:5432"   # RA_PG_PORT=5434 when 5432 is taken by another database
     volumes:
       - ra-pg:/var/lib/postgresql/data
     healthcheck:

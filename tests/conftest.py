@@ -142,6 +142,8 @@ DPD_BY_ID = {31: {"drug_code": 31, "brand_name": "JAMTEKI", "drug_identification
 DPD_PRODUCTS["Pyzchiva"].append({"drug_code": 13, "brand_name": "PYZCHIVA I.V.",
                                  "drug_identification_number": "09990013",
                                  "company_name": "SAMSUNG BIOEPIS CO., LTD."})
+for _p in [p for ps in DPD_PRODUCTS.values() for p in ps]:   # the by-id lookup of the ingredient path
+    DPD_BY_ID.setdefault(_p["drug_code"], _p)
 DPD_INGREDIENT = {13: "USTEKINUMAB", 11: "USTEKINUMAB", 12: "USTEKINUMAB", 21: "USTEKINUMAB", 31: "USTEKINUMAB"}
 DPD_STATUS = {13: "2024-09-01", 11: "2024-08-15", 12: "2024-08-20", 21: "2023-12-27", 31: "2023-11-30"}
 

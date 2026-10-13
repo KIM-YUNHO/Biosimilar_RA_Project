@@ -31,6 +31,14 @@ uv venv .venv && uv pip install -p .venv -e ".[dev,postgres]"
   1. `ra-ingest migrate-paths`: 예전 행의 절대 경로를 키로 바꿉니다.
   2. `ra-ingest copy-db --to $RA_DB`: 빈 PostgreSQL로 모든 표를 복사합니다.
   - 자세한 순서는 [로컬 실행 안내](docs/local-run.md) 8장에 있습니다.
+- 다른 DB가 5432를 쓰고 있으면 `RA_PG_PORT=5434 docker compose up -d`로 포트를 바꿉니다.
+
+**요청한 대로 받아지는 방식**
+- 성분이나 제품을 요청하면 세 기관 카탈로그에서 허가를 모으고, 레지스트리에 없는 제품은 같은 개발 프로그램끼리 묶어(`auto_program` 이벤트에 근거) 문서를 받습니다.
+- 실패는 문서·출처·호스트 단위로 가둬 기록하고 계속합니다. 이전에 받은 문서는 이번 실패로 상태가 바뀌지 않습니다.
+- FDA가 이 클라이언트를 봇으로 차단하면(`www.fda.gov`가 `abuse-detection-apology`로 이동) 차단으로 기록하고 그 호스트를 잠시 건너뜁니다. FDA 문서 목록은 `accessdata.fda.gov` 개요 페이지로 대체합니다. `ra-ingest check`가 이 차단을 NG로 표시합니다.
+- 같은 요청을 다시 실행하면 빠진 원문만 채워집니다(`refill`).
+- HTML 문서 버전 지문 방식이 바뀌어, 이전에 적재한 DB는 한 번 `ra-ingest rekey-html`을 실행합니다(`--dry-run`으로 먼저 확인).
 
 ## 사용
 
@@ -43,6 +51,10 @@ uv venv .venv && uv pip install -p .venv -e ".[dev,postgres]"
 
 # 제품 단위. 개발 코드 / 기관별 브랜드명 / FDA 접미사 이름 모두 가능
 .venv/bin/ra-ingest ingest --product SB17 --product Wezenla --agencies ema,fda
+
+# 레지스트리에 없는 성분·제품도 요청만 하면 됨: 카탈로그에서 프로그램을 만들어 문서를 받음
+.venv/bin/ra-ingest ingest --ingredient adalimumab
+.venv/bin/ra-ingest ingest --product Hadlima --agencies ema,fda,hc
 
 # 신규 제품 추가 측정 (holdout 포함)
 .venv/bin/ra-ingest ingest --product BAT2206 --include-holdout
@@ -73,7 +85,8 @@ result = run_ingest(IngestConfig(products=["CT-P43"], agencies=["ema", "fda", "h
 | `config/products.yaml` | 제품 레지스트리: 기관별 별칭, 식별자 힌트, holdout, 기관별 미승인 표시, HC 문서 시드 URL |
 | `config/guidances.yaml` | 가이던스 목록: 관할, 상태, 날짜, 적용 범위, 쟁점 |
 | `src/ra_ingest/connectors/` | 기관별 커넥터(`ema`, `fda`, `hc`, `guidance`, `ctgov`). 모두 같은 인터페이스(`base.Connector`)를 따름 |
-| `src/ra_ingest/pipeline.py` | 대상 해석 → 허가 정보 → 문서 → 원문 버전 저장, 실행 로그 |
+| `src/ra_ingest/pipeline.py` | 대상 해석 → 허가 정보 → 프로그램 → 문서 → 원문 버전 저장 → 빠진 원문 채우기, 실행 로그 |
+| `src/ra_ingest/autoprogram.py` | 레지스트리에 없는 제품의 프로그램 묶기(브랜드·허가권자·유사 이름), 근거 기록 |
 | `src/ra_ingest/db.py` | `programs`, `registrations`, `documents`, `document_versions`, `trials`, `ingest_runs`, `ingest_events` |
 | `src/ra_ingest/metadata.py` | 문서 메타데이터 계약, 청크 메타데이터 스키마, 컨텍스트 헤더 |
 | `src/ra_ingest/objstore.py` | 원문·파싱 결과 저장소(로컬 폴더 / S3). DB에는 키만 저장 |

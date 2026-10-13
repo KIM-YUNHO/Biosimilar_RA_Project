@@ -3,6 +3,9 @@
 A run targets an ingredient ("ustekinumab") and/or products named by development code,
 brand name or FDA suffix name ("SB17", "Wezenla", "ustekinumab-auub"). Resolution
 returns the programs to ingest plus the names each agency connector should search for.
+
+Names the registry does not know are not an error: the target is marked `auto` and the
+pipeline derives the programs from the agency catalogs (ra_ingest.autoprogram).
 """
 from __future__ import annotations
 
@@ -59,12 +62,20 @@ class Target:
     programs: list[Program]
     ingredient_synonyms: list[str]
     product_scoped: bool  # True when the user named products: connectors keep only alias matches
+    requested: list[str] = field(default_factory=list)   # product names the registry does not know
+    auto: bool = False                                    # derive programs from the catalogs
+    excluded: list[Program] = field(default_factory=list)  # holdout programs: never auto-mapped
 
     def search_names(self, agency: str) -> list[str]:
         names: list[str] = []
         for p in self.programs:
             names.extend(p.agency_names(agency))
-        return names
+        return names + self.requested
+
+    def is_excluded(self, agency: str, reg: RegistrationRecord) -> bool:
+        reg_names = {norm_name(n) for n in reg.names()}
+        return any(names_match(reg_names, p.agency_names(agency)) or names_match(reg_names, p.all_names())
+                   for p in self.excluded)
 
     def match_program(self, agency: str, reg: RegistrationRecord) -> str | None:
         """Map a registration to a program by agency alias, then by any program name."""
@@ -118,29 +129,34 @@ class Registry:
         if not ingredient and not products:
             raise ValueError("ingredient 또는 product 중 하나는 지정해야 합니다")
         selected: list[Program] = []
+        unknown: list[str] = []
         if products:
-            unknown = []
             for name in products:
                 p = self.find_program(name)
                 if p is None:
                     unknown.append(name)
                 elif p not in selected:
                     selected.append(p)
-            if unknown:
-                raise ValueError(f"레지스트리에 없는 제품: {', '.join(unknown)} (config/products.yaml에 추가)")
-            ingredient = ingredient or selected[0].ingredient
+            if not ingredient and selected:
+                ingredient = selected[0].ingredient
         else:
             selected = [
                 p for p in self.programs
                 if p.ingredient == ingredient and (include_holdout or not p.holdout)
             ]
         ing_cfg = self.ingredients.get(ingredient or "", {})
-        synonyms = list(ing_cfg.get("synonyms") or ([ingredient] if ingredient else []))
+        default_names = [ingredient, f"{ingredient}-"] if ingredient else []   # "-": FDA suffix names
+        synonyms = list(ing_cfg.get("synonyms") or default_names)
+        excluded = [p for p in self.programs
+                    if p.ingredient == ingredient and p.holdout and not include_holdout]
         return Target(
             ingredient=ingredient,
             programs=selected,
             ingredient_synonyms=synonyms,
             product_scoped=bool(products),
+            requested=unknown,
+            auto=bool(unknown) or (not products and not selected),
+            excluded=excluded,
         )
 
 

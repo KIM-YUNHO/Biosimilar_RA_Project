@@ -131,6 +131,8 @@ $P -m ra_chunk search "Wezlana는 어떤 근거로 인터체인저블로 지정�
 |---|---|
 | `warmup`이 다운로드에서 멈춤·실패 | 1장의 모델 주소가 막혀 있음. 열린 망에서 캐시를 만들어 복사 |
 | FDA에서 403·"apology" 페이지 | FDA 봇 차단. 잠시 후 다시 실행(받은 것은 건너뜀) |
+| `ra-ingest check`가 FDA에 `봇 차단 페이지`, 적재 이벤트에 `source_blocked`/`host_blocked` | `www.fda.gov`가 이 IP를 봇으로 보고 차단함(404로 보임). FDA 제품 문서는 `accessdata.fda.gov`로 계속 받아지고, 가이던스 문서와 Drugs@FDA ZIP만 막힘. 차단은 시간이 지나야 풀리며, 풀린 뒤 같은 요청을 다시 실행하면 빠진 것이 채워짐 |
+| HC 문서마다 실행할 때 새 버전이 생김 | 옛 지문 방식(조회일 포함)으로 적재된 DB. `ra-ingest rekey-html --dry-run` 후 `ra-ingest rekey-html` |
 | `database is locked` | SQLite에 프로세스 두 개가 동시에 씀. 한 번에 하나만 실행하거나 PostgreSQL 사용 |
 | 메모리 부족으로 워커가 죽음 | `--workers`를 줄임 |
 | `type "vector" does not exist`, `extension "vector" is not available` | PostgreSQL에 pgvector가 없음. `docker compose up -d`의 이미지(pgvector/pgvector)를 쓰거나 pgvector 0.7 이상을 설치 |
@@ -167,4 +169,21 @@ $P eval/retrieval/check_index_parity.py
 
 - 2단계는 SQLite를 계속 쓸 때도 필요합니다. 새 코드는 키를 읽지만 예전 절대 경로도 계속 읽을 수 있어서, 하지 않아도 동작은 합니다.
 - `copy-db`는 대상 DB의 표가 비어 있을 때만 복사합니다. PostgreSQL의 id 순번도 복사한 값 다음부터 이어지게 맞춥니다.
+- 5432 포트를 다른 DB가 쓰고 있으면 `RA_PG_PORT=5434 docker compose up -d`로 띄우고 URL의 포트를 맞춥니다.
+- 다른 컴퓨터에서 만든 SQLite라면 `/home/.../data/raw/...` 같은 경로도 `copy-db`가 저장소 키로 바꿉니다(`data/raw`, `data/parsed` 아래 경로만).
 - 원문 저장소를 공유 볼륨이나 S3 호환 저장소로 옮길 때는 `data/raw`, `data/parsed` 폴더를 그대로 복사합니다. 그다음 `RA_STORE`를 그 위치로 바꾸면 됩니다(예: `s3://ra-docs/prod`, `.[s3]` 설치).
+
+## 9. 색인 export를 PostgreSQL로 가져오기 (모델 없이)
+
+`scripts/export_index.py`로 만든 export(`chunks.jsonl`, `dense_fp16.npy`, `sparse.jsonl`, `parents.jsonl`)와 파싱 결과(`parsed/*.json`)가 있으면 bge-m3 모델 없이 색인 표를 채울 수 있습니다. 8장의 1~5단계(DB 복사)와 파싱 결과를 `data/parsed/`에 두는 것까지 끝난 상태에서 실행합니다.
+
+```bash
+P=.venv/bin/python        # Windows: .venv\Scripts\python.exe  (".[postgres,rag]" 설치, torch 불필요)
+$P scripts/import_index.py --export path/to/export --store data
+```
+
+- 벡터는 임베딩한 텍스트의 해시로 export에서 찾아 씁니다. 청크는 평소처럼 파싱 결과에서 다시 만들기 때문에 `speaker`, `table_caption`, `study_ids` 같은 필드가 모두 채워지고, 색인 키(문서 버전·엔진·청커·모델·메타데이터 해시)가 `ra-index run`이 기대하는 값과 같아 이후 실행에서 건너뜁니다.
+- 파싱 결과가 저장소에 없는 문서는 export 행을 그대로 넣습니다(위 필드는 비고, 부모 절의 쪽 번호는 청크 쪽의 합집합). `ra-prep run --doc-id N --force` 후 `ra-index run --force --doc-id N`으로 채울 수 있습니다.
+- `prep_documents.output_path`가 저장소 키가 아니면 `parsed/<sha256>.json`으로 바꿉니다.
+- 끝에 문서별 청크 수·텍스트 해시를 export와 비교해 다르면 종료 코드 1로 끝납니다.
+- 토크나이저(수 MB)만 huggingface.co에서 받습니다.

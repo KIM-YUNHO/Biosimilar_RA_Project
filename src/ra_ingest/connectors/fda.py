@@ -6,6 +6,9 @@ Sources (docs/ra-document-sources.md F1/F2/F3):
   the full list below; both blocks start with their own header row.
 - Drugs@FDA data files (ZIP of tab-delimited tables): Products/Applications/Submissions/
   ApplicationDocs -> document URLs (letters, labels, reviews) with dates.
+- Drugs@FDA application overview page (accessdata.fda.gov, per BLA): the same documents as
+  the ZIP, read from HTML. Used when the ZIP (served from www.fda.gov, which blocks some
+  clients with a bot-detection page) cannot be fetched.
 - Approval package TOC pages: HTML index pages whose PDF links are expanded.
 """
 from __future__ import annotations
@@ -27,6 +30,7 @@ from .base import Connector
 PURPLE_BOOK_URL = ("https://www.accessdata.fda.gov/drugsatfda_docs/PurpleBook/{year}/"
                    "purplebook-search-{month}-data-download.csv")
 DRUGSATFDA_ZIP = "https://www.fda.gov/media/89850/download?attachment"
+DAF_OVERVIEW = "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"
 
 _MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
            "September", "October", "November", "December"]
@@ -106,6 +110,27 @@ def map_fda_doc_type(desc: str | None, url: str) -> tuple[str, bool]:
     return "other", False
 
 
+def parse_daf_overview(page: str) -> list[dict[str, Any]]:
+    """Rows of the "Original Approvals" and "Supplements" tables of a Drugs@FDA application
+    overview page: [{"date", "submission", "links": [(href, label)]}]. Rows without a link
+    are skipped; the last cell of a row repeats the URLs as plain text."""
+    rows: list[dict[str, Any]] = []
+    for table_id in ("exampleApplOrig", "exampleApplSuppl"):
+        m = re.search(rf'<table[^>]*id="{table_id}".*?</table>', page, flags=re.S)
+        if not m:
+            continue
+        for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", m.group(0), flags=re.S):
+            cells = [re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", c)).strip()
+                     for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, flags=re.S)]
+            if len(cells) < 3:
+                continue
+            links = [(href, re.sub(r"<[^>]+>|\s+", " ", label).strip()) for href, label in
+                     re.findall(r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', tr, flags=re.S)]
+            if links:
+                rows.append({"date": to_iso_date(cells[0]), "submission": cells[1], "links": links})
+    return rows
+
+
 class FdaConnector(Connector):
     agency = "fda"
 
@@ -120,10 +145,10 @@ class FdaConnector(Connector):
         last: FetchError | None = None
         for month, url in purple_book_candidates(self.today):
             try:
-                res = self.fetcher.get(url)
+                res = self.fetcher.get(url, cache=True)
             except FetchError as e:
                 last = e
-                if e.status is None:   # network-level failure: other months will fail the same way
+                if e.status is None or e.blocked:   # host-level failure: other months fail the same way
                     break
                 continue
             rows = parse_purple_book(res.text())
@@ -137,13 +162,16 @@ class FdaConnector(Connector):
     def _drugsatfda(self) -> dict[str, list[dict[str, str]]]:
         if self._dafda is None:
             try:
-                res = self.fetcher.get(self.drugsatfda_url)
+                res = self.fetcher.get(self.drugsatfda_url, cache=True)
                 z = zipfile.ZipFile(io.BytesIO(res.content))
                 self._dafda = {t: read_tsv_table(z, t) for t in
                                ("Products", "Applications", "Submissions", "ApplicationDocs",
                                 "ApplicationsDocsType_Lookup")}
             except (FetchError, zipfile.BadZipFile) as e:
-                self.report("error", "source_failed", f"Drugs@FDA ZIP 수집 실패: {e}", url=self.drugsatfda_url)
+                blocked = isinstance(e, FetchError) and e.blocked
+                self.report("warning", "source_blocked" if blocked else "source_failed",
+                            f"Drugs@FDA ZIP 수집 실패({'봇 차단' if blocked else e}): "
+                            "문서 목록은 Drugs@FDA 개요 페이지(accessdata.fda.gov)로 대체", url=self.drugsatfda_url)
                 self._dafda = {}
         return self._dafda
 
@@ -216,6 +244,45 @@ class FdaConnector(Connector):
     # -- documents -------------------------------------------------------------
     def discover_documents(self, reg: RegistrationRecord, target: Target) -> Iterable[DocumentRecord]:
         t = self._drugsatfda()
+        if t.get("ApplicationDocs"):
+            yield from self._documents_from_zip(reg, t)
+        else:
+            yield from self._documents_from_overview(reg)
+
+    def _documents_from_overview(self, reg: RegistrationRecord) -> Iterable[DocumentRecord]:
+        appl = str(reg.identifiers.get("fda_bla", "")).lstrip("0")
+        if not appl:
+            return
+        try:
+            page = self.fetcher.get(DAF_OVERVIEW, params={"event": "overview.process", "ApplNo": appl},
+                                    cache=True)
+        except FetchError as e:
+            self.report("error", "source_failed", f"Drugs@FDA 개요 페이지 수집 실패(BLA {appl}): {e.reason}",
+                        url=e.url, program_id=reg.program_id)
+            return
+        rows = parse_daf_overview(page.text())
+        if not rows:
+            self.report("warning", "source_format", f"Drugs@FDA 개요 페이지에서 문서 행을 찾지 못함(BLA {appl})",
+                        url=page.url, program_id=reg.program_id)
+        seen: set[str] = set()
+        for row in rows:
+            for href, label in row["links"]:
+                url, fragment = normalize_fda_url(href)
+                if "/drugsatfda_docs/" not in url or url in seen:
+                    continue
+                seen.add(url)
+                doc_type, is_index = map_fda_doc_type(label, url)
+                yield DocumentRecord(
+                    agency="fda", doc_kind="product", doc_type=doc_type, native_doc_type=label or None,
+                    title=f"{label} - {row['submission']}" if label else url.rsplit("/", 1)[-1],
+                    source_url=url, registration_key=reg.native_key, program_id=reg.program_id,
+                    procedure_id=row["submission"], decision_date=row["date"], doc_date=row["date"],
+                    language="en", is_index_page=is_index,
+                    extra={"from_overview": True, **({"page_fragment": fragment} if fragment else {})},
+                )
+
+    def _documents_from_zip(self, reg: RegistrationRecord, t: dict[str, list[dict[str, str]]]
+                            ) -> Iterable[DocumentRecord]:
         appl = reg.identifiers.get("fda_bla", "")
         lookup = {r.get("ApplicationDocsType_Lookup_ID"): r.get("ApplicationDocsType_Lookup_Description")
                   for r in t.get("ApplicationsDocsType_Lookup", [])}

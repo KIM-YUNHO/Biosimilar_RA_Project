@@ -2,13 +2,15 @@
 
   migrate_paths  rows written before object-store keys hold absolute file paths
                  (document_versions.storage_path, prep_documents.output_path); rewrite the
-                 ones inside the store root to keys ("raw/fda/ab/<sha>.pdf", "parsed/<sha>.json")
+                 ones inside the store root, or written on another machine under a
+                 ".../data/raw|parsed/" folder, to keys ("raw/fda/ab/<sha>.pdf", "parsed/<sha>.json")
   copy_database  copy every table from one database to another (SQLite -> PostgreSQL),
                  rewriting legacy paths on the way and resetting PostgreSQL id sequences
 """
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import create_engine, func, inspect, select, text, update
@@ -32,10 +34,19 @@ def load_all_tables() -> None:
 PATH_COLUMNS = [("document_versions", "storage_path"), ("prep_documents", "output_path")]
 
 
+# A path written on another machine (".../data/raw/fda/ab/<sha>.pdf"): the part after data/ is the key.
+_FOREIGN_DATA_PATH = re.compile(r"^.*[/\\]data[/\\]((?:raw|parsed)[/\\].+)$")
+
+
 def _to_key(value, store: ObjectStore):
-    if isinstance(value, str) and os.path.isabs(value):
-        return store.key_for(value) or value
-    return value
+    if not isinstance(value, str):
+        return value
+    if os.path.isabs(value):
+        key = store.key_for(value)
+        if key:
+            return key
+    m = _FOREIGN_DATA_PATH.match(value)
+    return m.group(1).replace("\\", "/") if m else value
 
 
 def migrate_paths(db_url: str, store: ObjectStore, dry_run: bool = False) -> dict:
@@ -55,7 +66,8 @@ def migrate_paths(db_url: str, store: ObjectStore, dry_run: bool = False) -> dic
             for row_id, value in conn.execute(select(t.c.id, c).where(c.is_not(None))).all():
                 new = _to_key(value, store)
                 if new == value:
-                    outside += os.path.isabs(value)
+                    # "/x/y" is not absolute on Windows (Python 3.13), but it is a legacy path
+                    outside += os.path.isabs(value) or value.startswith(("/", "\\"))
                     continue
                 done += 1
                 if not dry_run:
@@ -124,3 +136,102 @@ def copy_database(src_url: str, dst_url: str, store: ObjectStore | None = None,
                         f"COALESCE(MAX({pk[0].name}), 1), MAX({pk[0].name}) IS NOT NULL) FROM {t.name}"))
     return counts
 
+
+# tables whose rows are keyed by a document version's sha256
+_SHA_TABLES = ("prep_documents", "page_routes", "index_documents")
+
+
+def rekey_html_versions(db_url: str, store: ObjectStore, dry_run: bool = False,
+                        size_tolerance: int = 64, log=print) -> dict:
+    """Move HTML versions recorded under the old fingerprint (version 1: it contained the
+    day of the request) to the current one, so the next fetch of the same page is "no change".
+
+    For a document whose newest version is HTML and present in the store:
+      * one version: its sha256 is replaced by the current fingerprint of the stored bytes;
+      * several versions: an older version that is the same page keeps the row (the parse
+        output and the index refer to it) and the newest row is removed. "Same page" =
+        same current fingerprint when the older bytes are in the store, else a byte size
+        within `size_tolerance` (those pages differed only by the date / script token).
+    sha256 is rewritten in prep_documents, page_routes, index_documents and the parse output
+    key (parsed/<sha>.json) follows. Nothing is deleted from the store except the key of a
+    removed duplicate version."""
+    import json
+
+    from sqlalchemy.orm import Session
+
+    from .db import DocumentRow, DocumentVersionRow
+    from .objstore import LocalStore
+    from .storage import RawStore, fingerprint
+
+    load_all_tables()
+    engine = create_engine(db_url, future=True)
+    tables = Base.metadata.tables
+    stats = {"rekeyed": 0, "duplicates_removed": 0, "unchanged": 0, "skipped_no_raw": 0, "unresolved": 0}
+    with Session(engine) as s:
+        for doc in s.scalars(select(DocumentRow).order_by(DocumentRow.id)):
+            vs = list(s.scalars(select(DocumentVersionRow).where(DocumentVersionRow.document_id == doc.id)
+                                .order_by(DocumentVersionRow.id)))
+            if not vs or not vs[-1].storage_path.lower().endswith((".html", ".htm")):
+                continue
+            newest = vs[-1]
+            ext = "." + newest.storage_path.rsplit(".", 1)[-1].lower()
+            if not store.exists(newest.storage_path):
+                stats["skipped_no_raw"] += 1
+                continue
+            content = store.get_bytes(newest.storage_path)
+            new_sha = fingerprint(content, ext)
+            keep = None
+            for v in reversed(vs[:-1]):
+                if store.exists(v.storage_path):
+                    same = fingerprint(store.get_bytes(v.storage_path), ext) == new_sha
+                else:
+                    same = abs((v.size_bytes or 0) - (newest.size_bytes or 0)) <= size_tolerance
+                if same:
+                    keep = v
+                    break
+            if keep is None and len(vs) == 1:
+                keep = newest
+            if keep is None:
+                stats["unresolved"] += 1
+                continue
+            if keep.sha256 == new_sha and keep is newest:
+                stats["unchanged"] += 1
+                continue
+            new_key = RawStore.key(doc.agency, new_sha, ext)
+            old_sha = keep.sha256
+            log(f"  doc {doc.id} ({doc.agency} {doc.doc_type}): {old_sha[:10]} -> {new_sha[:10]}"
+                f"{'' if keep is newest else f' (drops version {newest.id})'}")
+            stats["rekeyed"] += 1
+            if dry_run:
+                continue
+            if not store.exists(new_key):
+                store.put_bytes(new_key, content)
+            if keep is not newest:
+                stale = newest.storage_path
+                s.delete(newest)
+                s.flush()
+                stats["duplicates_removed"] += 1
+                if stale != new_key and isinstance(store, LocalStore):
+                    try:
+                        store.path(stale).unlink()
+                    except OSError:
+                        pass
+            keep.sha256, keep.storage_path, keep.size_bytes = new_sha, new_key, len(content)
+            s.flush()
+            for tname in _SHA_TABLES:
+                t = tables.get(tname)
+                if t is not None:
+                    s.execute(update(t).where(t.c.sha256 == old_sha).values(sha256=new_sha))
+            pt = tables.get("prep_documents")
+            if pt is not None:
+                for row_id, out in s.execute(select(pt.c.id, pt.c.output_path)
+                                             .where(pt.c.sha256 == new_sha, pt.c.output_path.is_not(None))).all():
+                    if out and out.endswith(f"{old_sha}.json") and store.exists(out):
+                        parsed = json.loads(store.read_text(out))
+                        parsed["sha256"] = new_sha
+                        key = f"parsed/{new_sha}.json"
+                        store.put_bytes(key, json.dumps(parsed, ensure_ascii=False).encode("utf-8"))
+                        s.execute(update(pt).where(pt.c.id == row_id).values(output_path=key))
+        if not dry_run:
+            s.commit()
+    return stats

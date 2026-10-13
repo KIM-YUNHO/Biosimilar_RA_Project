@@ -28,6 +28,11 @@ def guess_ext(url: str, content_type: str | None) -> str:
     return ".bin"
 
 
+# Fingerprint version. 1: <main> only, request tokens removed. 2: also the "Date modified"
+# block and the bot-manager script. Version 1 hashes changed every day on HC pages (the
+# block shows the day of the request), so each run recorded a new version.
+FINGERPRINT_VERSION = 2
+
 # Tokens that change on every request without the document changing (Cloudflare email
 # obfuscation, Drupal form ids, nonces). Seen on dhpp.hpfb-dgpsa.ca SBD/RDS pages.
 _VOLATILE = [
@@ -37,6 +42,11 @@ _VOLATILE = [
     re.compile(rb'(nonce|data-drupal-selector-hash)="[^"]*"'),
     re.compile(rb'data-drupal-selector="form-[A-Za-z0-9_-]+"'),
     re.compile(rb'value="form-[A-Za-z0-9_-]+"'),
+    # canada.ca / DHPP "Date modified: <day of the request>"
+    re.compile(rb'<dl id="wb-dtmd">.*?</dl>', re.S),
+    re.compile(rb'<time property="dateModified">[^<]*</time>'),
+    # Akamai bot-manager script injected per request (FDA accessdata pages): random path
+    re.compile(rb'<script[^>]*\ssrc="/[A-Za-z0-9_-]{6,}(?:/[A-Za-z0-9_-]{2,}){3,}"[^>]*>\s*</script>', re.I),
 ]
 _MAIN = re.compile(rb"<main\b.*?</main>", re.S | re.I)
 
