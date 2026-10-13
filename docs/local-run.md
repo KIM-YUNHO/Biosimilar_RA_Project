@@ -30,7 +30,6 @@
 
 ```bash
 git clone https://github.com/kim-yunho/biosimilar_ra_project.git Biosimilar_RA_Project && cd Biosimilar_RA_Project
-git checkout claude/biosimilar-ra-rag-system-9rfk8h
 
 uv venv .venv-prep --python 3.13
 # NVIDIA GPU가 있으면 먼저 CUDA용 torch를 설치 (CUDA 버전에 맞는 index 사용)
