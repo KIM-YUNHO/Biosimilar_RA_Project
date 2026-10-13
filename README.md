@@ -252,6 +252,7 @@ RA_TEST_DB_URL=postgresql+psycopg://ra:ra@localhost/ra_test .venv/bin/pytest -q 
 
 **설계와 실행**
 - [적재: 명령, 프로그램 묶기, 실패 처리](docs/ingestion.md)
+- [라벨 적재 개편 계획: 문서 계열 구분, 구조화 원천(SPL) 우선](docs/label-ingestion-plan.md)
 - [전처리 워크플로우: 단계별 도구와 목적](docs/preprocessing-workflow.md)
 - [전처리 파이프라인 설계](docs/preprocessing-design.md)
 - [전처리 실행 계획(확정안)](docs/preprocessing-plan.md)
